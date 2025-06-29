@@ -1,5 +1,5 @@
-// HyperTrack Pro - Main Application Logic
-// Evidence-Based Workout Tracking Application
+// HyperTrack Pro - Enhanced Application Logic
+// Fixed exercise search and history display
 
 // Global application state
 const HyperTrack = {
@@ -7,6 +7,7 @@ const HyperTrack = {
         currentWorkout: null,
         workouts: [],
         exercises: [],
+        filteredExercises: [],
         settings: {
             showResearchFacts: true,
             darkMode: true,
@@ -31,114 +32,6 @@ const HyperTrack = {
         "Range of motion matters - full ROM generally produces better results",
         "Sleep quality directly impacts recovery and muscle protein synthesis",
         "Consistency beats perfection - regular training trumps perfect sessions"
-    ],
-    
-    // Exercise database with research-backed data
-    exerciseDatabase: [
-        // Chest exercises
-        { 
-            id: 1, name: "Barbell Bench Press", muscleGroup: "Chest", category: "Compound", 
-            tier: 1, mvc: 95, equipment: ["barbell", "bench"],
-            description: "The gold standard for chest development with highest pectoralis major activation."
-        },
-        { 
-            id: 2, name: "Incline Dumbbell Press", muscleGroup: "Chest", category: "Compound", 
-            tier: 1, mvc: 90, equipment: ["dumbbells", "incline_bench"],
-            description: "Superior upper chest activation compared to flat pressing movements."
-        },
-        { 
-            id: 3, name: "Dips", muscleGroup: "Chest", category: "Compound", 
-            tier: 1, mvc: 85, equipment: ["dip_station"],
-            description: "Excellent compound movement for chest, triceps, and anterior deltoids."
-        },
-        { 
-            id: 4, name: "Cable Flyes", muscleGroup: "Chest", category: "Isolation", 
-            tier: 2, mvc: 60, equipment: ["cable_machine"],
-            description: "Isolation movement maintaining constant tension throughout range of motion."
-        },
-        
-        // Back exercises
-        { 
-            id: 5, name: "Pull-ups", muscleGroup: "Back", category: "Compound", 
-            tier: 1, mvc: 117, equipment: ["pull_up_bar"],
-            description: "Highest latissimus dorsi activation among all pulling exercises."
-        },
-        { 
-            id: 6, name: "Barbell Rows", muscleGroup: "Back", category: "Compound", 
-            tier: 1, mvc: 93, equipment: ["barbell"],
-            description: "Excellent for building back thickness and overall pulling strength."
-        },
-        { 
-            id: 7, name: "Lat Pulldowns", muscleGroup: "Back", category: "Compound", 
-            tier: 1, mvc: 90, equipment: ["lat_pulldown_machine"],
-            description: "Machine alternative to pull-ups with adjustable resistance."
-        },
-        { 
-            id: 8, name: "Face Pulls", muscleGroup: "Back", category: "Isolation", 
-            tier: 2, mvc: 65, equipment: ["cable_machine"],
-            description: "Critical for rear deltoid and rhomboid development."
-        },
-        
-        // Leg exercises
-        { 
-            id: 9, name: "Squats", muscleGroup: "Legs", category: "Compound", 
-            tier: 1, mvc: 95, equipment: ["barbell", "squat_rack"],
-            description: "The king of exercises - full-body compound movement."
-        },
-        { 
-            id: 10, name: "Romanian Deadlifts", muscleGroup: "Legs", category: "Compound", 
-            tier: 1, mvc: 90, equipment: ["barbell"],
-            description: "Primary hamstring and glute developer with hip hinge pattern."
-        },
-        { 
-            id: 11, name: "Leg Press", muscleGroup: "Legs", category: "Compound", 
-            tier: 1, mvc: 88, equipment: ["leg_press_machine"],
-            description: "Safe alternative to squats allowing for heavier loading."
-        },
-        { 
-            id: 12, name: "Leg Curls", muscleGroup: "Legs", category: "Isolation", 
-            tier: 2, mvc: 70, equipment: ["leg_curl_machine"],
-            description: "Direct hamstring isolation with knee flexion movement."
-        },
-        
-        // Shoulder exercises
-        { 
-            id: 13, name: "Overhead Press", muscleGroup: "Shoulders", category: "Compound", 
-            tier: 1, mvc: 85, equipment: ["barbell"],
-            description: "Primary compound movement for shoulder development and stability."
-        },
-        { 
-            id: 14, name: "Lateral Raises", muscleGroup: "Shoulders", category: "Isolation", 
-            tier: 2, mvc: 65, equipment: ["dumbbells"],
-            description: "Direct medial deltoid isolation for shoulder width."
-        },
-        { 
-            id: 15, name: "Rear Delt Flyes", muscleGroup: "Shoulders", category: "Isolation", 
-            tier: 2, mvc: 60, equipment: ["dumbbells"],
-            description: "Essential for balanced shoulder development and posture."
-        },
-        
-        // Arm exercises
-        { 
-            id: 16, name: "Barbell Curls", muscleGroup: "Biceps", category: "Isolation", 
-            tier: 1, mvc: 90, equipment: ["barbell"],
-            description: "Classic bicep builder allowing for maximum loading potential."
-        },
-        { 
-            id: 17, name: "Hammer Curls", muscleGroup: "Biceps", category: "Isolation", 
-            tier: 2, mvc: 75, equipment: ["dumbbells"],
-            description: "Targets brachialis and brachioradialis for arm thickness."
-        },
-        { 
-            id: 18, name: "Close-Grip Bench Press", muscleGroup: "Triceps", category: "Compound", 
-            tier: 1, mvc: 85, equipment: ["barbell", "bench"],
-            description: "Compound tricep movement allowing for heavy progressive overload."
-        },
-        { 
-            id: 19, name: "Tricep Pushdowns", muscleGroup: "Triceps", category: "Isolation", 
-            tier: 2, mvc: 75, equipment: ["cable_machine"],
-            description: "Direct tricep isolation with constant tension throughout movement."
-        }
     ]
 };
 
@@ -146,10 +39,59 @@ const HyperTrack = {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🏋️ HyperTrack Pro initializing...');
     loadAppData();
+    loadExercisesFromAPI();
     updateUI();
     startResearchFactRotation();
     setupEventListeners();
 });
+
+// Load exercises from API
+async function loadExercisesFromAPI() {
+    try {
+        console.log('📚 Loading exercises from API...');
+        const response = await API.getExercises();
+        
+        if (response.success && response.data) {
+            HyperTrack.state.exercises = response.data;
+            HyperTrack.state.filteredExercises = response.data;
+            console.log(`✅ Loaded ${response.data.length} exercises from ${response.source}`);
+            updateExerciseList();
+        } else {
+            throw new Error('Failed to load exercises');
+        }
+    } catch (error) {
+        console.error('❌ Error loading exercises:', error);
+        // Use local fallback if API fails
+        HyperTrack.state.exercises = getFallbackExercises();
+        HyperTrack.state.filteredExercises = HyperTrack.state.exercises;
+        updateExerciseList();
+    }
+}
+
+// Fallback exercises data
+function getFallbackExercises() {
+    return [
+        { id: 1, name: "Barbell Bench Press", muscle_group: "Chest", category: "Compound", tier: 1 },
+        { id: 2, name: "Incline Dumbbell Press", muscle_group: "Chest", category: "Compound", tier: 1 },
+        { id: 3, name: "Dips", muscle_group: "Chest", category: "Compound", tier: 1 },
+        { id: 4, name: "Cable Flyes", muscle_group: "Chest", category: "Isolation", tier: 2 },
+        { id: 5, name: "Pull-ups", muscle_group: "Back", category: "Compound", tier: 1 },
+        { id: 6, name: "Barbell Rows", muscle_group: "Back", category: "Compound", tier: 1 },
+        { id: 7, name: "Lat Pulldowns", muscle_group: "Back", category: "Compound", tier: 1 },
+        { id: 8, name: "Face Pulls", muscle_group: "Back", category: "Isolation", tier: 2 },
+        { id: 9, name: "Squats", muscle_group: "Legs", category: "Compound", tier: 1 },
+        { id: 10, name: "Romanian Deadlifts", muscle_group: "Legs", category: "Compound", tier: 1 },
+        { id: 11, name: "Leg Press", muscle_group: "Legs", category: "Compound", tier: 1 },
+        { id: 12, name: "Leg Curls", muscle_group: "Legs", category: "Isolation", tier: 2 },
+        { id: 13, name: "Overhead Press", muscle_group: "Shoulders", category: "Compound", tier: 1 },
+        { id: 14, name: "Lateral Raises", muscle_group: "Shoulders", category: "Isolation", tier: 2 },
+        { id: 15, name: "Rear Delt Flyes", muscle_group: "Shoulders", category: "Isolation", tier: 2 },
+        { id: 16, name: "Barbell Curls", muscle_group: "Biceps", category: "Isolation", tier: 1 },
+        { id: 17, name: "Hammer Curls", muscle_group: "Biceps", category: "Isolation", tier: 2 },
+        { id: 18, name: "Close-Grip Bench Press", muscle_group: "Triceps", category: "Compound", tier: 1 },
+        { id: 19, name: "Tricep Pushdowns", muscle_group: "Triceps", category: "Isolation", tier: 2 }
+    ];
+}
 
 // Data Management Functions
 function loadAppData() {
@@ -161,9 +103,6 @@ function loadAppData() {
             HyperTrack.state.settings = { ...HyperTrack.state.settings, ...parsed.settings };
             HyperTrack.state.user = { ...HyperTrack.state.user, ...parsed.user };
         }
-        
-        // Load exercises into state
-        HyperTrack.state.exercises = HyperTrack.exerciseDatabase;
         
         console.log('✅ App data loaded successfully');
     } catch (error) {
@@ -204,6 +143,127 @@ function updateWorkoutTab() {
     }
 }
 
+function updateHistoryTab() {
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+
+    const workouts = HyperTrack.state.workouts;
+    
+    if (workouts.length === 0) {
+        historyList.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📖</div>
+                <h3>No Workouts Yet</h3>
+                <p>Complete your first workout to see your training history and progress over time.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    workouts.slice().reverse().forEach(workout => {
+        const date = new Date(workout.date || workout.startTime).toLocaleDateString();
+        const exerciseCount = workout.exercises?.length || 0;
+        const setCount = workout.exercises?.reduce((total, ex) => total + (ex.sets?.length || 0), 0) || 0;
+        
+        html += `
+            <div class="history-item">
+                <div class="history-header">
+                    <h4>${date}</h4>
+                    <span class="history-stats">${exerciseCount} exercises, ${setCount} sets</span>
+                </div>
+                <div class="history-exercises">
+                    ${(workout.exercises || []).map(ex => `
+                        <span class="exercise-tag">${ex.name}</span>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    });
+    
+    historyList.innerHTML = html;
+}
+
+function updateAnalyticsTab() {
+    // This will be updated by Tyler's data integration
+}
+
+function updateSettingsTab() {
+    // Settings UI updates
+}
+
+function updateResearchBanner() {
+    const banner = document.getElementById('researchBanner');
+    if (banner) {
+        banner.style.display = HyperTrack.state.settings.showResearchFacts ? 'block' : 'none';
+    }
+}
+
+// Exercise Functions
+function updateExerciseList() {
+    const exerciseList = document.getElementById('exerciseList');
+    if (!exerciseList) return;
+
+    const exercises = HyperTrack.state.filteredExercises;
+    
+    if (exercises.length === 0) {
+        exerciseList.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No exercises found</p>';
+        return;
+    }
+
+    let html = '';
+    exercises.forEach(exercise => {
+        html += `
+            <div class="exercise-item" onclick="selectExercise(${exercise.id})">
+                <div class="exercise-name">${exercise.name}</div>
+                <div class="exercise-details">
+                    ${exercise.muscle_group} • ${exercise.category}
+                    ${exercise.mvc_percentage ? ` • ${exercise.mvc_percentage}% MVC` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    exerciseList.innerHTML = html;
+}
+
+function filterExercises(searchTerm) {
+    const allExercises = HyperTrack.state.exercises;
+    const filtered = allExercises.filter(exercise => 
+        exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exercise.muscle_group.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    HyperTrack.state.filteredExercises = filtered;
+    updateExerciseList();
+}
+
+function filterByMuscle(muscleGroup) {
+    // Update active button
+    document.querySelectorAll('.muscle-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    const allExercises = HyperTrack.state.exercises;
+    
+    if (muscleGroup === 'all') {
+        HyperTrack.state.filteredExercises = allExercises;
+    } else {
+        HyperTrack.state.filteredExercises = allExercises.filter(exercise => 
+            exercise.muscle_group === muscleGroup
+        );
+    }
+    
+    updateExerciseList();
+}
+
+function selectExercise(exerciseId) {
+    const exercise = HyperTrack.state.exercises.find(ex => ex.id === exerciseId);
+    if (!exercise) return;
+    
+    console.log('Selected exercise:', exercise.name);
+    // TODO: Implement exercise selection modal
+}
+
 function showStartWorkout() {
     document.getElementById('startWorkout').style.display = 'block';
     document.getElementById('currentWorkout').style.display = 'none';
@@ -225,7 +285,7 @@ function updateCurrentWorkoutDisplay() {
     const currentExercises = document.getElementById('currentExercises');
     const workout = HyperTrack.state.currentWorkout;
     
-    if (workout.exercises.length === 0) {
+    if (!workout || workout.exercises.length === 0) {
         currentExercises.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No exercises added yet. Select an exercise below to begin.</p>';
         return;
     }
@@ -252,7 +312,6 @@ function updateCurrentWorkoutDisplay() {
     }
 }
 
-// Continue with remaining functions...
 // Workout Management Functions
 function startWorkout() {
     HyperTrack.state.currentWorkout = {
@@ -275,6 +334,8 @@ function startWorkout() {
 
 function updateWorkoutTimer() {
     const timerElement = document.getElementById('workoutTime');
+    if (!timerElement || !HyperTrack.state.currentWorkout) return;
+    
     const startTime = new Date(HyperTrack.state.currentWorkout.startTime);
     const now = new Date();
     const elapsed = Math.floor((now - startTime) / 1000);
@@ -303,6 +364,11 @@ function switchTab(tabName) {
     // Mark nav button as active
     document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
     
+    // Update content when switching to history
+    if (tabName === 'history') {
+        updateHistoryTab();
+    }
+    
     console.log(`📱 Switched to ${tabName} tab`);
 }
 
@@ -314,6 +380,28 @@ function toggleWorkout() {
     }
 }
 
+function finishWorkout() {
+    if (!HyperTrack.state.currentWorkout) return;
+    
+    // Stop timer
+    if (HyperTrack.state.currentWorkout.timerInterval) {
+        clearInterval(HyperTrack.state.currentWorkout.timerInterval);
+    }
+    
+    // Add end time
+    HyperTrack.state.currentWorkout.endTime = new Date().toISOString();
+    
+    // Save workout
+    HyperTrack.state.workouts.push(HyperTrack.state.currentWorkout);
+    HyperTrack.state.currentWorkout = null;
+    
+    // Save data and update UI
+    saveAppData();
+    updateUI();
+    
+    console.log('✅ Workout completed and saved');
+}
+
 // Settings Functions
 function toggleResearchFacts(enabled) {
     HyperTrack.state.settings.showResearchFacts = enabled;
@@ -321,9 +409,10 @@ function toggleResearchFacts(enabled) {
     saveAppData();
 }
 
-function updateResearchBanner() {
-    const banner = document.getElementById('researchBanner');
-    banner.style.display = HyperTrack.state.settings.showResearchFacts ? 'block' : 'none';
+function toggleDarkMode(enabled) {
+    // Already in dark mode by default
+    HyperTrack.state.settings.darkMode = enabled;
+    saveAppData();
 }
 
 // Research Facts Functions
@@ -350,6 +439,12 @@ function startResearchFactRotation() {
 
 // Event Listeners Setup
 function setupEventListeners() {
+    // Search input
+    const searchInput = document.getElementById('exerciseSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => filterExercises(e.target.value));
+    }
+    
     console.log('🎛️ Event listeners setup complete');
 }
 
