@@ -1,18 +1,19 @@
 // HyperTrack Pro - API Configuration
-// Backend API Integration
+// Vercel Serverless Backend Integration
 
 const API_CONFIG = {
-    baseURL: 'https://hypertrack-pro-production.up.railway.app',
+    // Use relative URLs for Vercel serverless functions
+    baseURL: '',
     endpoints: {
-        health: '/health',
+        health: '/api/health',
         exercises: '/api/exercises',
         workouts: '/api/workouts',
-        analytics: '/api/analytics/summary'
+        analytics: '/api/analytics'
     },
     timeout: 10000
 };
 
-// API Helper Functions
+// API Helper Functions with Error Handling
 const API = {
     async request(endpoint, options = {}) {
         try {
@@ -32,6 +33,18 @@ const API = {
             return await response.json();
         } catch (error) {
             console.error('API Request failed:', error);
+            
+            // Fallback to local data if API fails
+            if (endpoint.includes('/exercises')) {
+                console.log('📱 Using local exercise database as fallback');
+                return {
+                    success: true,
+                    data: HyperTrack?.exerciseDatabase || [],
+                    count: HyperTrack?.exerciseDatabase?.length || 0,
+                    source: 'local'
+                };
+            }
+            
             throw error;
         }
     },
@@ -63,3 +76,13 @@ const API = {
         return this.get(API_CONFIG.endpoints.workouts);
     }
 };
+
+// Test API connection on load
+window.addEventListener('load', async () => {
+    try {
+        const health = await API.healthCheck();
+        console.log('✅ API connected:', health.message);
+    } catch (error) {
+        console.log('📱 API offline - using local data mode');
+    }
+});
