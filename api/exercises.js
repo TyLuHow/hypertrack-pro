@@ -7,21 +7,47 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    console.log('Fetching exercises from Supabase...');
+    
     const { data: exercises, error } = await supabase
       .from('exercises')
       .select('*')
-      .order('name');
+      .order('muscle_group, tier, name');
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
 
-    res.status(200).json(exercises);
+    console.log(`Successfully fetched ${exercises?.length || 0} exercises`);
+
+    res.status(200).json({
+      success: true,
+      data: exercises || [],
+      count: exercises?.length || 0,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Failed to fetch exercises' });
+    console.error('Error fetching exercises:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch exercises',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
   }
 }
