@@ -1,13 +1,14 @@
 {
   "version": 2,
-  "name": "hypertrack-pro",
-  "builds": [
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
-    }
-  ],
+  "buildCommand": "echo 'No build required for static frontend'",
+  "outputDirectory": "frontend",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.ts"
+    },
     {
       "src": "/(.*)",
       "dest": "/frontend/$1"
@@ -22,7 +23,7 @@
           "value": "nosniff"
         },
         {
-          "key": "X-Frame-Options",
+          "key": "X-Frame-Options", 
           "value": "DENY"
         },
         {
