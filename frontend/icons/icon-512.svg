@@ -1,0 +1,48 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="80" fill="#2c5f5f"/>
+  <rect x="32" y="32" width="448" height="448" rx="64" fill="#1b4e4e"/>
+  
+  <!-- Main Barbell Icon -->
+  <g transform="translate(96, 160)">
+    <!-- Central Bar -->
+    <rect x="60" y="80" width="200" height="16" rx="8" fill="#f8fafc"/>
+    
+    <!-- Left Weight Plates -->
+    <rect x="40" y="60" width="32" height="56" rx="8" fill="#3d7070"/>
+    <rect x="20" y="68" width="24" height="40" rx="6" fill="#4a9eff"/>
+    <rect x="8" y="72" width="16" height="32" rx="4" fill="#10b981"/>
+    
+    <!-- Right Weight Plates -->
+    <rect x="248" y="60" width="32" height="56" rx="8" fill="#3d7070"/>
+    <rect x="276" y="68" width="24" height="40" rx="6" fill="#4a9eff"/>
+    <rect x="296" y="72" width="16" height="32" rx="4" fill="#10b981"/>
+    
+    <!-- Collars -->
+    <rect x="52" y="76" width="8" height="24" rx="2" fill="#ef4444"/>
+    <rect x="260" y="76" width="8" height="24" rx="2" fill="#ef4444"/>
+  </g>
+  
+  <!-- Progress Indicators -->
+  <g transform="translate(256, 320)">
+    <!-- Outer Ring -->
+    <circle r="32" stroke="#10b981" stroke-width="6" fill="none" stroke-dasharray="16 4"/>
+    <!-- Inner Ring -->
+    <circle r="20" stroke="#4a9eff" stroke-width="4" fill="none" stroke-dasharray="8 2"/>
+    <!-- Center Dot -->
+    <circle r="8" fill="#f8fafc"/>
+  </g>
+  
+  <!-- Decorative Elements -->
+  <g transform="translate(128, 380)">
+    <rect width="32" height="8" rx="4" fill="#3d7070" opacity="0.7"/>
+    <rect x="48" width="24" height="8" rx="4" fill="#4a9eff" opacity="0.7"/>
+    <rect x="88" width="40" height="8" rx="4" fill="#10b981" opacity="0.7"/>
+    <rect x="144" width="28" height="8" rx="4" fill="#f59e0b" opacity="0.7"/>
+    <rect x="188" width="36" height="8" rx="4" fill="#ef4444" opacity="0.7"/>
+    <rect x="240" width="32" height="8" rx="4" fill="#8b5cf6" opacity="0.7"/>
+  </g>
+  
+  <!-- App Title -->
+  <text x="256" y="440" text-anchor="middle" font-family="Inter, sans-serif" font-size="32" font-weight="700" fill="#f8fafc">HyperTrack Pro</text>
+  <text x="256" y="464" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" font-weight="500" fill="#cbd5e1" opacity="0.8">Evidence-Based Training</text>
+</svg>
