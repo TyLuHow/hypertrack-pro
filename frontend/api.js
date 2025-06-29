@@ -2,7 +2,7 @@
 // Backend API Integration
 
 const API_CONFIG = {
-    baseURL: 'http://hypertrack-pro-production.up.railway.app',
+    baseURL: 'https://hypertrack-pro-production.up.railway.app',
     endpoints: {
         health: '/health',
         exercises: '/api/exercises',
