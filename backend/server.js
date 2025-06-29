@@ -272,12 +272,15 @@ app.use('*', (req, res) => {
     });
 });
 
-// Start server
+// Start server - FIXED: Bind to 0.0.0.0 for Railway
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`🚀 HyperTrack Pro API server running on port ${PORT}`);
+const HOST = '0.0.0.0'; // Railway requires binding to 0.0.0.0
+
+app.listen(PORT, HOST, () => {
+    console.log(`🚀 HyperTrack Pro API server running on ${HOST}:${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔗 Health check: http://${HOST}:${PORT}/health`);
+    console.log(`🔗 Public URL: https://hypertrack-pro-production.up.railway.app`);
 });
 
 module.exports = app;
