@@ -1,5 +1,54 @@
 {
+  "name": "hypertrack-pro",
+  "version": "1.0.0",
+  "description": "Evidence-Based Hypertrophy Optimization - Scientific fitness tracking for maximum muscle growth",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build required'",
+    "preview": "npx serve .",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "fitness",
+    "workout",
+    "hypertrophy", 
+    "evidence-based",
+    "progressive-overload",
+    "pwa",
+    "offline"
+  ],
+  "author": "Tyler Luby-Howard",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TyLuHow/hypertrack-pro.git"
+  },
+  "homepage": "https://hypertrack-pro.vercel.app",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3"
+  },
+  "devDependencies": {
+    "serve": "^14.2.1"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie <= 11"
+  ],
+  "pwa": {
+    "name": "HyperTrack Pro",
+    "short_name": "HyperTrack",
+    "theme_color": "#2c5f5f",
+    "background_color": "#0a0f0f",
+    "display": "standalone",
+    "orientation": "portrait",
+    "scope": "/",
+    "start_url": "/"
   }
 }
