@@ -1,33 +1,44 @@
 {
   "version": 2,
-  "buildCommand": "echo 'No build required for static frontend'",
-  "outputDirectory": "frontend",
-  "cleanUrls": true,
-  "trailingSlash": false,
+  "functions": {
+    "api/exercises.js": {
+      "maxDuration": 10
+    },
+    "api/workouts.js": {
+      "maxDuration": 10
+    },
+    "api/recommendations.js": {
+      "maxDuration": 10
+    },
+    "api/health.js": {
+      "maxDuration": 5
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
         },
         {
-          "key": "X-Frame-Options", 
-          "value": "DENY"
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         },
         {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
-    },
-    {
-      "source": "/sw.js",
-      "headers": [
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+        },
         {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
         }
       ]
     }
