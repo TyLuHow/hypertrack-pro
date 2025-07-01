@@ -1,7 +1,47 @@
-// HyperTrack Pro - Main Application Logic
+// HyperTrack Pro - Simplified Single User Version
 // Evidence-Based Workout Tracking Application
 
-// Global application state
+// ==========================================
+// SIMPLIFIED AUTH FOR SINGLE USER
+// ==========================================
+class SimpleAuth {
+    constructor() {
+        this.isAuthenticated = true; // Always authenticated for single user
+        this.user = {
+            id: 'tyler-main-user',
+            email: 'tyler@hypertrack.local',
+            name: 'Tyler'
+        };
+        this.session = {
+            access_token: 'single-user-session',
+            user: this.user
+        };
+    }
+    
+    getAuthHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.session.access_token}`
+        };
+    }
+    
+    async authenticatedFetch(url, options = {}) {
+        return fetch(url, {
+            ...options,
+            headers: {
+                ...this.getAuthHeaders(),
+                ...options.headers
+            }
+        });
+    }
+}
+
+// Initialize simplified auth
+const authManager = new SimpleAuth();
+
+// ==========================================
+// GLOBAL APPLICATION STATE
+// ==========================================
 const HyperTrack = {
     state: {
         currentWorkout: null,
@@ -15,7 +55,7 @@ const HyperTrack = {
             progressionRate: 2.5
         },
         user: {
-            name: '',
+            name: 'Tyler',
             preferences: {}
         }
     },
@@ -33,125 +73,78 @@ const HyperTrack = {
         "Consistency beats perfection - regular training trumps perfect sessions"
     ],
     
-    // Exercise database with research-backed data
+    // Load Tyler's complete workout history
+    loadHistoricalData() {
+        if (typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
+            const existingIds = this.state.workouts.map(w => w.id);
+            const newWorkouts = tylerCompleteWorkouts.filter(w => !existingIds.includes(w.id));
+            this.state.workouts = [...this.state.workouts, ...newWorkouts];
+            console.log(`✅ Loaded ${newWorkouts.length} historical workouts (${tylerCompleteWorkouts.length} total from CSV)`);
+        }
+    },
+    
+    // Exercise database with research-backed data (fallback)
     exerciseDatabase: [
         // Chest exercises
         { 
-            id: 1, name: "Barbell Bench Press", muscleGroup: "Chest", category: "Compound", 
-            tier: 1, mvc: 95, equipment: ["barbell", "bench"],
+            id: 1, name: "Barbell Bench Press", muscle_group: "Chest", category: "Compound", 
+            tier: 1, mvc_percentage: 95, equipment: ["barbell", "bench"],
             description: "The gold standard for chest development with highest pectoralis major activation."
         },
         { 
-            id: 2, name: "Incline Dumbbell Press", muscleGroup: "Chest", category: "Compound", 
-            tier: 1, mvc: 90, equipment: ["dumbbells", "incline_bench"],
+            id: 2, name: "Incline Dumbbell Press", muscle_group: "Chest", category: "Compound", 
+            tier: 1, mvc_percentage: 90, equipment: ["dumbbells", "incline_bench"],
             description: "Superior upper chest activation compared to flat pressing movements."
         },
         { 
-            id: 3, name: "Dips", muscleGroup: "Chest", category: "Compound", 
-            tier: 1, mvc: 85, equipment: ["dip_station"],
+            id: 3, name: "Dips", muscle_group: "Chest", category: "Compound", 
+            tier: 1, mvc_percentage: 85, equipment: ["dip_station"],
             description: "Excellent compound movement for chest, triceps, and anterior deltoids."
-        },
-        { 
-            id: 4, name: "Cable Flyes", muscleGroup: "Chest", category: "Isolation", 
-            tier: 2, mvc: 60, equipment: ["cable_machine"],
-            description: "Isolation movement maintaining constant tension throughout range of motion."
         },
         
         // Back exercises
         { 
-            id: 5, name: "Pull-ups", muscleGroup: "Back", category: "Compound", 
-            tier: 1, mvc: 117, equipment: ["pull_up_bar"],
+            id: 5, name: "Pull-ups", muscle_group: "Back", category: "Compound", 
+            tier: 1, mvc_percentage: 117, equipment: ["pull_up_bar"],
             description: "Highest latissimus dorsi activation among all pulling exercises."
         },
         { 
-            id: 6, name: "Barbell Rows", muscleGroup: "Back", category: "Compound", 
-            tier: 1, mvc: 93, equipment: ["barbell"],
+            id: 6, name: "Barbell Rows", muscle_group: "Back", category: "Compound", 
+            tier: 1, mvc_percentage: 93, equipment: ["barbell"],
             description: "Excellent for building back thickness and overall pulling strength."
         },
         { 
-            id: 7, name: "Lat Pulldowns", muscleGroup: "Back", category: "Compound", 
-            tier: 1, mvc: 90, equipment: ["lat_pulldown_machine"],
+            id: 7, name: "Lat Pulldowns", muscle_group: "Back", category: "Compound", 
+            tier: 1, mvc_percentage: 90, equipment: ["lat_pulldown_machine"],
             description: "Machine alternative to pull-ups with adjustable resistance."
-        },
-        { 
-            id: 8, name: "Face Pulls", muscleGroup: "Back", category: "Isolation", 
-            tier: 2, mvc: 65, equipment: ["cable_machine"],
-            description: "Critical for rear deltoid and rhomboid development."
-        },
-        
-        // Leg exercises
-        { 
-            id: 9, name: "Squats", muscleGroup: "Legs", category: "Compound", 
-            tier: 1, mvc: 95, equipment: ["barbell", "squat_rack"],
-            description: "The king of exercises - full-body compound movement."
-        },
-        { 
-            id: 10, name: "Romanian Deadlifts", muscleGroup: "Legs", category: "Compound", 
-            tier: 1, mvc: 90, equipment: ["barbell"],
-            description: "Primary hamstring and glute developer with hip hinge pattern."
-        },
-        { 
-            id: 11, name: "Leg Press", muscleGroup: "Legs", category: "Compound", 
-            tier: 1, mvc: 88, equipment: ["leg_press_machine"],
-            description: "Safe alternative to squats allowing for heavier loading."
-        },
-        { 
-            id: 12, name: "Leg Curls", muscleGroup: "Legs", category: "Isolation", 
-            tier: 2, mvc: 70, equipment: ["leg_curl_machine"],
-            description: "Direct hamstring isolation with knee flexion movement."
-        },
-        
-        // Shoulder exercises
-        { 
-            id: 13, name: "Overhead Press", muscleGroup: "Shoulders", category: "Compound", 
-            tier: 1, mvc: 85, equipment: ["barbell"],
-            description: "Primary compound movement for shoulder development and stability."
-        },
-        { 
-            id: 14, name: "Lateral Raises", muscleGroup: "Shoulders", category: "Isolation", 
-            tier: 2, mvc: 65, equipment: ["dumbbells"],
-            description: "Direct medial deltoid isolation for shoulder width."
-        },
-        { 
-            id: 15, name: "Rear Delt Flyes", muscleGroup: "Shoulders", category: "Isolation", 
-            tier: 2, mvc: 60, equipment: ["dumbbells"],
-            description: "Essential for balanced shoulder development and posture."
-        },
-        
-        // Arm exercises
-        { 
-            id: 16, name: "Barbell Curls", muscleGroup: "Biceps", category: "Isolation", 
-            tier: 1, mvc: 90, equipment: ["barbell"],
-            description: "Classic bicep builder allowing for maximum loading potential."
-        },
-        { 
-            id: 17, name: "Hammer Curls", muscleGroup: "Biceps", category: "Isolation", 
-            tier: 2, mvc: 75, equipment: ["dumbbells"],
-            description: "Targets brachialis and brachioradialis for arm thickness."
-        },
-        { 
-            id: 18, name: "Close-Grip Bench Press", muscleGroup: "Triceps", category: "Compound", 
-            tier: 1, mvc: 85, equipment: ["barbell", "bench"],
-            description: "Compound tricep movement allowing for heavy progressive overload."
-        },
-        { 
-            id: 19, name: "Tricep Pushdowns", muscleGroup: "Triceps", category: "Isolation", 
-            tier: 2, mvc: 75, equipment: ["cable_machine"],
-            description: "Direct tricep isolation with constant tension throughout movement."
         }
     ]
 };
 
+// ==========================================
+// INITIALIZATION
+// ==========================================
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🏋️ HyperTrack Pro initializing...');
+    
+    // Load Tyler's historical data first
+    HyperTrack.loadHistoricalData();
+    
     loadAppData();
     updateUI();
     startResearchFactRotation();
     setupEventListeners();
+    
+    // No authentication complexity - just load workouts
+    loadWorkoutsFromAPI();
+    
+    console.log('✅ Single-user mode active - ready to track workouts');
 });
 
-// Data Management Functions
+// ==========================================
+// DATA MANAGEMENT FUNCTIONS
+// ==========================================
 function loadAppData() {
     try {
         const savedData = localStorage.getItem('hypertrackData');
@@ -162,28 +155,22 @@ function loadAppData() {
             HyperTrack.state.user = { ...HyperTrack.state.user, ...parsed.user };
         }
         
-        // Load exercises from API (fallback to local database)
         loadExercisesFromAPI();
-        
-        // Load workouts from API
-        loadWorkoutsFromAPI();
         
         console.log('✅ App data loaded successfully');
     } catch (error) {
         console.error('❌ Error loading app data:', error);
-        // Fallback to local data
         HyperTrack.state.exercises = HyperTrack.exerciseDatabase;
     }
 }
 
-// Load exercises from API
 async function loadExercisesFromAPI() {
     try {
         const response = await fetch('/api/exercises');
         if (response.ok) {
             const data = await response.json();
             HyperTrack.state.exercises = data.exercises || HyperTrack.exerciseDatabase;
-            console.log(`✅ Loaded ${data.exercises.length} exercises from API`);
+            console.log(`✅ Loaded ${data.exercises?.length || 0} exercises from API`);
         } else {
             throw new Error(`API returned ${response.status}`);
         }
@@ -193,22 +180,25 @@ async function loadExercisesFromAPI() {
     }
 }
 
-// Load workouts from API
 async function loadWorkoutsFromAPI() {
     try {
-        const response = await fetch('/api/workouts');
+        const response = await authManager.authenticatedFetch('/api/workouts');
         if (response.ok) {
             const data = await response.json();
-            HyperTrack.state.workouts = data.workouts || [];
-            console.log(`✅ Loaded ${data.workouts.length} workouts from API`);
+            // Merge API workouts with historical data
+            const apiWorkouts = data.workouts || [];
+            const existingIds = HyperTrack.state.workouts.map(w => w.id);
+            const newApiWorkouts = apiWorkouts.filter(w => !existingIds.includes(w.id));
+            HyperTrack.state.workouts = [...HyperTrack.state.workouts, ...newApiWorkouts];
+            
+            console.log(`✅ Loaded ${newApiWorkouts.length} workouts from API`);
             updateHistoryTab();
             updateAnalyticsTab();
         } else {
             throw new Error(`API returned ${response.status}`);
         }
     } catch (error) {
-        console.warn('⚠️ Failed to load workouts from API, using localStorage:', error.message);
-        // Keep localStorage data as fallback
+        console.warn('⚠️ Failed to load workouts from API:', error.message);
     }
 }
 
@@ -218,7 +208,7 @@ function saveAppData() {
             workouts: HyperTrack.state.workouts,
             settings: HyperTrack.state.settings,
             user: HyperTrack.state.user,
-            version: '1.0.0',
+            version: '2.0.0',
             lastSaved: new Date().toISOString()
         };
         localStorage.setItem('hypertrackData', JSON.stringify(dataToSave));
@@ -228,15 +218,32 @@ function saveAppData() {
     }
 }
 
-// Save workout to API
 async function saveWorkoutToAPI(workout) {
     try {
-        const response = await fetch('/api/workouts', {
+        const formattedWorkout = {
+            workout_date: workout.date,
+            start_time: workout.startTime || new Date().toISOString(),
+            end_time: workout.endTime || new Date().toISOString(),
+            notes: workout.notes || null,
+            exercises: workout.exercises.map((exercise) => ({
+                id: exercise.id,
+                name: exercise.name,
+                muscle_group: exercise.muscle_group || exercise.muscleGroup,
+                category: exercise.category,
+                sets: exercise.sets.map((set) => ({
+                    weight: parseFloat(set.weight),
+                    reps: parseInt(set.reps),
+                    rpe: set.rpe ? parseInt(set.rpe) : null,
+                    tempo: set.tempo || null,
+                    rest_time_actual: set.restTime ? parseInt(set.restTime) : null,
+                    notes: set.notes || null
+                }))
+            }))
+        };
+        
+        const response = await authManager.authenticatedFetch('/api/workouts', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(workout)
+            body: JSON.stringify(formattedWorkout)
         });
         
         if (response.ok) {
@@ -248,13 +255,56 @@ async function saveWorkoutToAPI(workout) {
         }
     } catch (error) {
         console.error('❌ Failed to save workout to API:', error.message);
-        // Save to localStorage as fallback
         saveAppData();
         throw error;
     }
 }
 
-// UI Update Functions
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+    `;
+    
+    // Set background color based on type
+    const colors = {
+        success: '#4CAF50',
+        error: '#F44336',
+        warning: '#FF9800',
+        info: '#2196F3'
+    };
+    notification.style.backgroundColor = colors[type] || colors.info;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// ==========================================
+// UI UPDATE FUNCTIONS
+// ==========================================
 function updateUI() {
     updateWorkoutTab();
     updateHistoryTab();
@@ -264,8 +314,6 @@ function updateUI() {
 }
 
 function updateWorkoutTab() {
-    const workoutTab = document.getElementById('workoutTab');
-    
     if (HyperTrack.state.currentWorkout) {
         showCurrentWorkout();
     } else {
@@ -294,6 +342,8 @@ function updateCurrentWorkoutDisplay() {
     const currentExercises = document.getElementById('currentExercises');
     const workout = HyperTrack.state.currentWorkout;
     
+    if (!currentExercises) return;
+    
     if (workout.exercises.length === 0) {
         currentExercises.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No exercises added yet. Select an exercise below to begin.</p>';
         return;
@@ -315,7 +365,6 @@ function updateCurrentWorkoutDisplay() {
     
     currentExercises.innerHTML = html;
     
-    // Update workout timer
     if (workout.startTime) {
         updateWorkoutTimer();
     }
@@ -323,6 +372,8 @@ function updateCurrentWorkoutDisplay() {
 
 function updateWorkoutTimer() {
     const timerElement = document.getElementById('workoutTime');
+    if (!timerElement) return;
+    
     const startTime = new Date(HyperTrack.state.currentWorkout.startTime);
     const now = new Date();
     const elapsed = Math.floor((now - startTime) / 1000);
@@ -335,42 +386,51 @@ function updateWorkoutTimer() {
 
 function updateExerciseList() {
     const exerciseList = document.getElementById('exerciseList');
-    const searchTerm = document.getElementById('exerciseSearch').value.toLowerCase();
-    const activeMuscle = document.querySelector('.muscle-btn.active').textContent;
+    const searchInput = document.getElementById('exerciseSearch');
+    const activeMuscleBtn = document.querySelector('.muscle-btn.active');
+    
+    if (!exerciseList || !searchInput || !activeMuscleBtn) return;
+    
+    const searchTerm = searchInput.value.toLowerCase();
+    const activeMuscle = activeMuscleBtn.textContent;
     
     let filteredExercises = HyperTrack.state.exercises.filter(exercise => {
         const matchesSearch = exercise.name.toLowerCase().includes(searchTerm) ||
-                             exercise.muscleGroup.toLowerCase().includes(searchTerm);
+                             (exercise.muscle_group || exercise.muscleGroup || '').toLowerCase().includes(searchTerm);
         
-        // Handle muscle group filtering with Arms mapping to Biceps/Triceps
         let matchesMuscle = false;
+        const muscleGroup = exercise.muscle_group || exercise.muscleGroup;
+        
         if (activeMuscle === 'All') {
             matchesMuscle = true;
         } else if (activeMuscle === 'Arms') {
-            matchesMuscle = exercise.muscleGroup === 'Biceps' || exercise.muscleGroup === 'Triceps';
+            matchesMuscle = muscleGroup === 'Biceps' || muscleGroup === 'Triceps';
         } else {
-            matchesMuscle = exercise.muscleGroup === activeMuscle;
+            matchesMuscle = muscleGroup === activeMuscle;
         }
         
         return matchesSearch && matchesMuscle;
     });
     
-    // Sort by tier (1 first) then by MVC
+    // Sort by tier then by MVC
     filteredExercises.sort((a, b) => {
         if (a.tier !== b.tier) return a.tier - b.tier;
-        return b.mvc - a.mvc;
+        return (b.mvc_percentage || b.mvc || 0) - (a.mvc_percentage || a.mvc || 0);
     });
     
     let html = '';
     filteredExercises.forEach(exercise => {
+        const muscleGroup = exercise.muscle_group || exercise.muscleGroup || 'Unknown';
+        const mvc = exercise.mvc_percentage || exercise.mvc || 0;
+        
         html += `
             <div class="exercise-item" onclick="selectExercise(${exercise.id})">
                 <div class="exercise-name">${exercise.name}</div>
                 <div class="exercise-meta">
-                    <span class="exercise-muscle">${exercise.muscleGroup}</span>
+                    <span class="exercise-muscle">${muscleGroup}</span>
                     <span class="exercise-category">${exercise.category}</span>
                     <span class="exercise-tier">Tier ${exercise.tier}</span>
-                    <span class="exercise-mvc">${exercise.mvc}% MVC</span>
+                    <span class="exercise-mvc">${mvc}% MVC</span>
                 </div>
             </div>
         `;
@@ -381,6 +441,7 @@ function updateExerciseList() {
 
 function updateHistoryTab() {
     const historyList = document.getElementById('historyList');
+    if (!historyList) return;
     
     if (HyperTrack.state.workouts.length === 0) {
         historyList.innerHTML = `
@@ -393,30 +454,30 @@ function updateHistoryTab() {
         return;
     }
     
-    // Sort workouts by date (newest first)
     const sortedWorkouts = [...HyperTrack.state.workouts].sort((a, b) => 
-        new Date(b.date) - new Date(a.date)
+        new Date(b.workout_date || b.date) - new Date(a.workout_date || a.date)
     );
     
     let html = '';
     sortedWorkouts.forEach(workout => {
-        const duration = workout.duration ? Math.floor(workout.duration / 1000 / 60) : 0;
-        const totalSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
-        const totalVolume = workout.exercises.reduce((sum, ex) => 
-            sum + ex.sets.reduce((setSum, set) => setSum + (set.weight * set.reps), 0), 0
+        const workoutExercises = workout.workout_exercises || workout.exercises || [];
+        const duration = workout.duration ? Math.floor(workout.duration / 1000 / 60) : 90;
+        const totalSets = workoutExercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
+        const totalVolume = workoutExercises.reduce((sum, ex) => 
+            sum + (ex.sets?.reduce((setSum, set) => setSum + (set.weight * set.reps), 0) || 0), 0
         );
         
         html += `
             <div class="history-item">
-                <div class="history-date">${formatDate(workout.date)}</div>
+                <div class="history-date">${formatDate(workout.workout_date || workout.date)}</div>
                 <div class="history-meta">
-                    <span>${workout.exercises.length} exercises</span>
+                    <span>${workoutExercises.length} exercises</span>
                     <span>${totalSets} sets</span>
                     <span>${duration} minutes</span>
                     <span>${totalVolume.toLocaleString()} lbs volume</span>
                 </div>
                 <div class="history-exercises">
-                    ${workout.exercises.map(ex => ex.name).join(', ')}
+                    ${workoutExercises.map(ex => ex.name || (ex.exercises?.name)).join(', ')}
                 </div>
             </div>
         `;
@@ -427,39 +488,60 @@ function updateHistoryTab() {
 
 function updateAnalyticsTab() {
     const totalWorkouts = HyperTrack.state.workouts.length;
-    const totalSets = HyperTrack.state.workouts.reduce((sum, w) => 
-        sum + w.exercises.reduce((s, e) => s + e.sets.length, 0), 0
-    );
-    const totalVolume = HyperTrack.state.workouts.reduce((sum, w) => 
-        sum + w.exercises.reduce((s, e) => 
-            s + e.sets.reduce((setSum, set) => setSum + (set.weight * set.reps), 0), 0
-        ), 0
-    );
+    const totalSets = HyperTrack.state.workouts.reduce((sum, w) => {
+        const exercises = w.workout_exercises || w.exercises || [];
+        return sum + exercises.reduce((s, e) => s + (e.sets?.length || 0), 0);
+    }, 0);
+    const totalVolume = HyperTrack.state.workouts.reduce((sum, w) => {
+        const exercises = w.workout_exercises || w.exercises || [];
+        return sum + exercises.reduce((s, e) => 
+            s + (e.sets?.reduce((setSum, set) => setSum + (set.weight * set.reps), 0) || 0), 0
+        );
+    }, 0);
     const avgDuration = totalWorkouts > 0 ? 
         Math.floor(HyperTrack.state.workouts.reduce((sum, w) => 
-            sum + (w.duration ? w.duration / 1000 / 60 : 0), 0
+            sum + (w.duration ? w.duration / 1000 / 60 : 90), 0
         ) / totalWorkouts) : 0;
     
-    document.getElementById('totalWorkouts').textContent = totalWorkouts;
-    document.getElementById('totalSets').textContent = totalSets;
-    document.getElementById('totalVolume').textContent = totalVolume.toLocaleString();
-    document.getElementById('avgDuration').textContent = avgDuration;
+    const elements = {
+        totalWorkouts: document.getElementById('totalWorkouts'),
+        totalSets: document.getElementById('totalSets'),
+        totalVolume: document.getElementById('totalVolume'),
+        avgDuration: document.getElementById('avgDuration')
+    };
+    
+    if (elements.totalWorkouts) elements.totalWorkouts.textContent = totalWorkouts;
+    if (elements.totalSets) elements.totalSets.textContent = totalSets;
+    if (elements.totalVolume) elements.totalVolume.textContent = totalVolume.toLocaleString();
+    if (elements.avgDuration) elements.avgDuration.textContent = avgDuration;
 }
 
 function updateSettingsTab() {
-    document.getElementById('showResearchFacts').checked = HyperTrack.state.settings.showResearchFacts;
-    document.getElementById('darkMode').checked = HyperTrack.state.settings.darkMode;
-    document.getElementById('compoundRest').value = HyperTrack.state.settings.compoundRest;
-    document.getElementById('isolationRest').value = HyperTrack.state.settings.isolationRest;
-    document.getElementById('progressionRate').value = HyperTrack.state.settings.progressionRate;
+    const elements = {
+        showResearchFacts: document.getElementById('showResearchFacts'),
+        darkMode: document.getElementById('darkMode'),
+        compoundRest: document.getElementById('compoundRest'),
+        isolationRest: document.getElementById('isolationRest'),
+        progressionRate: document.getElementById('progressionRate')
+    };
+    
+    if (elements.showResearchFacts) elements.showResearchFacts.checked = HyperTrack.state.settings.showResearchFacts;
+    if (elements.darkMode) elements.darkMode.checked = HyperTrack.state.settings.darkMode;
+    if (elements.compoundRest) elements.compoundRest.value = HyperTrack.state.settings.compoundRest;
+    if (elements.isolationRest) elements.isolationRest.value = HyperTrack.state.settings.isolationRest;
+    if (elements.progressionRate) elements.progressionRate.value = HyperTrack.state.settings.progressionRate;
 }
 
 function updateResearchBanner() {
     const banner = document.getElementById('researchBanner');
-    banner.style.display = HyperTrack.state.settings.showResearchFacts ? 'block' : 'none';
+    if (banner) {
+        banner.style.display = HyperTrack.state.settings.showResearchFacts ? 'block' : 'none';
+    }
 }
 
-// Workout Management Functions
+// ==========================================
+// WORKOUT MANAGEMENT FUNCTIONS  
+// ==========================================
 function startWorkout() {
     HyperTrack.state.currentWorkout = {
         id: Date.now(),
@@ -470,7 +552,6 @@ function startWorkout() {
     
     showCurrentWorkout();
     
-    // Start timer
     if (HyperTrack.state.currentWorkout.timerInterval) {
         clearInterval(HyperTrack.state.currentWorkout.timerInterval);
     }
@@ -492,28 +573,23 @@ async function finishWorkout() {
     workout.endTime = new Date().toISOString();
     workout.duration = new Date(workout.endTime) - new Date(workout.startTime);
     
-    // Clear timer
     if (workout.timerInterval) {
         clearInterval(workout.timerInterval);
     }
     
     try {
-        // Save to API first
         const savedWorkout = await saveWorkoutToAPI(workout);
-        
-        // Update local state with API response
         HyperTrack.state.workouts.push(savedWorkout);
-        HyperTrack.state.currentWorkout = null;
         
+        HyperTrack.state.currentWorkout = null;
         updateUI();
         
         const duration = Math.floor(workout.duration / 1000 / 60);
-        alert(`🎉 Workout completed and saved!\n${workout.exercises.length} exercises • ${duration} minutes`);
+        showNotification(`🎉 Workout saved to database! ${workout.exercises.length} exercises • ${duration} minutes`, 'success');
         
-        console.log('✅ Workout finished and saved to API');
+        console.log('✅ Workout finished and saved to database');
         
     } catch (error) {
-        // Fallback to localStorage if API fails
         HyperTrack.state.workouts.push(workout);
         HyperTrack.state.currentWorkout = null;
         
@@ -521,7 +597,7 @@ async function finishWorkout() {
         updateUI();
         
         const duration = Math.floor(workout.duration / 1000 / 60);
-        alert(`🎉 Workout completed!\n${workout.exercises.length} exercises • ${duration} minutes\n(Saved locally - will sync when online)`);
+        showNotification(`🎉 Workout completed! ${workout.exercises.length} exercises • ${duration} minutes (Saved locally)`, 'success');
         
         console.log('✅ Workout finished and saved locally');
     }
@@ -545,14 +621,9 @@ function openExerciseModal(exercise) {
     }
     
     exerciseName.textContent = exercise.name;
-    
-    // Clear existing sets and initialize with one set
     setInputs.innerHTML = '';
-    
-    // Store current exercise in modal first
     modal.dataset.exerciseId = exercise.id;
     
-    // Show modal
     modal.style.display = 'flex';
     modal.style.position = 'fixed';
     modal.style.top = '0';
@@ -564,7 +635,6 @@ function openExerciseModal(exercise) {
     modal.style.justifyContent = 'center';
     modal.style.alignItems = 'center';
     
-    // Add one set after modal is visible
     setTimeout(() => {
         addSet();
     }, 50);
@@ -573,7 +643,10 @@ function openExerciseModal(exercise) {
 }
 
 function closeExerciseModal() {
-    document.getElementById('exerciseModal').style.display = 'none';
+    const modal = document.getElementById('exerciseModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 function addSet() {
@@ -603,7 +676,6 @@ function addSet() {
     
     setInputs.appendChild(setRow);
     
-    // Focus on weight input with a slight delay to ensure DOM is ready
     setTimeout(() => {
         const weightInput = setRow.querySelector('.weight-input');
         if (weightInput) {
@@ -616,12 +688,14 @@ function addSet() {
 
 function removeSet(button) {
     const setInputs = document.getElementById('setInputs');
-    if (setInputs.children.length > 1) {
+    if (setInputs && setInputs.children.length > 1) {
         button.parentElement.remove();
         
-        // Renumber sets
         Array.from(setInputs.children).forEach((row, index) => {
-            row.querySelector('.set-number').textContent = `Set ${index + 1}`;
+            const setNumber = row.querySelector('.set-number');
+            if (setNumber) {
+                setNumber.textContent = `Set ${index + 1}`;
+            }
         });
     }
 }
@@ -633,7 +707,6 @@ function finishExercise() {
     
     if (!exercise) return;
     
-    // Collect sets data
     const setRows = document.querySelectorAll('.set-input-row');
     const sets = [];
     
@@ -652,15 +725,14 @@ function finishExercise() {
     }
     
     if (sets.length === 0) {
-        alert('Please enter at least one valid set (weight and reps must be greater than 0).');
+        showNotification('Please enter at least one valid set', 'warning');
         return;
     }
     
-    // Add exercise to current workout
     const workoutExercise = {
         id: exerciseId,
         name: exercise.name,
-        muscleGroup: exercise.muscleGroup,
+        muscle_group: exercise.muscle_group || exercise.muscleGroup,
         category: exercise.category,
         sets: sets,
         addedAt: new Date().toISOString()
@@ -674,25 +746,24 @@ function finishExercise() {
     console.log(`✅ Added ${exercise.name} with ${sets.length} sets`);
 }
 
-// Navigation Functions
+// ==========================================
+// NAVIGATION FUNCTIONS
+// ==========================================
 function switchTab(tabName) {
-    // Hide all tabs
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
     
-    // Remove active class from all nav buttons
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    // Show selected tab
-    document.getElementById(tabName + 'Tab').classList.add('active');
+    const tabElement = document.getElementById(tabName + 'Tab');
+    const navButton = document.querySelector(`[data-tab="${tabName}"]`);
     
-    // Mark nav button as active
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    if (tabElement) tabElement.classList.add('active');
+    if (navButton) navButton.classList.add('active');
     
-    // Update specific tab content
     switch (tabName) {
         case 'workout':
             updateWorkoutTab();
@@ -719,20 +790,19 @@ function toggleWorkout() {
     }
 }
 
-// Filter Functions
 function filterExercises(searchTerm) {
     updateExerciseList();
 }
 
 function filterByMuscle(muscleGroup) {
-    // Update active muscle button
     document.querySelectorAll('.muscle-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    
     updateExerciseList();
 }
 
-// Settings Functions
+// ==========================================
+// SETTINGS FUNCTIONS
+// ==========================================
 function toggleResearchFacts(enabled) {
     HyperTrack.state.settings.showResearchFacts = enabled;
     updateResearchBanner();
@@ -749,7 +819,9 @@ function openSettings() {
     switchTab('settings');
 }
 
-// Data Management Functions
+// ==========================================
+// DATA MANAGEMENT FUNCTIONS
+// ==========================================
 function exportData() {
     try {
         const data = {
@@ -757,7 +829,7 @@ function exportData() {
             settings: HyperTrack.state.settings,
             user: HyperTrack.state.user,
             exportDate: new Date().toISOString(),
-            version: '1.0.0'
+            version: '2.0.0'
         };
         
         const dataStr = JSON.stringify(data, null, 2);
@@ -774,7 +846,7 @@ function exportData() {
         console.log('📤 Data exported successfully');
     } catch (error) {
         console.error('❌ Export error:', error);
-        alert('Error exporting data. Please try again.');
+        showNotification('Error exporting data. Please try again.', 'error');
     }
 }
 
@@ -792,7 +864,6 @@ function importData() {
             try {
                 const imported = JSON.parse(event.target.result);
                 
-                // Validate data structure
                 if (imported.workouts && imported.settings) {
                     HyperTrack.state.workouts = imported.workouts;
                     HyperTrack.state.settings = { ...HyperTrack.state.settings, ...imported.settings };
@@ -801,14 +872,14 @@ function importData() {
                     saveAppData();
                     updateUI();
                     
-                    alert('✅ Data imported successfully!');
+                    showNotification('Data imported successfully!', 'success');
                     console.log('📥 Data imported successfully');
                 } else {
                     throw new Error('Invalid data format');
                 }
             } catch (error) {
                 console.error('❌ Import error:', error);
-                alert('Error importing data. Please check the file format.');
+                showNotification('Error importing data. Please check the file format.', 'error');
             }
         };
         reader.readAsText(file);
@@ -832,13 +903,15 @@ function clearAllData() {
             };
             
             updateUI();
-            alert('All data has been cleared.');
+            showNotification('All data has been cleared.', 'info');
             console.log('🗑️ All data cleared');
         }
     }
 }
 
-// Research Facts Functions
+// ==========================================
+// RESEARCH FACTS FUNCTIONS
+// ==========================================
 function startResearchFactRotation() {
     function showNextFact() {
         if (!HyperTrack.state.settings.showResearchFacts) return;
@@ -853,14 +926,13 @@ function startResearchFactRotation() {
         }
     }
     
-    // Show initial fact
     showNextFact();
-    
-    // Rotate every 15 seconds
     setInterval(showNextFact, 15000);
 }
 
-// Utility Functions
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
 function formatDate(dateString) {
     const date = new Date(dateString);
     const today = new Date();
@@ -880,43 +952,57 @@ function formatDate(dateString) {
     }
 }
 
-// Event Listeners Setup
+// ==========================================
+// EVENT LISTENERS SETUP
+// ==========================================
 function setupEventListeners() {
-    // Handle back button for modal
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('exerciseModal');
-            if (modal.style.display === 'flex') {
+            if (modal && modal.style.display === 'flex') {
                 closeExerciseModal();
             }
         }
     });
     
-    // Handle settings changes
-    document.getElementById('compoundRest').addEventListener('change', function(e) {
-        HyperTrack.state.settings.compoundRest = parseInt(e.target.value);
-        saveAppData();
-    });
+    // Settings event listeners
+    const compoundRest = document.getElementById('compoundRest');
+    const isolationRest = document.getElementById('isolationRest');
+    const progressionRate = document.getElementById('progressionRate');
     
-    document.getElementById('isolationRest').addEventListener('change', function(e) {
-        HyperTrack.state.settings.isolationRest = parseInt(e.target.value);
-        saveAppData();
-    });
+    if (compoundRest) {
+        compoundRest.addEventListener('change', function(e) {
+            HyperTrack.state.settings.compoundRest = parseInt(e.target.value);
+            saveAppData();
+        });
+    }
     
-    document.getElementById('progressionRate').addEventListener('change', function(e) {
-        HyperTrack.state.settings.progressionRate = parseFloat(e.target.value);
-        saveAppData();
-    });
+    if (isolationRest) {
+        isolationRest.addEventListener('change', function(e) {
+            HyperTrack.state.settings.isolationRest = parseInt(e.target.value);
+            saveAppData();
+        });
+    }
     
-    // Handle modal clicks
-    document.getElementById('exerciseModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeExerciseModal();
-        }
-    });
+    if (progressionRate) {
+        progressionRate.addEventListener('change', function(e) {
+            HyperTrack.state.settings.progressionRate = parseFloat(e.target.value);
+            saveAppData();
+        });
+    }
+    
+    // Modal click handler
+    const modal = document.getElementById('exerciseModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeExerciseModal();
+            }
+        });
+    }
     
     console.log('🎛️ Event listeners setup complete');
 }
 
-// Initialize when page loads
-console.log('🚀 HyperTrack Pro script loaded');
+// Initialize
+console.log('🚀 HyperTrack Pro Single-User Edition loaded');
