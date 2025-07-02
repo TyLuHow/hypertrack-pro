@@ -1,14 +1,12 @@
 {
   "name": "HyperTrack Pro",
   "short_name": "HyperTrack",
-  "description": "Evidence-based workout tracking for optimal muscle growth",
+  "description": "Evidence-Based Hypertrophy Optimization",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#2c5f5f",
-  "categories": ["fitness", "health", "productivity"],
-  "lang": "en-US",
+  "orientation": "portrait",
   "scope": "/",
   "icons": [
     {
@@ -19,45 +17,18 @@
     },
     {
       "src": "icon-512.png",
-      "sizes": "512x512", 
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
+  "categories": ["health", "fitness", "productivity"],
   "screenshots": [
     {
       "src": "screenshot-mobile.png",
       "sizes": "390x844",
       "type": "image/png",
-      "platform": "narrow",
-      "label": "Mobile workout tracking interface"
+      "form_factor": "narrow"
     }
-  ],
-  "shortcuts": [
-    {
-      "name": "Start Workout",
-      "short_name": "Workout",
-      "description": "Quickly start a new workout session",
-      "url": "/?action=start-workout",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "View History",
-      "short_name": "History", 
-      "description": "View your workout history",
-      "url": "/?tab=history",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    }
-  ],
-  "prefer_related_applications": false
+  ]
 }
