@@ -17,73 +17,8 @@
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
     <link rel="apple-touch-icon" href="icon-192.png">
     
-    <!-- Force CSS load with cache busting -->
-    <link rel="stylesheet" href="styles.css?v=20250702" type="text/css">
-    
-    <!-- Backup inline styles in case external CSS fails -->
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            color: #f8fafc;
-            margin: 0;
-            min-height: 100vh;
-        }
-        .header { 
-            background: linear-gradient(135deg, #1b4e4e, #2c5f5f);
-            padding: 20px;
-            color: white;
-            text-align: center;
-        }
-        .app-title { font-size: 28px; font-weight: bold; margin-bottom: 4px; }
-        .app-subtitle { font-size: 14px; opacity: 0.9; }
-        .main-content { padding: 20px; max-width: 800px; margin: 0 auto; }
-        .btn { 
-            background: linear-gradient(135deg, #1b4e4e, #2c5f5f);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 16px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .welcome-card {
-            background: linear-gradient(135deg, #2a2c2f, #334155);
-            border: 1px solid #374151;
-            border-radius: 16px;
-            padding: 40px 24px;
-            text-align: center;
-            margin-bottom: 24px;
-        }
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #2a2c2f;
-            border-top: 1px solid #374151;
-            display: flex;
-            z-index: 100;
-        }
-        .nav-btn {
-            flex: 1;
-            padding: 12px 8px;
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-        .nav-btn.active { color: #3d7070; }
-        .tab-content { display: none; padding-bottom: 100px; }
-        .tab-content.active { display: block; }
-    </style>
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="app">
@@ -159,26 +94,7 @@
                         </div>
 
                         <div id="exerciseList" class="exercise-list">
-                            <div class="exercise-item" onclick="selectExercise(1)">
-                                <div class="exercise-name">Pull-ups</div>
-                                <div class="exercise-meta">Back • Compound • Tier 1 • 117% MVC</div>
-                            </div>
-                            <div class="exercise-item" onclick="selectExercise(2)">
-                                <div class="exercise-name">Barbell Squats</div>
-                                <div class="exercise-meta">Legs • Compound • Tier 1 • 95% MVC</div>
-                            </div>
-                            <div class="exercise-item" onclick="selectExercise(3)">
-                                <div class="exercise-name">Barbell Bench Press</div>
-                                <div class="exercise-meta">Chest • Compound • Tier 1 • 95% MVC</div>
-                            </div>
-                            <div class="exercise-item" onclick="selectExercise(4)">
-                                <div class="exercise-name">Barbell Rows</div>
-                                <div class="exercise-meta">Back • Compound • Tier 1 • 93% MVC</div>
-                            </div>
-                            <div class="exercise-item" onclick="selectExercise(5)">
-                                <div class="exercise-name">Romanian Deadlifts</div>
-                                <div class="exercise-meta">Legs • Compound • Tier 1 • 90% MVC</div>
-                            </div>
+                            <!-- Exercises will be populated by JavaScript -->
                         </div>
                     </div>
                 </div>
@@ -189,11 +105,7 @@
                 <div class="history-container">
                     <h2>Workout History</h2>
                     <div id="historyList" class="history-list">
-                        <div class="empty-state">
-                            <div class="empty-icon">📖</div>
-                            <h3>No Workouts Yet</h3>
-                            <p>Complete your first workout to see your training history and progress over time.</p>
-                        </div>
+                        <!-- History will be populated by JavaScript -->
                     </div>
                 </div>
             </div>
@@ -298,119 +210,5 @@
     <!-- Scripts -->
     <script src="tyler-data-integration.js"></script>
     <script src="app.js"></script>
-    <script>
-        // Basic functionality for demo
-        function startWorkout() {
-            document.getElementById('startWorkout').style.display = 'none';
-            document.getElementById('currentWorkout').style.display = 'block';
-            document.getElementById('exerciseSelection').style.display = 'block';
-            document.getElementById('fabIcon').textContent = '✓';
-            console.log('Workout started');
-        }
-
-        function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Remove active from all nav buttons
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        }
-
-        function toggleWorkout() {
-            const startSection = document.getElementById('startWorkout');
-            if (startSection.style.display !== 'none') {
-                startWorkout();
-            } else {
-                // End workout
-                document.getElementById('startWorkout').style.display = 'block';
-                document.getElementById('currentWorkout').style.display = 'none';
-                document.getElementById('exerciseSelection').style.display = 'none';
-                document.getElementById('fabIcon').textContent = '+';
-            }
-        }
-
-        function selectExercise(id) {
-            alert(`Exercise ${id} selected! Modal functionality coming soon.`);
-        }
-
-        function filterByMuscle(muscle) {
-            document.querySelectorAll('.muscle-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            console.log('Filtering by:', muscle);
-        }
-
-        function filterExercises(term) {
-            console.log('Searching for:', term);
-        }
-
-        function openSettings() {
-            switchTab('settings');
-        }
-
-        function toggleResearchFacts(enabled) {
-            document.getElementById('researchBanner').style.display = enabled ? 'block' : 'none';
-        }
-
-        function toggleDarkMode(enabled) {
-            console.log('Dark mode:', enabled);
-        }
-
-        function exportData() {
-            alert('Export functionality coming soon!');
-        }
-
-        function importData() {
-            alert('Import functionality coming soon!');
-        }
-
-        function clearAllData() {
-            if (confirm('Clear all data?')) {
-                alert('Data cleared!');
-            }
-        }
-
-        function closeExerciseModal() {
-            document.getElementById('exerciseModal').style.display = 'none';
-        }
-
-        function addSet() {
-            console.log('Add set');
-        }
-
-        function finishExercise() {
-            console.log('Finish exercise');
-            closeExerciseModal();
-        }
-
-        // Auto-start research facts rotation
-        const researchFacts = [
-            "Dr. Eric Helms' research recommends 3.5% weekly progression for trained individuals",
-            "Research shows 2-3 minutes rest between compound exercises maximizes performance",
-            "Studies show 10-20 sets per muscle per week optimizes hypertrophy",
-            "Training each muscle 2x per week maximizes protein synthesis response",
-            "Both heavy (4-6) and moderate (8-12) rep ranges build muscle effectively"
-        ];
-
-        let factIndex = 0;
-        setInterval(() => {
-            document.getElementById('researchText').textContent = researchFacts[factIndex];
-            factIndex = (factIndex + 1) % researchFacts.length;
-        }, 10000);
-
-        // Register service worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('SW registered'))
-                .catch(() => console.log('SW failed'));
-        }
-    </script>
 </body>
 </html>
