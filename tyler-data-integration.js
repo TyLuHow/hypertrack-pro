@@ -1,136 +1,135 @@
-// Tyler's Historical Workout Data Integration
-// This file contains pre-loaded workout data for testing and demonstration
+// Tyler's Complete Workout Data Integration
+// Historical workout data for HyperTrack Pro
 
-// Sample workout data (simplified for demo)
+// Tyler's workout history (sample data structure)
 const tylerCompleteWorkouts = [
     {
-        id: 'workout-2024-06-15',
-        date: '2024-06-15',
-        workout_date: '2024-06-15',
-        startTime: '2024-06-15T10:30:00Z',
-        endTime: '2024-06-15T11:45:00Z',
-        duration: 4500000, // 75 minutes in milliseconds
+        id: 'workout-001',
+        date: '2024-12-15',
+        duration: 75, // minutes
         exercises: [
             {
                 name: 'Barbell Bench Press',
-                muscle_group: 'Chest',
-                category: 'Compound',
                 sets: [
-                    { weight: 185, reps: 8 },
-                    { weight: 185, reps: 7 },
-                    { weight: 180, reps: 8 },
-                    { weight: 180, reps: 8 }
-                ]
-            },
-            {
-                name: 'Incline Dumbbell Press',
-                muscle_group: 'Chest',
-                category: 'Compound',
-                sets: [
-                    { weight: 70, reps: 10 },
-                    { weight: 70, reps: 9 },
-                    { weight: 65, reps: 10 }
+                    { weight: 185, reps: 8, rest: 150 },
+                    { weight: 185, reps: 7, rest: 150 },
+                    { weight: 175, reps: 9, rest: 150 }
                 ]
             },
             {
                 name: 'Pull-ups',
-                muscle_group: 'Back',
-                category: 'Compound',
                 sets: [
-                    { weight: 0, reps: 12 },
-                    { weight: 0, reps: 10 },
-                    { weight: 0, reps: 8 }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'workout-2024-06-17',
-        date: '2024-06-17',
-        workout_date: '2024-06-17',
-        startTime: '2024-06-17T14:00:00Z',
-        endTime: '2024-06-17T15:30:00Z',
-        duration: 5400000, // 90 minutes
-        exercises: [
-            {
-                name: 'Squats',
-                muscle_group: 'Legs',
-                category: 'Compound',
-                sets: [
-                    { weight: 225, reps: 8 },
-                    { weight: 225, reps: 8 },
-                    { weight: 225, reps: 7 },
-                    { weight: 215, reps: 8 }
+                    { weight: 0, reps: 12, rest: 120 },
+                    { weight: 0, reps: 10, rest: 120 },
+                    { weight: 0, reps: 8, rest: 120 }
                 ]
             },
+            {
+                name: 'Barbell Squats',
+                sets: [
+                    { weight: 225, reps: 8, rest: 180 },
+                    { weight: 225, reps: 8, rest: 180 },
+                    { weight: 215, reps: 9, rest: 180 }
+                ]
+            }
+        ],
+        notes: 'Strong session, felt great on bench press'
+    },
+    {
+        id: 'workout-002',
+        date: '2024-12-17',
+        duration: 68,
+        exercises: [
             {
                 name: 'Romanian Deadlifts',
-                muscle_group: 'Legs',
-                category: 'Compound',
                 sets: [
-                    { weight: 185, reps: 10 },
-                    { weight: 185, reps: 10 },
-                    { weight: 185, reps: 9 }
+                    { weight: 205, reps: 10, rest: 150 },
+                    { weight: 205, reps: 9, rest: 150 },
+                    { weight: 195, reps: 11, rest: 150 }
                 ]
             },
             {
-                name: 'Leg Curls',
-                muscle_group: 'Legs',
-                category: 'Isolation',
+                name: 'Incline Dumbbell Press',
                 sets: [
-                    { weight: 110, reps: 12 },
-                    { weight: 110, reps: 11 },
-                    { weight: 105, reps: 12 }
+                    { weight: 75, reps: 8, rest: 120 },
+                    { weight: 75, reps: 7, rest: 120 },
+                    { weight: 70, reps: 9, rest: 120 }
+                ]
+            },
+            {
+                name: 'Barbell Rows',
+                sets: [
+                    { weight: 155, reps: 10, rest: 120 },
+                    { weight: 155, reps: 9, rest: 120 },
+                    { weight: 155, reps: 8, rest: 120 }
                 ]
             }
-        ]
+        ],
+        notes: 'Good focus on posterior chain'
     },
     {
-        id: 'workout-2024-06-19',
-        date: '2024-06-19',
-        workout_date: '2024-06-19',
-        startTime: '2024-06-19T16:15:00Z',
-        endTime: '2024-06-19T17:30:00Z',
-        duration: 4500000, // 75 minutes
+        id: 'workout-003',
+        date: '2024-12-19',
+        duration: 82,
         exercises: [
             {
-                name: 'Overhead Press',
-                muscle_group: 'Shoulders',
-                category: 'Compound',
+                name: 'Barbell Bench Press',
                 sets: [
-                    { weight: 115, reps: 8 },
-                    { weight: 115, reps: 7 },
-                    { weight: 110, reps: 8 },
-                    { weight: 110, reps: 8 }
+                    { weight: 190, reps: 6, rest: 180 },
+                    { weight: 185, reps: 8, rest: 150 },
+                    { weight: 180, reps: 9, rest: 150 }
                 ]
             },
             {
-                name: 'Lateral Raises',
-                muscle_group: 'Shoulders',
-                category: 'Isolation',
+                name: 'Pull-ups',
                 sets: [
-                    { weight: 25, reps: 15 },
-                    { weight: 25, reps: 14 },
-                    { weight: 22.5, reps: 15 }
+                    { weight: 10, reps: 8, rest: 120 }, // Added weight
+                    { weight: 0, reps: 12, rest: 120 },
+                    { weight: 0, reps: 10, rest: 120 }
                 ]
             },
             {
-                name: 'Barbell Curls',
-                muscle_group: 'Biceps',
-                category: 'Isolation',
+                name: 'Dips',
                 sets: [
-                    { weight: 75, reps: 10 },
-                    { weight: 75, reps: 9 },
-                    { weight: 70, reps: 10 }
+                    { weight: 0, reps: 15, rest: 90 },
+                    { weight: 0, reps: 12, rest: 90 },
+                    { weight: 0, reps: 10, rest: 90 }
                 ]
             }
-        ]
+        ],
+        notes: 'Progressive overload on bench, added weight to pull-ups'
     }
 ];
 
-// Export for use in main application
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { tylerCompleteWorkouts };
+// Tyler's personal records
+const tylerPersonalRecords = {
+    'Barbell Bench Press': { weight: 225, reps: 3, date: '2024-11-28' },
+    'Barbell Squats': { weight: 275, reps: 5, date: '2024-12-01' },
+    'Romanian Deadlifts': { weight: 245, reps: 8, date: '2024-11-15' },
+    'Pull-ups': { weight: 25, reps: 5, date: '2024-12-10' },
+    'Barbell Rows': { weight: 185, reps: 6, date: '2024-11-20' }
+};
+
+// Tyler's current strength baselines (for progression calculations)
+const tylerStrengthBaselines = {
+    'Barbell Bench Press': { current_max: 190, target_reps: 8 },
+    'Barbell Squats': { current_max: 225, target_reps: 8 },
+    'Romanian Deadlifts': { current_max: 205, target_reps: 10 },
+    'Pull-ups': { current_max: 0, target_reps: 12 }, // bodyweight
+    'Barbell Rows': { current_max: 155, target_reps: 10 },
+    'Incline Dumbbell Press': { current_max: 75, target_reps: 8 },
+    'Dips': { current_max: 0, target_reps: 15 } // bodyweight
+};
+
+// Make data available globally for the main app
+if (typeof window !== 'undefined') {
+    window.tylerCompleteWorkouts = tylerCompleteWorkouts;
+    window.tylerPersonalRecords = tylerPersonalRecords;
+    window.tylerStrengthBaselines = tylerStrengthBaselines;
 }
 
-console.log('📊 Tyler\'s workout data loaded:', tylerCompleteWorkouts.length, 'workouts');
+console.log('📊 Tyler data integration loaded:', {
+    workouts: tylerCompleteWorkouts.length,
+    prs: Object.keys(tylerPersonalRecords).length,
+    baselines: Object.keys(tylerStrengthBaselines).length
+});
