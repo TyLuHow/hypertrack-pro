@@ -1,20 +1,20 @@
-// HyperTrack Pro Service Worker
+// HyperTrack Pro Service Worker - Fixed Paths
 // Enables offline functionality and app-like experience
 
-const CACHE_NAME = 'hypertrack-pro-v1.0.0';
-const STATIC_CACHE_NAME = 'hypertrack-static-v1.0.0';
-const DYNAMIC_CACHE_NAME = 'hypertrack-dynamic-v1.0.0';
+const CACHE_NAME = 'hypertrack-pro-v2.0.0';
+const STATIC_CACHE_NAME = 'hypertrack-static-v2.0.0';
+const DYNAMIC_CACHE_NAME = 'hypertrack-dynamic-v2.0.0';
 
-// Files to cache for offline functionality
+// Files to cache for offline functionality - Updated paths
 const STATIC_FILES = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
+  '/tyler-data-integration.js',
   '/manifest.json',
   '/icon-192.png',
-  '/icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
+  '/icon-512.png'
 ];
 
 // Install event - cache static files
@@ -94,12 +94,14 @@ self.addEventListener('fetch', event => {
             // Clone the response
             const responseToCache = response.clone();
             
-            // Cache dynamic content
-            caches.open(DYNAMIC_CACHE_NAME)
-              .then(cache => {
-                console.log('💾 Caching dynamic content:', request.url);
-                cache.put(request, responseToCache);
-              });
+            // Cache dynamic content (but not API calls)
+            if (!request.url.includes('/api/')) {
+              caches.open(DYNAMIC_CACHE_NAME)
+                .then(cache => {
+                  console.log('💾 Caching dynamic content:', request.url);
+                  cache.put(request, responseToCache);
+                });
+            }
             
             return response;
           })
@@ -119,4 +121,4 @@ self.addEventListener('fetch', event => {
   );
 });
 
-console.log('🎯 HyperTrack Pro Service Worker loaded successfully');
+console.log('🎯 HyperTrack Pro Service Worker v2.0.0 loaded successfully');
