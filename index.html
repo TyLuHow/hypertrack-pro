@@ -7,25 +7,37 @@
     <title>HyperTrack Pro</title>
     
     <!-- PWA Support -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HyperTrack Pro">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
     
-    <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <!-- Styles - Cache busting -->
+    <link rel="stylesheet" href="/styles.css?v=2.0.0">
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/app.js" as="script">
+    <link rel="preload" href="/tyler-data-integration.js" as="script">
 </head>
 <body>
+    <!-- Loading indicator -->
+    <div id="loadingIndicator" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; z-index: 9999;">
+        <div style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 16px;">💪</div>
+            <div>Loading HyperTrack Pro...</div>
+        </div>
+    </div>
+
     <!-- App Container -->
-    <div class="app" id="app">
+    <div class="app" id="app" style="display: none;">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
@@ -55,17 +67,6 @@
             <!-- Workout Tab -->
             <div id="workoutTab" class="tab-content active">
                 <div class="workout-container">
-                    <!-- Current Workout Display -->
-                    <div id="currentWorkout" class="current-workout" style="display: none;">
-                        <div class="workout-header">
-                            <h2>Current Workout</h2>
-                            <div class="workout-timer">
-                                <span id="workoutTime">00:00</span>
-                            </div>
-                        </div>
-                        <div id="currentExercises" class="current-exercises"></div>
-                    </div>
-
                     <!-- Start Workout Section -->
                     <div id="startWorkout" class="start-workout">
                         <div class="welcome-card">
@@ -76,6 +77,17 @@
                                 Start New Workout
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Current Workout Display -->
+                    <div id="currentWorkout" class="current-workout" style="display: none;">
+                        <div class="workout-header">
+                            <h2>Current Workout</h2>
+                            <div class="workout-timer">
+                                <span id="workoutTime">00:00</span>
+                            </div>
+                        </div>
+                        <div id="currentExercises" class="current-exercises"></div>
                     </div>
 
                     <!-- Exercise Selection -->
@@ -180,33 +192,6 @@
                     </div>
 
                     <div class="settings-section">
-                        <h3>Rest Timer Settings</h3>
-                        <div class="setting-item">
-                            <label class="setting-label">
-                                <input type="checkbox" id="autoStartRestTimer" checked onchange="toggleAutoRestTimer(this.checked)">
-                                <span class="checkmark"></span>
-                                Auto-Start Rest Timer After Set
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label>Compound Exercise Rest (seconds)</label>
-                            <input type="number" class="setting-input" id="compoundRest" value="150" min="60" max="300">
-                        </div>
-                        <div class="setting-item">
-                            <label>Isolation Exercise Rest (seconds)</label>
-                            <input type="number" class="setting-input" id="isolationRest" value="90" min="30" max="180">
-                        </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <h3>Progressive Overload</h3>
-                        <div class="setting-item">
-                            <label>Weekly Progression Rate (%)</label>
-                            <input type="number" class="setting-input" id="progressionRate" value="3.5" min="1" max="10" step="0.1">
-                        </div>
-                    </div>
-
-                    <div class="settings-section">
                         <h3>Data Management</h3>
                         <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
                         <button class="btn btn-secondary" onclick="importData()">Import Data</button>
@@ -258,17 +243,46 @@
     </div>
 
     <!-- Scripts -->
-    <script src="tyler-data-integration.js"></script>
-    <script src="app.js"></script>
+    <script src="/tyler-data-integration.js?v=2.0.0"></script>
+    <script src="/app.js?v=2.0.0"></script>
     <script>
-        // Register service worker for PWA
+        // Hide loading indicator and show app
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+            }, 500);
+        });
+
+        // Register service worker for PWA - with cache busting
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => console.log('SW registered'))
-                    .catch(error => console.log('SW registration failed'));
+                navigator.serviceWorker.register('/sw.js?v=2.0.0')
+                    .then(registration => {
+                        console.log('SW registered successfully');
+                        // Force update if new version available
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available, reload page
+                                    window.location.reload();
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => console.log('SW registration failed:', error));
             });
         }
+
+        // Force CSS reload if needed
+        setTimeout(() => {
+            const link = document.querySelector('link[href*="styles.css"]');
+            if (link && !document.querySelector('.app')) {
+                console.log('CSS not loaded, forcing reload...');
+                window.location.reload();
+            }
+        }, 2000);
     </script>
 </body>
 </html>
