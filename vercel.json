@@ -7,14 +7,8 @@
     "api/workouts.js": {
       "maxDuration": 10
     },
-    "api/recommendations.js": {
-      "maxDuration": 10
-    },
     "api/health.js": {
       "maxDuration": 5
-    },
-    "api/auth.js": {
-      "maxDuration": 10
     }
   },
   "rewrites": [
