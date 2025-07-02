@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c5f5f">
+    <title>HyperTrack Pro</title>
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HyperTrack Pro">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app" id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">HyperTrack Pro</h1>
+                <p class="app-subtitle">Evidence-Based Hypertrophy Optimization</p>
+            </div>
+            <div class="header-actions">
+                <button class="settings-btn" onclick="openSettings()" aria-label="Settings">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Research Banner -->
+        <div class="research-banner" id="researchBanner">
+            <div class="research-content">
+                <span class="research-icon">🔬</span>
+                <p class="research-text" id="researchText">Loading research insights...</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Workout Tab -->
+            <div id="workoutTab" class="tab-content active">
+                <div class="workout-container">
+                    <!-- Current Workout Display -->
+                    <div id="currentWorkout" class="current-workout" style="display: none;">
+                        <div class="workout-header">
+                            <h2>Current Workout</h2>
+                            <div class="workout-timer">
+                                <span id="workoutTime">00:00</span>
+                            </div>
+                        </div>
+                        <div id="currentExercises" class="current-exercises"></div>
+                    </div>
+
+                    <!-- Start Workout Section -->
+                    <div id="startWorkout" class="start-workout">
+                        <div class="welcome-card">
+                            <h2>Ready to Train?</h2>
+                            <p>Start a new workout session to begin tracking your progress with evidence-based training principles.</p>
+                            <button class="btn btn-primary btn-large" onclick="startWorkout()">
+                                <span class="btn-icon">💪</span>
+                                Start New Workout
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Exercise Selection -->
+                    <div id="exerciseSelection" class="exercise-selection" style="display: none;">
+                        <div class="search-container">
+                            <input type="text" 
+                                   class="search-input" 
+                                   id="exerciseSearch" 
+                                   placeholder="Search exercises..."
+                                   onkeyup="filterExercises(this.value)">
+                            <div class="search-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="muscle-groups">
+                            <button class="muscle-btn active" onclick="filterByMuscle('all')">All</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Chest')">Chest</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Back')">Back</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Legs')">Legs</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Shoulders')">Shoulders</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Arms')">Arms</button>
+                        </div>
+
+                        <div id="exerciseList" class="exercise-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyTab" class="tab-content">
+                <div class="history-container">
+                    <h2>Workout History</h2>
+                    <div id="historyList" class="history-list">
+                        <div class="empty-state">
+                            <div class="empty-icon">📖</div>
+                            <h3>No Workouts Yet</h3>
+                            <p>Complete your first workout to see your training history and progress over time.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analyticsTab" class="tab-content">
+                <div class="analytics-container">
+                    <h2>Progress Analytics</h2>
+                    <div id="analyticsContent" class="analytics-content">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="totalWorkouts">0</div>
+                                <div class="stat-label">Total Workouts</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="totalSets">0</div>
+                                <div class="stat-label">Total Sets</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="totalVolume">0</div>
+                                <div class="stat-label">Total Volume (lbs)</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="avgDuration">0</div>
+                                <div class="stat-label">Avg Duration (min)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-section">
+                            <h3>Recent Progress</h3>
+                            <div id="progressChart" class="progress-chart">
+                                <p class="chart-placeholder">Complete more workouts to see progress trends</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settingsTab" class="tab-content">
+                <div class="settings-container">
+                    <h2>Settings</h2>
+                    
+                    <div class="settings-section">
+                        <h3>Preferences</h3>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="showResearchFacts" checked onchange="toggleResearchFacts(this.checked)">
+                                <span class="checkmark"></span>
+                                Show Research Facts
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="darkMode" checked onchange="toggleDarkMode(this.checked)">
+                                <span class="checkmark"></span>
+                                Dark Mode
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Rest Timer Settings</h3>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="autoStartRestTimer" checked onchange="toggleAutoRestTimer(this.checked)">
+                                <span class="checkmark"></span>
+                                Auto-Start Rest Timer After Set
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>Compound Exercise Rest (seconds)</label>
+                            <input type="number" class="setting-input" id="compoundRest" value="150" min="60" max="300">
+                        </div>
+                        <div class="setting-item">
+                            <label>Isolation Exercise Rest (seconds)</label>
+                            <input type="number" class="setting-input" id="isolationRest" value="90" min="30" max="180">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Progressive Overload</h3>
+                        <div class="setting-item">
+                            <label>Weekly Progression Rate (%)</label>
+                            <input type="number" class="setting-input" id="progressionRate" value="3.5" min="1" max="10" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Data Management</h3>
+                        <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+                        <button class="btn btn-secondary" onclick="importData()">Import Data</button>
+                        <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" onclick="switchTab('workout')" data-tab="workout">
+                <div class="nav-icon">💪</div>
+                <div class="nav-label">Workout</div>
+            </button>
+            <button class="nav-btn" onclick="switchTab('history')" data-tab="history">
+                <div class="nav-icon">📖</div>
+                <div class="nav-label">History</div>
+            </button>
+            <button class="nav-btn" onclick="switchTab('analytics')" data-tab="analytics">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">Analytics</div>
+            </button>
+            <button class="nav-btn" onclick="switchTab('settings')" data-tab="settings">
+                <div class="nav-icon">⚙️</div>
+                <div class="nav-label">Settings</div>
+            </button>
+        </nav>
+
+        <!-- Floating Action Button -->
+        <button class="fab" id="fab" onclick="toggleWorkout()" aria-label="Start workout">
+            <span id="fabIcon">+</span>
+        </button>
+    </div>
+
+    <!-- Modals -->
+    <div id="exerciseModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalExerciseName">Exercise</h3>
+                <button class="close-btn" onclick="closeExerciseModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="setInputs" class="set-inputs"></div>
+                <button class="btn btn-primary" onclick="addSet()">Add Set</button>
+                <button class="btn btn-success" onclick="finishExercise()">Finish Exercise</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="tyler-data-integration.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
