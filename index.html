@@ -17,27 +17,103 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
     <link rel="apple-touch-icon" href="/icon-192.png">
     
-    <!-- Styles - Cache busting -->
-    <link rel="stylesheet" href="/styles.css?v=2.0.0">
+    <!-- Critical CSS Inline - Fallback -->
+    <style>
+        /* Critical CSS for immediate rendering */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        .app { min-height: 100vh; display: flex; flex-direction: column; }
+        .header { 
+            background: linear-gradient(135deg, #1b4e4e, #2c5f5f);
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-content { text-align: center; flex: 1; }
+        .app-title { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+        .app-subtitle { font-size: 14px; opacity: 0.9; }
+        .main-content { flex: 1; padding: 20px; max-width: 800px; margin: 0 auto; width: 100%; }
+        .welcome-card { 
+            text-align: center;
+            background: linear-gradient(135deg, #2a2c2f, #334155);
+            border: 1px solid #374151;
+            border-radius: 16px;
+            padding: 40px 24px;
+            margin-bottom: 24px;
+        }
+        .btn { 
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 52px;
+            background: linear-gradient(135deg, #1b4e4e, #2c5f5f);
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #2a2c2f;
+            border-top: 1px solid #374151;
+            display: flex;
+            z-index: 100;
+        }
+        .nav-btn {
+            flex: 1;
+            padding: 12px 8px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-btn.active { color: #3d7070; }
+        .nav-icon { font-size: 24px; }
+        .nav-label { font-size: 12px; font-weight: 600; }
+        .tab-content { display: none; padding-bottom: 100px; }
+        .tab-content.active { display: block; }
+        .settings-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+    </style>
+    
+    <!-- Main Styles - Cache busting -->
+    <link rel="stylesheet" href="/styles.css?v=2.0.1">
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Preload critical resources -->
-    <link rel="preload" href="/app.js" as="script">
-    <link rel="preload" href="/tyler-data-integration.js" as="script">
 </head>
 <body>
-    <!-- Loading indicator -->
-    <div id="loadingIndicator" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; z-index: 9999;">
-        <div style="text-align: center;">
-            <div style="font-size: 24px; margin-bottom: 16px;">💪</div>
-            <div>Loading HyperTrack Pro...</div>
-        </div>
-    </div>
-
     <!-- App Container -->
-    <div class="app" id="app" style="display: none;">
+    <div class="app" id="app">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
@@ -55,10 +131,10 @@
         </header>
 
         <!-- Research Banner -->
-        <div class="research-banner" id="researchBanner">
-            <div class="research-content">
-                <span class="research-icon">🔬</span>
-                <p class="research-text" id="researchText">Loading research insights...</p>
+        <div class="research-banner" id="researchBanner" style="background: #2a2c2f; border-bottom: 1px solid #374151; padding: 16px 20px;">
+            <div class="research-content" style="display: flex; align-items: center; gap: 12px; max-width: 600px; margin: 0 auto;">
+                <span class="research-icon" style="font-size: 20px; opacity: 0.8;">🔬</span>
+                <p class="research-text" id="researchText" style="font-size: 14px; color: #cbd5e1; margin: 0;">Loading research insights...</p>
             </div>
         </div>
 
@@ -70,10 +146,10 @@
                     <!-- Start Workout Section -->
                     <div id="startWorkout" class="start-workout">
                         <div class="welcome-card">
-                            <h2>Ready to Train?</h2>
-                            <p>Start a new workout session to begin tracking your progress with evidence-based training principles.</p>
+                            <h2 style="font-size: 24px; margin-bottom: 12px;">Ready to Train?</h2>
+                            <p style="color: #cbd5e1; margin-bottom: 24px; font-size: 16px;">Start a new workout session to begin tracking your progress with evidence-based training principles.</p>
                             <button class="btn btn-primary btn-large" onclick="startWorkout()">
-                                <span class="btn-icon">💪</span>
+                                <span class="btn-icon" style="font-size: 18px;">💪</span>
                                 Start New Workout
                             </button>
                         </div>
@@ -92,13 +168,14 @@
 
                     <!-- Exercise Selection -->
                     <div id="exerciseSelection" class="exercise-selection" style="display: none;">
-                        <div class="search-container">
+                        <div class="search-container" style="position: relative; margin-bottom: 20px;">
                             <input type="text" 
                                    class="search-input" 
                                    id="exerciseSearch" 
                                    placeholder="Search exercises..."
-                                   onkeyup="filterExercises(this.value)">
-                            <div class="search-icon">
+                                   onkeyup="filterExercises(this.value)"
+                                   style="width: 100%; padding: 16px 20px 16px 50px; background: #334155; border: 1px solid #374151; border-radius: 12px; color: #f8fafc; font-size: 16px;">
+                            <div class="search-icon" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8;">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="11" cy="11" r="8"></circle>
                                     <path d="m21 21-4.35-4.35"></path>
@@ -106,13 +183,13 @@
                             </div>
                         </div>
 
-                        <div class="muscle-groups">
-                            <button class="muscle-btn active" onclick="filterByMuscle('all')">All</button>
-                            <button class="muscle-btn" onclick="filterByMuscle('Chest')">Chest</button>
-                            <button class="muscle-btn" onclick="filterByMuscle('Back')">Back</button>
-                            <button class="muscle-btn" onclick="filterByMuscle('Legs')">Legs</button>
-                            <button class="muscle-btn" onclick="filterByMuscle('Shoulders')">Shoulders</button>
-                            <button class="muscle-btn" onclick="filterByMuscle('Arms')">Arms</button>
+                        <div class="muscle-groups" style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto;">
+                            <button class="muscle-btn active" onclick="filterByMuscle('all')" style="padding: 8px 16px; background: #2c5f5f; color: white; border: 1px solid #2c5f5f; border-radius: 20px; font-size: 14px; cursor: pointer; white-space: nowrap;">All</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Chest')" style="padding: 8px 16px; background: #334155; color: #cbd5e1; border: 1px solid #374151; border-radius: 20px; font-size: 14px; cursor: pointer; white-space: nowrap;">Chest</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Back')" style="padding: 8px 16px; background: #334155; color: #cbd5e1; border: 1px solid #374151; border-radius: 20px; font-size: 14px; cursor: pointer; white-space: nowrap;">Back</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Legs')" style="padding: 8px 16px; background: #334155; color: #cbd5e1; border: 1px solid #374151; border-radius: 20px; font-size: 14px; cursor: pointer; white-space: nowrap;">Legs</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Shoulders')" style="padding: 8px 16px; background: #334155; color: #cbd5e1; border: 1px solid #374151; border-radius: 20px; font-size: 14px; cursor: pointer; white-space: nowrap;">Shoulders</button>
+                            <button class="muscle-btn" onclick="filterByMuscle('Arms')" style="padding: 8px 16px; background: #334155; color: #cbd5e1; border: 1px solid #374151; border-radius: 20px; font-size: 14px; cursor: pointer; white-space: nowrap;">Arms</button>
                         </div>
 
                         <div id="exerciseList" class="exercise-list"></div>
@@ -125,10 +202,10 @@
                 <div class="history-container">
                     <h2>Workout History</h2>
                     <div id="historyList" class="history-list">
-                        <div class="empty-state">
-                            <div class="empty-icon">📖</div>
-                            <h3>No Workouts Yet</h3>
-                            <p>Complete your first workout to see your training history and progress over time.</p>
+                        <div class="empty-state" style="text-align: center; padding: 60px 20px;">
+                            <div class="empty-icon" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">📖</div>
+                            <h3 style="margin-bottom: 8px;">No Workouts Yet</h3>
+                            <p style="color: #94a3b8; max-width: 300px; margin: 0 auto;">Complete your first workout to see your training history and progress over time.</p>
                         </div>
                     </div>
                 </div>
@@ -139,29 +216,22 @@
                 <div class="analytics-container">
                     <h2>Progress Analytics</h2>
                     <div id="analyticsContent" class="analytics-content">
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-value" id="totalWorkouts">0</div>
-                                <div class="stat-label">Total Workouts</div>
+                        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                            <div class="stat-card" style="background: #2a2c2f; border: 1px solid #374151; border-radius: 12px; padding: 20px; text-align: center;">
+                                <div class="stat-value" id="totalWorkouts" style="font-size: 32px; font-weight: 800; color: #3d7070; margin-bottom: 8px;">0</div>
+                                <div class="stat-label" style="font-size: 14px; color: #94a3b8;">Total Workouts</div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="totalSets">0</div>
-                                <div class="stat-label">Total Sets</div>
+                            <div class="stat-card" style="background: #2a2c2f; border: 1px solid #374151; border-radius: 12px; padding: 20px; text-align: center;">
+                                <div class="stat-value" id="totalSets" style="font-size: 32px; font-weight: 800; color: #3d7070; margin-bottom: 8px;">0</div>
+                                <div class="stat-label" style="font-size: 14px; color: #94a3b8;">Total Sets</div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="totalVolume">0</div>
-                                <div class="stat-label">Total Volume (lbs)</div>
+                            <div class="stat-card" style="background: #2a2c2f; border: 1px solid #374151; border-radius: 12px; padding: 20px; text-align: center;">
+                                <div class="stat-value" id="totalVolume" style="font-size: 32px; font-weight: 800; color: #3d7070; margin-bottom: 8px;">0</div>
+                                <div class="stat-label" style="font-size: 14px; color: #94a3b8;">Total Volume (lbs)</div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="avgDuration">0</div>
-                                <div class="stat-label">Avg Duration (min)</div>
-                            </div>
-                        </div>
-                        
-                        <div class="progress-section">
-                            <h3>Recent Progress</h3>
-                            <div id="progressChart" class="progress-chart">
-                                <p class="chart-placeholder">Complete more workouts to see progress trends</p>
+                            <div class="stat-card" style="background: #2a2c2f; border: 1px solid #374151; border-radius: 12px; padding: 20px; text-align: center;">
+                                <div class="stat-value" id="avgDuration" style="font-size: 32px; font-weight: 800; color: #3d7070; margin-bottom: 8px;">0</div>
+                                <div class="stat-label" style="font-size: 14px; color: #94a3b8;">Avg Duration (min)</div>
                             </div>
                         </div>
                     </div>
@@ -173,29 +243,27 @@
                 <div class="settings-container">
                     <h2>Settings</h2>
                     
-                    <div class="settings-section">
-                        <h3>Preferences</h3>
-                        <div class="setting-item">
-                            <label class="setting-label">
-                                <input type="checkbox" id="showResearchFacts" checked onchange="toggleResearchFacts(this.checked)">
-                                <span class="checkmark"></span>
+                    <div class="settings-section" style="margin-bottom: 32px;">
+                        <h3 style="margin-bottom: 16px; font-size: 18px;">Preferences</h3>
+                        <div class="setting-item" style="margin-bottom: 16px;">
+                            <label class="setting-label" style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 500;">
+                                <input type="checkbox" id="showResearchFacts" checked onchange="toggleResearchFacts(this.checked)" style="width: 20px; height: 20px;">
                                 Show Research Facts
                             </label>
                         </div>
-                        <div class="setting-item">
-                            <label class="setting-label">
-                                <input type="checkbox" id="darkMode" checked onchange="toggleDarkMode(this.checked)">
-                                <span class="checkmark"></span>
+                        <div class="setting-item" style="margin-bottom: 16px;">
+                            <label class="setting-label" style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 500;">
+                                <input type="checkbox" id="darkMode" checked onchange="toggleDarkMode(this.checked)" style="width: 20px; height: 20px;">
                                 Dark Mode
                             </label>
                         </div>
                     </div>
 
                     <div class="settings-section">
-                        <h3>Data Management</h3>
-                        <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
-                        <button class="btn btn-secondary" onclick="importData()">Import Data</button>
-                        <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+                        <h3 style="margin-bottom: 16px; font-size: 18px;">Data Management</h3>
+                        <button class="btn btn-secondary" onclick="exportData()" style="background: #334155; margin-right: 8px; margin-bottom: 8px;">Export Data</button>
+                        <button class="btn btn-secondary" onclick="importData()" style="background: #334155; margin-right: 8px; margin-bottom: 8px;">Import Data</button>
+                        <button class="btn btn-danger" onclick="clearAllData()" style="background: #ef4444; margin-bottom: 8px;">Clear All Data</button>
                     </div>
                 </div>
             </div>
@@ -222,7 +290,7 @@
         </nav>
 
         <!-- Floating Action Button -->
-        <button class="fab" id="fab" onclick="toggleWorkout()" aria-label="Start workout">
+        <button class="fab" id="fab" onclick="toggleWorkout()" aria-label="Start workout" style="position: fixed; bottom: 100px; right: 20px; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #1b4e4e, #2c5f5f); color: white; border: none; font-size: 32px; cursor: pointer; box-shadow: 0 10px 15px rgba(0,0,0,0.4); z-index: 99; display: flex; align-items: center; justify-content: center;">
             <span id="fabIcon">+</span>
         </button>
     </div>
@@ -243,46 +311,17 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/tyler-data-integration.js?v=2.0.0"></script>
-    <script src="/app.js?v=2.0.0"></script>
+    <script src="/tyler-data-integration.js?v=2.0.1"></script>
+    <script src="/app.js?v=2.0.1"></script>
     <script>
-        // Hide loading indicator and show app
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                document.getElementById('loadingIndicator').style.display = 'none';
-                document.getElementById('app').style.display = 'block';
-            }, 500);
-        });
-
-        // Register service worker for PWA - with cache busting
+        // Register service worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js?v=2.0.0')
-                    .then(registration => {
-                        console.log('SW registered successfully');
-                        // Force update if new version available
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // New version available, reload page
-                                    window.location.reload();
-                                }
-                            });
-                        });
-                    })
+                navigator.serviceWorker.register('/sw.js?v=2.0.1')
+                    .then(registration => console.log('SW registered successfully'))
                     .catch(error => console.log('SW registration failed:', error));
             });
         }
-
-        // Force CSS reload if needed
-        setTimeout(() => {
-            const link = document.querySelector('link[href*="styles.css"]');
-            if (link && !document.querySelector('.app')) {
-                console.log('CSS not loaded, forcing reload...');
-                window.location.reload();
-            }
-        }, 2000);
     </script>
 </body>
 </html>
