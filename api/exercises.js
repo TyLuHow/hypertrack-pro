@@ -1,10 +1,113 @@
-// api/exercises.js - Supabase Integration Version
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
+// Fallback exercise data for when database is not configured
+const fallbackExercises = [
+  {
+    id: 1,
+    name: "Barbell Bench Press",
+    muscle_group: "Chest",
+    category: "Compound",
+    tier: 1,
+    mvc_percentage: 95,
+    equipment: ["barbell", "bench"],
+    description: "The gold standard for chest development with highest pectoralis major activation."
+  },
+  {
+    id: 2,
+    name: "Incline Dumbbell Press",
+    muscle_group: "Chest", 
+    category: "Compound",
+    tier: 1,
+    mvc_percentage: 90,
+    equipment: ["dumbbells", "incline_bench"],
+    description: "Superior upper chest activation compared to flat pressing movements."
+  },
+  {
+    id: 3,
+    name: "Pull-ups",
+    muscle_group: "Back",
+    category: "Compound", 
+    tier: 1,
+    mvc_percentage: 117,
+    equipment: ["pull_up_bar"],
+    description: "Highest latissimus dorsi activation among all pulling exercises."
+  },
+  {
+    id: 4,
+    name: "Barbell Rows",
+    muscle_group: "Back",
+    category: "Compound",
+    tier: 1, 
+    mvc_percentage: 93,
+    equipment: ["barbell"],
+    description: "Excellent for building back thickness and overall pulling strength."
+  },
+  {
+    id: 5,
+    name: "Squats",
+    muscle_group: "Legs",
+    category: "Compound",
+    tier: 1,
+    mvc_percentage: 88,
+    equipment: ["barbell", "squat_rack"],
+    description: "The king of exercises for overall leg development and strength."
+  },
+  {
+    id: 6,
+    name: "Deadlifts", 
+    muscle_group: "Legs",
+    category: "Compound",
+    tier: 1,
+    mvc_percentage: 85,
+    equipment: ["barbell"],
+    description: "Fundamental movement for posterior chain and overall strength."
+  },
+  {
+    id: 7,
+    name: "Overhead Press",
+    muscle_group: "Shoulders",
+    category: "Compound", 
+    tier: 1,
+    mvc_percentage: 82,
+    equipment: ["barbell"],
+    description: "Essential for shoulder strength and stability."
+  },
+  {
+    id: 8,
+    name: "Dips",
+    muscle_group: "Chest",
+    category: "Compound",
+    tier: 1,
+    mvc_percentage: 85,
+    equipment: ["dip_station"],
+    description: "Excellent compound movement for chest, triceps, and anterior deltoids."
+  },
+  {
+    id: 9,
+    name: "Lateral Raises",
+    muscle_group: "Shoulders", 
+    category: "Isolation",
+    tier: 2,
+    mvc_percentage: 78,
+    equipment: ["dumbbells"],
+    description: "Primary isolation exercise for medial deltoid development."
+  },
+  {
+    id: 10,
+    name: "Barbell Curls",
+    muscle_group: "Biceps",
+    category: "Isolation",
+    tier: 2, 
+    mvc_percentage: 75,
+    equipment: ["barbell"],
+    description: "Classic bicep exercise for arm development."
+  }
+];
+
+const supabase = process.env.SUPABASE_URL ? createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+) : null;
 
 export default async function handler(req, res) {
   // CORS configuration
@@ -15,17 +118,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   
   try {
-    switch (req.method) {
-      case 'GET':
-        return await handleGetExercises(req, res);
-      case 'POST':
-        return await handleCreateExercise(req, res);
-      case 'PUT':
-        return await handleUpdateExercise(req, res);
-      case 'DELETE':
-        return await handleDeleteExercise(req, res);
-      default:
-        return res.status(405).json({ error: 'Method not allowed' });
+    if (req.method === 'GET') {
+      return await handleGetExercises(req, res);
+    } else {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error) {
     console.error('Exercises API Error:', error);
@@ -39,142 +135,90 @@ export default async function handler(req, res) {
 async function handleGetExercises(req, res) {
   const { muscleGroup, tier, category, search } = req.query;
   
-  let query = supabase
-    .from('exercises')
-    .select('*');
+  // Use database if configured, otherwise use fallback data
+  let exercises = fallbackExercises;
+  let usingFallback = true;
   
-  // Apply filters
-  if (muscleGroup) {
-    if (muscleGroup === 'Arms') {
-      query = query.in('muscle_group', ['Biceps', 'Triceps']);
-    } else {
-      query = query.eq('muscle_group', muscleGroup);
+  if (supabase) {
+    try {
+      let query = supabase.from('exercises').select('*');
+      
+      // Apply filters
+      if (muscleGroup) {
+        if (muscleGroup === 'Arms') {
+          query = query.in('muscle_group', ['Biceps', 'Triceps']);
+        } else {
+          query = query.eq('muscle_group', muscleGroup);
+        }
+      }
+      
+      if (tier) {
+        query = query.eq('tier', parseInt(tier));
+      }
+      
+      if (category) {
+        query = query.eq('category', category);
+      }
+      
+      if (search) {
+        query = query.ilike('name', `%${search}%`);
+      }
+      
+      query = query.order('tier').order('mvc_percentage', { ascending: false });
+      
+      const { data: dbExercises, error } = await query;
+      
+      if (!error && dbExercises) {
+        exercises = dbExercises;
+        usingFallback = false;
+      }
+    } catch (error) {
+      console.log('Database query failed, using fallback data:', error.message);
     }
   }
   
-  if (tier) {
-    query = query.eq('tier', parseInt(tier));
+  // Apply client-side filtering for fallback data
+  if (usingFallback) {
+    exercises = exercises.filter(exercise => {
+      let matches = true;
+      
+      if (muscleGroup && muscleGroup !== 'all') {
+        if (muscleGroup === 'Arms') {
+          matches = matches && ['Biceps', 'Triceps'].includes(exercise.muscle_group);
+        } else {
+          matches = matches && exercise.muscle_group === muscleGroup;
+        }
+      }
+      
+      if (tier) {
+        matches = matches && exercise.tier === parseInt(tier);
+      }
+      
+      if (category) {
+        matches = matches && exercise.category === category;
+      }
+      
+      if (search) {
+        matches = matches && exercise.name.toLowerCase().includes(search.toLowerCase());
+      }
+      
+      return matches;
+    });
   }
-  
-  if (category) {
-    query = query.eq('category', category);
-  }
-  
-  if (search) {
-    query = query.ilike('name', `%${search}%`);
-  }
-  
-  // Order by effectiveness (tier 1 first, then by MVC percentage)
-  query = query.order('tier').order('mvc_percentage', { ascending: false });
-  
-  const { data: exercises, error } = await query;
-  
-  if (error) {
-    throw new Error(`Database query failed: ${error.message}`);
-  }
-  
-  // Calculate metadata
-  const allExercises = await supabase.from('exercises').select('muscle_group, category');
-  const { data: allData } = allExercises;
   
   const metadata = {
     total: exercises.length,
-    totalInDatabase: allData?.length || 0,
-    muscleGroups: [...new Set(allData?.map(ex => ex.muscle_group) || [])],
-    categories: [...new Set(allData?.map(ex => ex.category) || [])],
-    lastUpdated: new Date().toISOString()
+    totalInDatabase: usingFallback ? fallbackExercises.length : exercises.length,
+    muscleGroups: [...new Set(exercises.map(ex => ex.muscle_group))],
+    categories: [...new Set(exercises.map(ex => ex.category))],
+    lastUpdated: new Date().toISOString(),
+    usingFallback: usingFallback,
+    databaseConfigured: !!supabase
   };
   
   return res.status(200).json({
     success: true,
     exercises,
     metadata
-  });
-}
-
-async function handleCreateExercise(req, res) {
-  const exerciseData = req.body;
-  
-  // Validate required fields
-  const required = ['name', 'muscle_group', 'category', 'tier', 'mvc_percentage'];
-  for (const field of required) {
-    if (!exerciseData[field]) {
-      return res.status(400).json({ 
-        error: `Missing required field: ${field}`
-      });
-    }
-  }
-  
-  const { data: exercise, error } = await supabase
-    .from('exercises')
-    .insert([{
-      name: exerciseData.name,
-      muscle_group: exerciseData.muscle_group,
-      category: exerciseData.category,
-      tier: exerciseData.tier,
-      mvc_percentage: exerciseData.mvc_percentage,
-      equipment: exerciseData.equipment || null,
-      description: exerciseData.description || null,
-      research_notes: exerciseData.research_notes || null
-    }])
-    .select()
-    .single();
-  
-  if (error) {
-    throw new Error(`Failed to create exercise: ${error.message}`);
-  }
-  
-  return res.status(201).json({
-    success: true,
-    exercise,
-    message: 'Exercise created successfully'
-  });
-}
-
-async function handleUpdateExercise(req, res) {
-  const { id } = req.query;
-  const updates = req.body;
-  
-  if (!id) {
-    return res.status(400).json({ error: 'Exercise ID required' });
-  }
-  
-  const { data: exercise, error } = await supabase
-    .from('exercises')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
-  
-  if (error) {
-    throw new Error(`Failed to update exercise: ${error.message}`);
-  }
-  
-  return res.status(200).json({
-    success: true,
-    exercise,
-    message: 'Exercise updated successfully'
-  });
-}
-
-async function handleDeleteExercise(req, res) {
-  const { id } = req.query;
-  
-  if (!id) {
-    return res.status(400).json({ error: 'Exercise ID required' });
-  }
-  
-  const { error } = await supabase
-    .from('exercises')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
-    throw new Error(`Failed to delete exercise: ${error.message}`);
-  }
-  
-  return res.status(200).json({
-    success: true,
-    message: 'Exercise deleted successfully'
   });
 }
