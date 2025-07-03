@@ -7,7 +7,9 @@
     "start": "vercel dev",
     "build": "echo 'Static build complete'",
     "deploy": "vercel --prod",
-    "serve": "npx serve . -p 3000"
+    "serve": "npx serve . -p 3000",
+    "setup-db": "node scripts/setup-database.js",
+    "test-db": "node -e \"require('./scripts/setup-database.js').testConnection()\""
   },
   "dependencies": {
     "@modelcontextprotocol/server-brave-search": "^0.6.2",
@@ -20,6 +22,7 @@
     "puppeteer-mcp-server": "^0.7.2"
   },
   "devDependencies": {
+    "dotenv": "^16.6.1",
     "vercel": "^33.0.0"
   },
   "keywords": [

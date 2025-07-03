@@ -417,8 +417,9 @@ document.addEventListener('DOMContentLoaded', function() {
     startResearchFactRotation();
     setupEventListeners();
     
-    // No authentication complexity - just load workouts
+    // Load workouts from both API and localStorage
     loadWorkoutsFromAPI();
+    loadWorkoutsFromLocalStorage();
     
     console.log('✅ Single-user mode active - ready to track workouts');
 });
@@ -480,6 +481,29 @@ async function loadWorkoutsFromAPI() {
         }
     } catch (error) {
         console.warn('⚠️ Failed to load workouts from API:', error.message);
+        console.log('📱 Loading from localStorage as fallback...');
+        loadWorkoutsFromLocalStorage();
+    }
+}
+
+function loadWorkoutsFromLocalStorage() {
+    try {
+        const localWorkouts = JSON.parse(localStorage.getItem('hypertrack_workouts') || '[]');
+        if (localWorkouts.length > 0) {
+            const existingIds = HyperTrack.state.workouts.map(w => w.id);
+            const newLocalWorkouts = localWorkouts.filter(w => !existingIds.includes(w.id));
+            HyperTrack.state.workouts = [...HyperTrack.state.workouts, ...newLocalWorkouts];
+            
+            console.log(`✅ Loaded ${newLocalWorkouts.length} workouts from localStorage`);
+            updateHistoryTab();
+            updateAnalyticsTab();
+            
+            if (newLocalWorkouts.length > 0) {
+                showNotification(`Loaded ${newLocalWorkouts.length} locally saved workouts`, 'info');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Failed to load from localStorage:', error);
     }
 }
 
@@ -522,6 +546,12 @@ async function saveWorkoutToAPI(workout) {
             }))
         };
         
+        console.log('💾 Attempting to save workout to API...', {
+            date: formattedWorkout.workout_date,
+            exercises: formattedWorkout.exercises.length,
+            auth: !!authManager.session.access_token
+        });
+        
         const response = await authManager.authenticatedFetch('/api/workouts', {
             method: 'POST',
             body: JSON.stringify(formattedWorkout)
@@ -530,14 +560,37 @@ async function saveWorkoutToAPI(workout) {
         if (response.ok) {
             const data = await response.json();
             console.log('✅ Workout saved to API:', data.message);
+            showNotification('Workout saved to database!', 'success');
             return data.workout;
         } else {
-            throw new Error(`API returned ${response.status}`);
+            const errorData = await response.text();
+            console.error('❌ API Error Response:', response.status, errorData);
+            throw new Error(`API returned ${response.status}: ${errorData}`);
         }
     } catch (error) {
         console.error('❌ Failed to save workout to API:', error.message);
-        saveAppData();
-        throw error;
+        console.log('📱 Falling back to localStorage...');
+        
+        // Enhanced localStorage fallback
+        try {
+            const localWorkouts = JSON.parse(localStorage.getItem('hypertrack_workouts') || '[]');
+            const workoutWithId = {
+                ...workout,
+                id: workout.id || `local-${Date.now()}`,
+                saved_locally: true,
+                created_at: new Date().toISOString()
+            };
+            localWorkouts.push(workoutWithId);
+            localStorage.setItem('hypertrack_workouts', JSON.stringify(localWorkouts));
+            
+            console.log('✅ Workout saved to localStorage as fallback');
+            showNotification('Workout saved locally (database offline)', 'warning');
+            return workoutWithId;
+        } catch (localError) {
+            console.error('❌ Failed to save to localStorage:', localError);
+            showNotification('Failed to save workout data', 'error');
+            throw new Error('Both API and localStorage save failed');
+        }
     }
 }
 
