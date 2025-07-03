@@ -783,3 +783,246 @@ body {
     color: #ef4444;
     font-weight: 600;
 }
+
+/* Exercise Cards */
+.exercise-list {
+    display: grid;
+    gap: 12px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.exercise-card {
+    background: #374151;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid #4b5563;
+}
+
+.exercise-card:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.exercise-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.exercise-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.exercise-muscle {
+    font-size: 14px;
+    color: #3d7070;
+    font-weight: 500;
+}
+
+.exercise-category {
+    font-size: 12px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.exercise-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.tier-badge {
+    background: #1f2937;
+    color: #f59e0b;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tier-1 { background: #065f46; color: #10b981; }
+.tier-2 { background: #1e40af; color: #60a5fa; }
+.tier-3 { background: #7c2d12; color: #fb923c; }
+
+.mvc-badge {
+    background: #374151;
+    color: #d1d5db;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+/* Set Input Rows */
+.set-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #374151;
+    border-radius: 8px;
+}
+
+.set-number {
+    font-weight: 600;
+    color: #3d7070;
+    min-width: 50px;
+}
+
+.input-group {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    align-items: center;
+}
+
+.set-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: #1f2937;
+    border: 1px solid #4b5563;
+    border-radius: 6px;
+    color: #f8fafc;
+    font-size: 14px;
+}
+
+.set-input:focus {
+    outline: none;
+    border-color: #3d7070;
+    box-shadow: 0 0 0 2px rgba(61, 112, 112, 0.2);
+}
+
+.remove-set-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.remove-set-btn:hover {
+    background: #dc2626;
+}
+
+/* Current Workout Display */
+.current-workout {
+    background: #1f2937;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px;
+    border: 1px solid #374151;
+}
+
+.workout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.workout-timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: #3d7070;
+}
+
+.current-exercises {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.exercise-item {
+    background: #374151;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.exercise-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.sets-summary {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.set-badge {
+    background: #1f2937;
+    color: #d1d5db;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.no-exercises {
+    text-align: center;
+    color: #9ca3af;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Notifications */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Color Variables */
+:root {
+    --primary: #3d7070;
+    --primary-light: #5c9b9b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --bg-card: #1f2937;
+    --bg-tertiary: #374151;
+    --text-primary: #f8fafc;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+    --border: #4b5563;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+}

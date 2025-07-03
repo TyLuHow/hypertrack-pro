@@ -2331,6 +2331,364 @@ function applyPlateauStrategy(exerciseName, strategy) {
 }
 
 // ==========================================
+// CORE APPLICATION FUNCTIONS
+// ==========================================
+function updateUI() {
+    // Update current workout display
+    if (HyperTrack.state.currentWorkout) {
+        showCurrentWorkout();
+    } else {
+        hideCurrentWorkout();
+    }
+    
+    // Update tab content
+    const activeTab = document.querySelector('.nav-btn.active')?.dataset.tab || 'workout';
+    switchTab(activeTab);
+    
+    // Update research banner
+    updateResearchBanner();
+    
+    // Update settings
+    updateSettingsTab();
+    
+    console.log('🔄 UI updated');
+}
+
+function loadAppData() {
+    try {
+        const saved = localStorage.getItem('hypertrackData');
+        if (saved) {
+            const data = JSON.parse(saved);
+            
+            // Load workouts
+            if (data.workouts) {
+                HyperTrack.state.workouts = data.workouts;
+            }
+            
+            // Load settings
+            if (data.settings) {
+                HyperTrack.state.settings = { ...HyperTrack.state.settings, ...data.settings };
+            }
+            
+            // Load current workout
+            if (data.currentWorkout) {
+                HyperTrack.state.currentWorkout = data.currentWorkout;
+            }
+            
+            // Load progression goals
+            if (data.progressionGoals) {
+                HyperTrack.state.progressionGoals = new Map(data.progressionGoals);
+            }
+            
+            console.log('📂 App data loaded from localStorage');
+        }
+    } catch (error) {
+        console.error('❌ Error loading app data:', error);
+    }
+}
+
+function saveAppData() {
+    try {
+        const data = {
+            workouts: HyperTrack.state.workouts,
+            settings: HyperTrack.state.settings,
+            currentWorkout: HyperTrack.state.currentWorkout,
+            progressionGoals: HyperTrack.state.progressionGoals ? 
+                Array.from(HyperTrack.state.progressionGoals.entries()) : []
+        };
+        
+        localStorage.setItem('hypertrackData', JSON.stringify(data));
+        console.log('💾 App data saved to localStorage');
+    } catch (error) {
+        console.error('❌ Error saving app data:', error);
+    }
+}
+
+function showCurrentWorkout() {
+    const currentWorkoutDiv = document.getElementById('currentWorkout');
+    const startWorkoutDiv = document.getElementById('startWorkout');
+    const exerciseSelectionDiv = document.getElementById('exerciseSelection');
+    
+    if (currentWorkoutDiv) currentWorkoutDiv.style.display = 'block';
+    if (startWorkoutDiv) startWorkoutDiv.style.display = 'none';
+    if (exerciseSelectionDiv) exerciseSelectionDiv.style.display = 'block';
+    
+    updateCurrentWorkoutDisplay();
+}
+
+function hideCurrentWorkout() {
+    const currentWorkoutDiv = document.getElementById('currentWorkout');
+    const startWorkoutDiv = document.getElementById('startWorkout');
+    const exerciseSelectionDiv = document.getElementById('exerciseSelection');
+    
+    if (currentWorkoutDiv) currentWorkoutDiv.style.display = 'none';
+    if (startWorkoutDiv) startWorkoutDiv.style.display = 'block';
+    if (exerciseSelectionDiv) exerciseSelectionDiv.style.display = 'none';
+}
+
+function updateCurrentWorkoutDisplay() {
+    if (!HyperTrack.state.currentWorkout) return;
+    
+    const exercisesContainer = document.getElementById('currentExercises');
+    if (!exercisesContainer) return;
+    
+    const exercises = HyperTrack.state.currentWorkout.exercises || [];
+    
+    if (exercises.length === 0) {
+        exercisesContainer.innerHTML = '<p class="no-exercises">No exercises added yet. Select an exercise to get started!</p>';
+        return;
+    }
+    
+    const html = exercises.map(exercise => `
+        <div class="exercise-item">
+            <div class="exercise-header">
+                <h3>${exercise.name}</h3>
+                <span class="muscle-group">${exercise.muscle_group}</span>
+            </div>
+            <div class="sets-summary">
+                ${exercise.sets.map((set, index) => `
+                    <span class="set-badge">${set.weight}lbs × ${set.reps}</span>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+    
+    exercisesContainer.innerHTML = html;
+}
+
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        padding: 16px 20px;
+        border-radius: 8px;
+        border-left: 4px solid var(--${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'primary'});
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        max-width: 300px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+        backdrop-filter: blur(10px);
+    `;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+function openSettings() {
+    switchTab('settings');
+}
+
+function toggleWorkout() {
+    if (HyperTrack.state.currentWorkout) {
+        // If workout is active, show finish workout modal
+        if (confirm('Are you sure you want to finish this workout?')) {
+            finishWorkout();
+        }
+    } else {
+        // Start new workout
+        startWorkout();
+    }
+}
+
+function filterExercises(searchTerm) {
+    const exerciseList = document.getElementById('exerciseList');
+    if (!exerciseList) return;
+    
+    const exercises = exerciseList.querySelectorAll('.exercise-card');
+    const term = searchTerm.toLowerCase();
+    
+    exercises.forEach(exercise => {
+        const name = exercise.querySelector('.exercise-name')?.textContent.toLowerCase() || '';
+        const muscle = exercise.querySelector('.exercise-muscle')?.textContent.toLowerCase() || '';
+        
+        if (name.includes(term) || muscle.includes(term) || term === '') {
+            exercise.style.display = 'block';
+        } else {
+            exercise.style.display = 'none';
+        }
+    });
+}
+
+function filterByMuscle(muscleGroup) {
+    // Update active button
+    document.querySelectorAll('.muscle-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Filter exercises
+    const exerciseList = document.getElementById('exerciseList');
+    if (!exerciseList) return;
+    
+    const exercises = exerciseList.querySelectorAll('.exercise-card');
+    
+    exercises.forEach(exercise => {
+        const muscle = exercise.querySelector('.exercise-muscle')?.textContent || '';
+        
+        if (muscleGroup === 'all' || muscle === muscleGroup) {
+            exercise.style.display = 'block';
+        } else {
+            exercise.style.display = 'none';
+        }
+    });
+}
+
+function updateWorkoutTimer() {
+    if (!HyperTrack.state.currentWorkout || !HyperTrack.state.currentWorkout.startTime) return;
+    
+    const startTime = new Date(HyperTrack.state.currentWorkout.startTime);
+    const now = new Date();
+    const elapsed = Math.floor((now - startTime) / 1000);
+    
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    
+    const timerElement = document.getElementById('workoutTime');
+    if (timerElement) {
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function populateExerciseList() {
+    const exerciseList = document.getElementById('exerciseList');
+    if (!exerciseList) return;
+    
+    const exercises = HyperTrack.exerciseDatabase;
+    
+    const html = exercises.map(exercise => `
+        <div class="exercise-card" onclick="selectExercise('${exercise.name}', '${exercise.muscle_group}', '${exercise.category}')">
+            <div class="exercise-info">
+                <div class="exercise-name">${exercise.name}</div>
+                <div class="exercise-muscle">${exercise.muscle_group}</div>
+                <div class="exercise-category">${exercise.category}</div>
+            </div>
+            <div class="exercise-meta">
+                <span class="tier-badge tier-${exercise.tier}">Tier ${exercise.tier}</span>
+                <span class="mvc-badge">${exercise.mvc_percentage}% MVC</span>
+            </div>
+        </div>
+    `).join('');
+    
+    exerciseList.innerHTML = html;
+    console.log(`📋 Populated ${exercises.length} exercises`);
+}
+
+function selectExercise(exerciseName, muscleGroup, category) {
+    if (!HyperTrack.state.currentWorkout) {
+        showNotification('Please start a workout first', 'warning');
+        return;
+    }
+    
+    // Store current exercise info
+    HyperTrack.state.currentExercise = {
+        name: exerciseName,
+        muscle_group: muscleGroup,
+        category: category
+    };
+    
+    // Open exercise modal
+    openExerciseModal(exerciseName);
+}
+
+function openExerciseModal(exerciseName) {
+    const modal = document.getElementById('exerciseModal');
+    const modalTitle = document.getElementById('modalExerciseName');
+    const setInputsContainer = document.getElementById('setInputs');
+    
+    if (!modal || !modalTitle || !setInputsContainer) {
+        console.error('Exercise modal elements not found');
+        return;
+    }
+    
+    modalTitle.textContent = exerciseName;
+    setInputsContainer.innerHTML = ''; // Clear previous sets
+    
+    // Add initial set
+    addSet();
+    
+    modal.style.display = 'flex';
+    
+    // Focus on first input
+    setTimeout(() => {
+        const firstInput = setInputsContainer.querySelector('input');
+        if (firstInput) firstInput.focus();
+    }, 100);
+    
+    console.log(`📝 Opened modal for ${exerciseName}`);
+}
+
+function closeExerciseModal() {
+    const modal = document.getElementById('exerciseModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    
+    // Clear current exercise
+    HyperTrack.state.currentExercise = null;
+}
+
+function addSet() {
+    const setInputsContainer = document.getElementById('setInputs');
+    if (!setInputsContainer) return;
+    
+    const setNumber = setInputsContainer.children.length + 1;
+    
+    const setDiv = document.createElement('div');
+    setDiv.className = 'set-input-row';
+    setDiv.innerHTML = `
+        <div class="set-number">Set ${setNumber}</div>
+        <div class="input-group">
+            <input type="number" class="set-input" placeholder="Weight (lbs)" min="0" step="2.5">
+            <input type="number" class="set-input" placeholder="Reps" min="1" max="50">
+            <button type="button" class="remove-set-btn" onclick="removeSet(this)">×</button>
+        </div>
+    `;
+    
+    setInputsContainer.appendChild(setDiv);
+    
+    // Focus on weight input
+    const weightInput = setDiv.querySelector('input');
+    if (weightInput) weightInput.focus();
+}
+
+function removeSet(button) {
+    const setInputsContainer = document.getElementById('setInputs');
+    const setRow = button.closest('.set-input-row');
+    
+    if (setRow && setInputsContainer.children.length > 1) {
+        setRow.remove();
+        
+        // Renumber remaining sets
+        Array.from(setInputsContainer.children).forEach((row, index) => {
+            const setNumber = row.querySelector('.set-number');
+            if (setNumber) {
+                setNumber.textContent = `Set ${index + 1}`;
+            }
+        });
+    }
+}
+
+// ==========================================
 // NAVIGATION FUNCTIONS
 // ==========================================
 function switchTab(tabName) {
@@ -2601,3 +2959,31 @@ function setupEventListeners() {
 
 // Initialize
 console.log('🚀 HyperTrack Pro Enhanced Edition loaded');
+
+// Initialize the application when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎯 Initializing HyperTrack Pro...');
+    
+    // Load historical data
+    HyperTrack.loadHistoricalData();
+    
+    // Initialize UI
+    loadAppData();
+    populateExerciseList();
+    updateUI();
+    
+    // Setup event listeners
+    setupEventListeners();
+    
+    // Start research fact rotation
+    startResearchFactRotation();
+    
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => console.log('✅ Service Worker registered'))
+            .catch(error => console.log('❌ Service Worker registration failed'));
+    }
+    
+    console.log('✅ HyperTrack Pro initialization complete');
+});
