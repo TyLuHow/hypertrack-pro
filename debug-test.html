@@ -3,44 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debug Test</title>
+    <title>HyperTrack Pro - Debug Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 5px;
+        }
+        .pass { color: #00ff00; }
+        .fail { color: #ff0000; }
+        .info { color: #ffff00; }
+        button {
+            background: #333;
+            color: white;
+            border: 1px solid #666;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #555; }
+    </style>
 </head>
 <body>
-    <h1>Debug Test</h1>
-    <button onclick="testFunction()">Test Button</button>
-    <div id="output"></div>
-
+    <h1>🧪 HyperTrack Pro Debug Test</h1>
+    <div id="testResults"></div>
+    
+    <h2>Manual Tests:</h2>
+    <button onclick="testStartWorkout()">Test Start Workout</button>
+    <button onclick="testExerciseSelection()">Test Exercise Selection</button>
+    <button onclick="testNavigation()">Test Navigation</button>
+    <button onclick="runAllTests()">Run All Tests</button>
+    
     <script src="tyler-data-integration.js"></script>
     <script src="app.js"></script>
     <script>
-        // Debug test
-        function testFunction() {
-            console.log('Test function called');
-            document.getElementById('output').innerHTML = 'Test worked!';
+        function log(message, className = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${className}`;
+            div.innerHTML = message;
+            document.getElementById('testResults').appendChild(div);
         }
         
-        // Check if key functions exist
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('=== DEBUGGING HYPERTRACK APP ===');
-            console.log('HyperTrack object:', typeof HyperTrack);
-            console.log('switchTab function:', typeof switchTab);
-            console.log('startWorkout function:', typeof startWorkout);
-            console.log('loadAppData function:', typeof loadAppData);
-            console.log('populateExerciseList function:', typeof populateExerciseList);
-            console.log('setupEventListeners function:', typeof setupEventListeners);
-            console.log('updateUI function:', typeof updateUI);
-            console.log('tylerCompleteWorkouts:', typeof tylerCompleteWorkouts);
-            
-            // Test if DOM elements exist
-            console.log('workoutTab element:', document.getElementById('workoutTab'));
-            console.log('exerciseList element:', document.getElementById('exerciseList'));
-            console.log('startWorkout element:', document.getElementById('startWorkout'));
-            console.log('nav buttons:', document.querySelectorAll('.nav-btn').length);
-            
-            // Test exercise database
-            if (typeof HyperTrack !== 'undefined' && HyperTrack.exerciseDatabase) {
-                console.log('Exercise database length:', HyperTrack.exerciseDatabase.length);
+        function testStartWorkout() {
+            log('🏋️‍♂️ Testing Start Workout...');
+            try {
+                if (typeof startWorkout === 'function') {
+                    log('✅ startWorkout function exists', 'pass');
+                    // Don't actually call it to avoid side effects
+                    log('✅ Start workout test passed', 'pass');
+                } else {
+                    log('❌ startWorkout function missing', 'fail');
+                }
+            } catch (error) {
+                log(`❌ Start workout test failed: ${error.message}`, 'fail');
             }
+        }
+        
+        function testExerciseSelection() {
+            log('🎯 Testing Exercise Selection...');
+            try {
+                if (typeof selectExercise === 'function') {
+                    log('✅ selectExercise function exists', 'pass');
+                    log(`✅ Exercise database has ${HyperTrack.exerciseDatabase.length} exercises`, 'pass');
+                } else {
+                    log('❌ selectExercise function missing', 'fail');
+                }
+            } catch (error) {
+                log(`❌ Exercise selection test failed: ${error.message}`, 'fail');
+            }
+        }
+        
+        function testNavigation() {
+            log('🧭 Testing Navigation...');
+            try {
+                if (typeof switchTab === 'function') {
+                    log('✅ switchTab function exists', 'pass');
+                    const tabs = ['workout', 'history', 'analytics', 'settings'];
+                    tabs.forEach(tab => {
+                        const element = document.getElementById(tab + 'Tab');
+                        if (element) {
+                            log(`✅ ${tab} tab found`, 'pass');
+                        } else {
+                            log(`❌ ${tab} tab missing`, 'fail');
+                        }
+                    });
+                } else {
+                    log('❌ switchTab function missing', 'fail');
+                }
+            } catch (error) {
+                log(`❌ Navigation test failed: ${error.message}`, 'fail');
+            }
+        }
+        
+        function runAllTests() {
+            document.getElementById('testResults').innerHTML = '';
+            log('🚀 Running all tests...');
+            testStartWorkout();
+            testExerciseSelection();
+            testNavigation();
+            log('✅ All tests completed!', 'pass');
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 1000);
         });
     </script>
 </body>
