@@ -1348,6 +1348,13 @@ function showCurrentWorkout() {
     updateExerciseList();
 }
 
+function hideCurrentWorkout() {
+    document.getElementById('startWorkout').style.display = 'block';
+    document.getElementById('currentWorkout').style.display = 'none';
+    document.getElementById('exerciseSelection').style.display = 'none';
+    document.getElementById('fabIcon').textContent = '+';
+}
+
 function updateCurrentWorkoutDisplay() {
     const currentExercises = document.getElementById('currentExercises');
     const workout = HyperTrack.state.currentWorkout;
@@ -2402,26 +2409,6 @@ function applyPlateauStrategy(exerciseName, strategy) {
 // ==========================================
 // CORE APPLICATION FUNCTIONS
 // ==========================================
-function updateUI() {
-    // Update current workout display
-    if (HyperTrack.state.currentWorkout) {
-        showCurrentWorkout();
-    } else {
-        hideCurrentWorkout();
-    }
-    
-    // Update tab content
-    const activeTab = document.querySelector('.nav-btn.active')?.dataset.tab || 'workout';
-    switchTab(activeTab);
-    
-    // Update research banner
-    updateResearchBanner();
-    
-    // Update settings
-    updateSettingsTab();
-    
-    console.log('🔄 UI updated');
-}
 
 function loadAppData() {
     try {
@@ -2471,58 +2458,6 @@ function saveAppData() {
     } catch (error) {
         console.error('❌ Error saving app data:', error);
     }
-}
-
-function showCurrentWorkout() {
-    const currentWorkoutDiv = document.getElementById('currentWorkout');
-    const startWorkoutDiv = document.getElementById('startWorkout');
-    const exerciseSelectionDiv = document.getElementById('exerciseSelection');
-    
-    if (currentWorkoutDiv) currentWorkoutDiv.style.display = 'block';
-    if (startWorkoutDiv) startWorkoutDiv.style.display = 'none';
-    if (exerciseSelectionDiv) exerciseSelectionDiv.style.display = 'block';
-    
-    updateCurrentWorkoutDisplay();
-}
-
-function hideCurrentWorkout() {
-    const currentWorkoutDiv = document.getElementById('currentWorkout');
-    const startWorkoutDiv = document.getElementById('startWorkout');
-    const exerciseSelectionDiv = document.getElementById('exerciseSelection');
-    
-    if (currentWorkoutDiv) currentWorkoutDiv.style.display = 'none';
-    if (startWorkoutDiv) startWorkoutDiv.style.display = 'block';
-    if (exerciseSelectionDiv) exerciseSelectionDiv.style.display = 'none';
-}
-
-function updateCurrentWorkoutDisplay() {
-    if (!HyperTrack.state.currentWorkout) return;
-    
-    const exercisesContainer = document.getElementById('currentExercises');
-    if (!exercisesContainer) return;
-    
-    const exercises = HyperTrack.state.currentWorkout.exercises || [];
-    
-    if (exercises.length === 0) {
-        exercisesContainer.innerHTML = '<p class="no-exercises">No exercises added yet. Select an exercise to get started!</p>';
-        return;
-    }
-    
-    const html = exercises.map(exercise => `
-        <div class="exercise-item">
-            <div class="exercise-header">
-                <h3>${exercise.name}</h3>
-                <span class="muscle-group">${exercise.muscle_group}</span>
-            </div>
-            <div class="sets-summary">
-                ${exercise.sets.map((set, index) => `
-                    <span class="set-badge">${set.weight}lbs × ${set.reps}</span>
-                `).join('')}
-            </div>
-        </div>
-    `).join('');
-    
-    exercisesContainer.innerHTML = html;
 }
 
 // ==========================================
@@ -2804,7 +2739,81 @@ function viewWorkoutDetails(workoutId) {
     const workout = HyperTrack.state.workouts.find(w => w.id === workoutId);
     if (!workout) return;
     
-    alert(`Workout Details:\n\nDate: ${workout.date || workout.workout_date}\nExercises: ${workout.exercises?.length || 0}\nDuration: ${Math.round((workout.duration || 0) / 60000)} minutes\nNotes: ${workout.notes || 'None'}`);
+    // Create detailed workout modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    
+    const exercises = workout.exercises || [];
+    const totalSets = exercises.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0);
+    const totalVolume = exercises.reduce((sum, ex) => 
+        sum + (ex.sets?.reduce((setSum, set) => setSum + (set.weight * set.reps), 0) || 0), 0);
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>🏋️ ${formatDate(workout.date || workout.workout_date)} Workout</h3>
+                <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="workout-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-value">${exercises.length}</div>
+                        <div class="stat-label">Exercises</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalSets}</div>
+                        <div class="stat-label">Total Sets</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${Math.round(totalVolume)}</div>
+                        <div class="stat-label">Volume (lbs)</div>
+                    </div>
+                </div>
+                
+                ${workout.notes ? `<div style="background: #374151; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-style: italic;">📝 ${workout.notes}</div>` : ''}
+                
+                <div class="exercises-detail">
+                    <h4 style="margin-bottom: 16px; color: #3d7070;">Exercise Details:</h4>
+                    ${exercises.map(exercise => `
+                        <div style="background: #374151; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <h5 style="color: #f8fafc; margin: 0;">${exercise.name}</h5>
+                                <span style="color: #3d7070; font-size: 14px;">${exercise.muscle_group} • ${exercise.category}</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px;">
+                                ${(exercise.sets || []).map((set, index) => `
+                                    <div style="background: #1f2937; padding: 8px; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 12px; color: #9ca3af; margin-bottom: 2px;">Set ${index + 1}</div>
+                                        <div style="font-weight: 600; color: #f8fafc;">${set.weight}lbs</div>
+                                        <div style="font-size: 14px; color: #d1d5db;">${set.reps} reps</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; color: #9ca3af;">
+                                ${exercise.sets?.length || 0} sets • Volume: ${Math.round((exercise.sets || []).reduce((sum, set) => sum + (set.weight * set.reps), 0))} lbs
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #374151; font-size: 14px; color: #9ca3af;">
+                    <div>⏱️ Duration: ${Math.round((workout.duration || 0) / 60000)} minutes</div>
+                    <div>📅 ${workout.tod || 'N/A'} workout</div>
+                    <div>🏷️ Split: ${workout.split || 'General'}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.remove();
+        }
+    });
 }
 
 function openSettings() {
