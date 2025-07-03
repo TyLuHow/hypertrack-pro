@@ -10,7 +10,14 @@
     "serve": "npx serve . -p 3000"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@modelcontextprotocol/server-brave-search": "^0.6.2",
+    "@modelcontextprotocol/server-filesystem": "^2025.7.1",
+    "@modelcontextprotocol/server-postgres": "^0.6.2",
+    "@supabase/supabase-js": "^2.45.4",
+    "firecrawl-mcp": "^1.12.0",
+    "firecrawl-simple-mcp": "^1.0.2",
+    "gptr": "^1.2.9",
+    "puppeteer-mcp-server": "^0.7.2"
   },
   "devDependencies": {
     "vercel": "^33.0.0"

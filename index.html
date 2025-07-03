@@ -17,76 +17,15 @@
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
     <link rel="apple-touch-icon" href="icon-192.png">
     
-    <!-- Force CSS load with cache busting -->
-    <link rel="stylesheet" href="styles.css?v=20250702" type="text/css">
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
     
-    <!-- Backup inline styles in case external CSS fails -->
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            color: #f8fafc;
-            margin: 0;
-            min-height: 100vh;
-        }
-        .header { 
-            background: linear-gradient(135deg, #1b4e4e, #2c5f5f);
-            padding: 20px;
-            color: white;
-            text-align: center;
-        }
-        .app-title { font-size: 28px; font-weight: bold; margin-bottom: 4px; }
-        .app-subtitle { font-size: 14px; opacity: 0.9; }
-        .main-content { padding: 20px; max-width: 800px; margin: 0 auto; }
-        .btn { 
-            background: linear-gradient(135deg, #1b4e4e, #2c5f5f);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 16px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .welcome-card {
-            background: linear-gradient(135deg, #2a2c2f, #334155);
-            border: 1px solid #374151;
-            border-radius: 16px;
-            padding: 40px 24px;
-            text-align: center;
-            margin-bottom: 24px;
-        }
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #2a2c2f;
-            border-top: 1px solid #374151;
-            display: flex;
-            z-index: 100;
-        }
-        .nav-btn {
-            flex: 1;
-            padding: 12px 8px;
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-        .nav-btn.active { color: #3d7070; }
-        .tab-content { display: none; padding-bottom: 100px; }
-        .tab-content.active { display: block; }
-    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app">
+    <!-- App Container -->
+    <div class="app" id="app">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
@@ -95,7 +34,10 @@
             </div>
             <div class="header-actions">
                 <button class="settings-btn" onclick="openSettings()" aria-label="Settings">
-                    ⚙️
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
                 </button>
             </div>
         </header>
@@ -104,7 +46,7 @@
         <div class="research-banner" id="researchBanner">
             <div class="research-content">
                 <span class="research-icon">🔬</span>
-                <p class="research-text" id="researchText">Dr. Eric Helms' research recommends 3.5% weekly progression for trained individuals</p>
+                <p class="research-text" id="researchText">Loading research insights...</p>
             </div>
         </div>
 
@@ -113,6 +55,17 @@
             <!-- Workout Tab -->
             <div id="workoutTab" class="tab-content active">
                 <div class="workout-container">
+                    <!-- Current Workout Display -->
+                    <div id="currentWorkout" class="current-workout" style="display: none;">
+                        <div class="workout-header">
+                            <h2>Current Workout</h2>
+                            <div class="workout-timer">
+                                <span id="workoutTime">00:00</span>
+                            </div>
+                        </div>
+                        <div id="currentExercises" class="current-exercises"></div>
+                    </div>
+
                     <!-- Start Workout Section -->
                     <div id="startWorkout" class="start-workout">
                         <div class="welcome-card">
@@ -125,19 +78,6 @@
                         </div>
                     </div>
 
-                    <!-- Current Workout Display -->
-                    <div id="currentWorkout" class="current-workout" style="display: none;">
-                        <div class="workout-header">
-                            <h2>Current Workout</h2>
-                            <div class="workout-timer">
-                                <span id="workoutTime">00:00</span>
-                            </div>
-                        </div>
-                        <div id="currentExercises" class="current-exercises">
-                            <p>No exercises added yet. Select an exercise below to begin.</p>
-                        </div>
-                    </div>
-
                     <!-- Exercise Selection -->
                     <div id="exerciseSelection" class="exercise-selection" style="display: none;">
                         <div class="search-container">
@@ -146,7 +86,12 @@
                                    id="exerciseSearch" 
                                    placeholder="Search exercises..."
                                    onkeyup="filterExercises(this.value)">
-                            <div class="search-icon">🔍</div>
+                            <div class="search-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+                            </div>
                         </div>
 
                         <div class="muscle-groups">
@@ -158,28 +103,7 @@
                             <button class="muscle-btn" onclick="filterByMuscle('Arms')">Arms</button>
                         </div>
 
-                        <div id="exerciseList" class="exercise-list">
-                            <div class="exercise-item" onclick="selectExercise(1)">
-                                <div class="exercise-name">Pull-ups</div>
-                                <div class="exercise-meta">Back • Compound • Tier 1 • 117% MVC</div>
-                            </div>
-                            <div class="exercise-item" onclick="selectExercise(2)">
-                                <div class="exercise-name">Barbell Squats</div>
-                                <div class="exercise-meta">Legs • Compound • Tier 1 • 95% MVC</div>
-                            </div>
-                            <div class="exercise-item" onclick="selectExercise(3)">
-                                <div class="exercise-name">Barbell Bench Press</div>
-                                <div class="exercise-meta">Chest • Compound • Tier 1 • 95% MVC</div>
-                            </div>
-                            <div class="exercise-item" onclick="selectExercise(4)">
-                                <div class="exercise-name">Barbell Rows</div>
-                                <div class="exercise-meta">Back • Compound • Tier 1 • 93% MVC</div>
-                            </div>
-                            <div class="exercise-item" onclick="selectExercise(5)">
-                                <div class="exercise-name">Romanian Deadlifts</div>
-                                <div class="exercise-meta">Legs • Compound • Tier 1 • 90% MVC</div>
-                            </div>
-                        </div>
+                        <div id="exerciseList" class="exercise-list"></div>
                     </div>
                 </div>
             </div>
@@ -202,22 +126,31 @@
             <div id="analyticsTab" class="tab-content">
                 <div class="analytics-container">
                     <h2>Progress Analytics</h2>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="totalWorkouts">0</div>
-                            <div class="stat-label">Total Workouts</div>
+                    <div id="analyticsContent" class="analytics-content">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="totalWorkouts">0</div>
+                                <div class="stat-label">Total Workouts</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="totalSets">0</div>
+                                <div class="stat-label">Total Sets</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="totalVolume">0</div>
+                                <div class="stat-label">Total Volume (lbs)</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="avgDuration">0</div>
+                                <div class="stat-label">Avg Duration (min)</div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="totalSets">0</div>
-                            <div class="stat-label">Total Sets</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="totalVolume">0</div>
-                            <div class="stat-label">Total Volume (lbs)</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="avgDuration">0</div>
-                            <div class="stat-label">Avg Duration (min)</div>
+                        
+                        <div class="progress-section">
+                            <h3>Recent Progress</h3>
+                            <div id="progressChart" class="progress-chart">
+                                <p class="chart-placeholder">Complete more workouts to see progress trends</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -233,14 +166,43 @@
                         <div class="setting-item">
                             <label class="setting-label">
                                 <input type="checkbox" id="showResearchFacts" checked onchange="toggleResearchFacts(this.checked)">
+                                <span class="checkmark"></span>
                                 Show Research Facts
                             </label>
                         </div>
                         <div class="setting-item">
                             <label class="setting-label">
                                 <input type="checkbox" id="darkMode" checked onchange="toggleDarkMode(this.checked)">
+                                <span class="checkmark"></span>
                                 Dark Mode
                             </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Rest Timer Settings</h3>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="autoStartRestTimer" checked onchange="toggleAutoRestTimer(this.checked)">
+                                <span class="checkmark"></span>
+                                Auto-Start Rest Timer After Set
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>Compound Exercise Rest (seconds)</label>
+                            <input type="number" class="setting-input" id="compoundRest" value="150" min="60" max="300">
+                        </div>
+                        <div class="setting-item">
+                            <label>Isolation Exercise Rest (seconds)</label>
+                            <input type="number" class="setting-input" id="isolationRest" value="90" min="30" max="180">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Progressive Overload</h3>
+                        <div class="setting-item">
+                            <label>Weekly Progression Rate (%)</label>
+                            <input type="number" class="setting-input" id="progressionRate" value="3.5" min="1" max="10" step="0.1">
                         </div>
                     </div>
 
@@ -299,117 +261,13 @@
     <script src="tyler-data-integration.js"></script>
     <script src="app.js"></script>
     <script>
-        // Basic functionality for demo
-        function startWorkout() {
-            document.getElementById('startWorkout').style.display = 'none';
-            document.getElementById('currentWorkout').style.display = 'block';
-            document.getElementById('exerciseSelection').style.display = 'block';
-            document.getElementById('fabIcon').textContent = '✓';
-            console.log('Workout started');
-        }
-
-        function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Remove active from all nav buttons
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        }
-
-        function toggleWorkout() {
-            const startSection = document.getElementById('startWorkout');
-            if (startSection.style.display !== 'none') {
-                startWorkout();
-            } else {
-                // End workout
-                document.getElementById('startWorkout').style.display = 'block';
-                document.getElementById('currentWorkout').style.display = 'none';
-                document.getElementById('exerciseSelection').style.display = 'none';
-                document.getElementById('fabIcon').textContent = '+';
-            }
-        }
-
-        function selectExercise(id) {
-            alert(`Exercise ${id} selected! Modal functionality coming soon.`);
-        }
-
-        function filterByMuscle(muscle) {
-            document.querySelectorAll('.muscle-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            console.log('Filtering by:', muscle);
-        }
-
-        function filterExercises(term) {
-            console.log('Searching for:', term);
-        }
-
-        function openSettings() {
-            switchTab('settings');
-        }
-
-        function toggleResearchFacts(enabled) {
-            document.getElementById('researchBanner').style.display = enabled ? 'block' : 'none';
-        }
-
-        function toggleDarkMode(enabled) {
-            console.log('Dark mode:', enabled);
-        }
-
-        function exportData() {
-            alert('Export functionality coming soon!');
-        }
-
-        function importData() {
-            alert('Import functionality coming soon!');
-        }
-
-        function clearAllData() {
-            if (confirm('Clear all data?')) {
-                alert('Data cleared!');
-            }
-        }
-
-        function closeExerciseModal() {
-            document.getElementById('exerciseModal').style.display = 'none';
-        }
-
-        function addSet() {
-            console.log('Add set');
-        }
-
-        function finishExercise() {
-            console.log('Finish exercise');
-            closeExerciseModal();
-        }
-
-        // Auto-start research facts rotation
-        const researchFacts = [
-            "Dr. Eric Helms' research recommends 3.5% weekly progression for trained individuals",
-            "Research shows 2-3 minutes rest between compound exercises maximizes performance",
-            "Studies show 10-20 sets per muscle per week optimizes hypertrophy",
-            "Training each muscle 2x per week maximizes protein synthesis response",
-            "Both heavy (4-6) and moderate (8-12) rep ranges build muscle effectively"
-        ];
-
-        let factIndex = 0;
-        setInterval(() => {
-            document.getElementById('researchText').textContent = researchFacts[factIndex];
-            factIndex = (factIndex + 1) % researchFacts.length;
-        }, 10000);
-
-        // Register service worker
+        // Register service worker for PWA
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('SW registered'))
-                .catch(() => console.log('SW failed'));
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
         }
     </script>
 </body>
