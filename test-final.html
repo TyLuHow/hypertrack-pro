@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperTrack Pro - Final Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .test { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .pass { background: #10b981; }
+        .fail { background: #ef4444; }
+        .info { background: #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🧪 HyperTrack Pro Final Test</h1>
+    <div id="results"></div>
+
+    <script src="tyler-data-integration.js"></script>
+    <script src="app.js"></script>
+    <script>
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.textContent = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        // Wait for app to initialize
+        setTimeout(() => {
+            log('🚀 Testing HyperTrack Pro functionality...', 'info');
+            
+            // Test 1: Check Tyler's historical data loaded
+            const historicalCount = HyperTrack.state.workouts.length;
+            if (historicalCount >= 6) {
+                log(`✅ Tyler's historical data loaded: ${historicalCount} workouts`, 'pass');
+            } else {
+                log(`❌ Expected 6+ historical workouts, got ${historicalCount}`, 'fail');
+            }
+            
+            // Test 2: Check exercise database
+            const exerciseCount = HyperTrack.exerciseDatabase.length;
+            if (exerciseCount >= 14) {
+                log(`✅ Exercise database loaded: ${exerciseCount} exercises`, 'pass');
+            } else {
+                log(`❌ Expected 14+ exercises, got ${exerciseCount}`, 'fail');
+            }
+            
+            // Test 3: Check key functions exist
+            const requiredFunctions = ['startWorkout', 'switchTab', 'selectExercise', 'finishWorkout', 'updateHistoryDisplay'];
+            let functionsPassed = 0;
+            
+            requiredFunctions.forEach(funcName => {
+                if (typeof window[funcName] === 'function') {
+                    functionsPassed++;
+                } else {
+                    log(`❌ Missing function: ${funcName}`, 'fail');
+                }
+            });
+            
+            if (functionsPassed === requiredFunctions.length) {
+                log(`✅ All ${requiredFunctions.length} required functions available`, 'pass');
+            } else {
+                log(`❌ Only ${functionsPassed}/${requiredFunctions.length} functions available`, 'fail');
+            }
+            
+            // Test 4: Check DOM elements exist
+            const requiredElements = ['workoutTab', 'exerciseList', 'exerciseModal', 'historyList'];
+            let elementsFound = 0;
+            
+            requiredElements.forEach(elementId => {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    elementsFound++;
+                } else {
+                    log(`❌ Missing element: ${elementId}`, 'fail');
+                }
+            });
+            
+            if (elementsFound === requiredElements.length) {
+                log(`✅ All ${requiredElements.length} required DOM elements found`, 'pass');
+            } else {
+                log(`❌ Only ${elementsFound}/${requiredElements.length} elements found`, 'fail');
+            }
+            
+            // Test 5: Check sample workout details
+            if (HyperTrack.state.workouts.length > 0) {
+                const sampleWorkout = HyperTrack.state.workouts[0];
+                const exerciseCount = sampleWorkout.exercises?.length || 0;
+                const totalSets = sampleWorkout.exercises?.reduce((sum, ex) => sum + (ex.sets?.length || 0), 0) || 0;
+                
+                if (exerciseCount > 0 && totalSets > 0) {
+                    log(`✅ Sample workout has ${exerciseCount} exercises, ${totalSets} total sets`, 'pass');
+                } else {
+                    log(`❌ Sample workout has incomplete data: ${exerciseCount} exercises, ${totalSets} sets`, 'fail');
+                }
+            }
+            
+            log('🏁 Testing complete! Check results above.', 'info');
+            
+        }, 2000);
+    </script>
+</body>
+</html>

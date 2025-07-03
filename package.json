@@ -1,45 +1,12 @@
 {
   "name": "hypertrack-pro",
-  "version": "2.0.0",
-  "description": "Evidence-based strength training tracker with Supabase integration",
-  "main": "app.js",
+  "version": "1.0.0",
+  "description": "Evidence-Based Hypertrophy Optimization PWA",
+  "main": "index.html",
   "scripts": {
-    "start": "vercel dev",
-    "build": "echo 'Static build complete'",
-    "deploy": "vercel --prod",
-    "serve": "npx serve . -p 3000",
-    "setup-db": "node scripts/setup-database.js",
-    "test-db": "node -e \"require('./scripts/setup-database.js').testConnection()\""
+    "start": "python3 -m http.server 3000"
   },
-  "dependencies": {
-    "@modelcontextprotocol/server-brave-search": "^0.6.2",
-    "@modelcontextprotocol/server-filesystem": "^2025.7.1",
-    "@modelcontextprotocol/server-postgres": "^0.6.2",
-    "@modelcontextprotocol/server-sequential-thinking": "^2025.7.1",
-    "@notionhq/notion-mcp-server": "^1.8.1",
-    "@supabase/mcp-server-supabase": "^0.4.5",
-    "@supabase/supabase-js": "^2.45.4",
-    "firecrawl-mcp": "^1.12.0",
-    "firecrawl-simple-mcp": "^1.0.2",
-    "gptr": "^1.2.9",
-    "mcp-server-kubernetes": "^2.4.9",
-    "puppeteer-mcp-server": "^0.7.2"
-  },
-  "devDependencies": {
-    "dotenv": "^16.6.1",
-    "vercel": "^33.0.0"
-  },
-  "keywords": [
-    "fitness",
-    "strength-training",
-    "progressive-overload",
-    "evidence-based",
-    "supabase"
-  ],
-  "author": "Tyler Luby Howard",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/TyLuHow/hypertrack-pro"
-  }
+  "keywords": ["fitness", "workout", "tracking", "pwa"],
+  "author": "Tyler",
+  "license": "MIT"
 }
