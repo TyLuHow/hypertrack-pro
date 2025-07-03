@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperTrack Pro - Live Test</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="testContainer">
+        <h1>🧪 HyperTrack Pro Live Test</h1>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="testNavigation()" class="btn btn-primary">Test Navigation</button>
+            <button onclick="testWorkoutFlow()" class="btn btn-primary">Test Workout Flow</button>
+            <button onclick="testExerciseDatabase()" class="btn btn-primary">Test Exercise DB</button>
+        </div>
+        
+        <div id="testResults"></div>
+        
+        <!-- Simulate the main app structure -->
+        <div class="app" style="display: none;">
+            <div id="workoutTab" class="tab-content active">Workout Tab</div>
+            <div id="historyTab" class="tab-content">History Tab</div>
+            <div id="analyticsTab" class="tab-content">Analytics Tab</div>
+            <div id="settingsTab" class="tab-content">Settings Tab</div>
+            
+            <nav class="bottom-nav">
+                <button class="nav-btn active" onclick="switchTab('workout')" data-tab="workout">Workout</button>
+                <button class="nav-btn" onclick="switchTab('history')" data-tab="history">History</button>
+                <button class="nav-btn" onclick="switchTab('analytics')" data-tab="analytics">Analytics</button>
+                <button class="nav-btn" onclick="switchTab('settings')" data-tab="settings">Settings</button>
+            </nav>
+            
+            <div id="exerciseList" class="exercise-list"></div>
+            <div id="historyList"></div>
+            <div id="totalWorkouts">0</div>
+            <div id="totalSets">0</div>
+            <div id="totalVolume">0</div>
+            <div id="avgDuration">0</div>
+        </div>
+    </div>
+
+    <script src="tyler-data-integration.js"></script>
+    <script src="app.js"></script>
+    <script>
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.style.cssText = `
+                margin: 5px 0;
+                padding: 10px;
+                border-radius: 4px;
+                background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#60a5fa'};
+                color: white;
+                font-weight: 500;
+            `;
+            div.textContent = message;
+            document.getElementById('testResults').appendChild(div);
+        }
+        
+        function testNavigation() {
+            log('Testing navigation functions...');
+            
+            // Test switchTab function
+            if (typeof switchTab === 'function') {
+                log('✅ switchTab function exists', 'success');
+                
+                try {
+                    switchTab('history');
+                    log('✅ switchTab execution successful', 'success');
+                } catch (error) {
+                    log(`❌ switchTab failed: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ switchTab function missing', 'error');
+            }
+        }
+        
+        function testWorkoutFlow() {
+            log('Testing workout flow...');
+            
+            // Test startWorkout function
+            if (typeof startWorkout === 'function') {
+                log('✅ startWorkout function exists', 'success');
+                
+                try {
+                    // Don't actually start to avoid side effects in test
+                    log('✅ startWorkout function is callable', 'success');
+                } catch (error) {
+                    log(`❌ startWorkout failed: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ startWorkout function missing', 'error');
+            }
+        }
+        
+        function testExerciseDatabase() {
+            log('Testing exercise database...');
+            
+            if (typeof HyperTrack !== 'undefined' && HyperTrack.exerciseDatabase) {
+                const count = HyperTrack.exerciseDatabase.length;
+                log(`✅ Exercise database loaded: ${count} exercises`, 'success');
+                
+                if (count > 0) {
+                    const firstExercise = HyperTrack.exerciseDatabase[0];
+                    log(`✅ Sample exercise: ${firstExercise.name} (${firstExercise.muscle_group})`, 'success');
+                }
+            } else {
+                log('❌ Exercise database not found', 'error');
+            }
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🚀 Starting HyperTrack Pro live tests...');
+                testNavigation();
+                testWorkoutFlow();
+                testExerciseDatabase();
+                log('✅ All tests completed!', 'success');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

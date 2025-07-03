@@ -2527,56 +2527,8 @@ function updateCurrentWorkoutDisplay() {
 
 // ==========================================
 // UTILITY FUNCTIONS
-// ==========================================
-function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: var(--bg-card);
-        color: var(--text-primary);
-        padding: 16px 20px;
-        border-radius: 8px;
-        border-left: 4px solid var(--${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'primary'});
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 10000;
-        max-width: 300px;
-        font-weight: 500;
-        animation: slideIn 0.3s ease;
-        backdrop-filter: blur(10px);
-    `;
-    
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
 function openSettings() {
     switchTab('settings');
-}
-
-function toggleWorkout() {
-    if (HyperTrack.state.currentWorkout) {
-        // If workout is active, show finish workout modal
-        if (confirm('Are you sure you want to finish this workout?')) {
-            finishWorkout();
-        }
-    } else {
-        // Start new workout
-        startWorkout();
-    }
 }
 
 function filterExercises(searchTerm) {
@@ -2706,39 +2658,6 @@ function openExerciseModal(exerciseName) {
     console.log(`📝 Opened modal for ${exerciseName}`);
 }
 
-function closeExerciseModal() {
-    const modal = document.getElementById('exerciseModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-    
-    // Clear current exercise
-    HyperTrack.state.currentExercise = null;
-}
-
-function addSet() {
-    const setInputsContainer = document.getElementById('setInputs');
-    if (!setInputsContainer) return;
-    
-    const setNumber = setInputsContainer.children.length + 1;
-    
-    const setDiv = document.createElement('div');
-    setDiv.className = 'set-input-row';
-    setDiv.innerHTML = `
-        <div class="set-number">Set ${setNumber}</div>
-        <div class="input-group">
-            <input type="number" class="set-input" placeholder="Weight (lbs)" min="0" step="2.5">
-            <input type="number" class="set-input" placeholder="Reps" min="1" max="50">
-            <button type="button" class="remove-set-btn" onclick="removeSet(this)">×</button>
-        </div>
-    `;
-    
-    setInputsContainer.appendChild(setDiv);
-    
-    // Focus on weight input
-    const weightInput = setDiv.querySelector('input');
-    if (weightInput) weightInput.focus();
-}
 
 function removeSet(button) {
     const setInputsContainer = document.getElementById('setInputs');
@@ -2757,59 +2676,6 @@ function removeSet(button) {
     }
 }
 
-// ==========================================
-// NAVIGATION FUNCTIONS
-// ==========================================
-function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    const tabElement = document.getElementById(tabName + 'Tab');
-    const navButton = document.querySelector(`[data-tab="${tabName}"]`);
-    
-    if (tabElement) tabElement.classList.add('active');
-    if (navButton) navButton.classList.add('active');
-    
-    switch (tabName) {
-        case 'workout':
-            updateWorkoutTab();
-            break;
-        case 'history':
-            updateHistoryTab();
-            break;
-        case 'analytics':
-            updateAnalyticsTab();
-            break;
-        case 'settings':
-            updateSettingsTab();
-            break;
-    }
-    
-    console.log(`📱 Switched to ${tabName} tab`);
-}
-
-function toggleWorkout() {
-    if (HyperTrack.state.currentWorkout) {
-        finishWorkout();
-    } else {
-        startWorkout();
-    }
-}
-
-function filterExercises(searchTerm) {
-    updateExerciseList();
-}
-
-function filterByMuscle(muscleGroup) {
-    document.querySelectorAll('.muscle-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    updateExerciseList();
-}
 
 // ==========================================
 // SETTINGS FUNCTIONS
@@ -2830,6 +2696,115 @@ function toggleAutoRestTimer(enabled) {
     HyperTrack.state.settings.autoStartRestTimer = enabled;
     saveAppData();
     console.log(`⏱️ Auto-start rest timer ${enabled ? 'enabled' : 'disabled'}`);
+}
+
+// ==========================================
+// NAVIGATION FUNCTIONS
+// ==========================================
+function switchTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all nav buttons
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    const selectedTab = document.getElementById(tabName + 'Tab');
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Add active class to corresponding nav button
+    const navButton = document.querySelector(`[data-tab="${tabName}"]`);
+    if (navButton) {
+        navButton.classList.add('active');
+    }
+    
+    // Update UI based on tab
+    if (tabName === 'history') {
+        updateHistoryDisplay();
+    } else if (tabName === 'analytics') {
+        updateAnalyticsDisplay();
+    }
+    
+    console.log(`🧭 Switched to ${tabName} tab`);
+}
+
+function toggleWorkout() {
+    if (HyperTrack.state.currentWorkout) {
+        // If workout is active, show finish options
+        if (confirm('Finish current workout?')) {
+            finishWorkout();
+        }
+    } else {
+        // Start new workout
+        startWorkout();
+    }
+}
+
+function updateHistoryDisplay() {
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+    
+    if (HyperTrack.state.workouts.length === 0) {
+        historyList.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📖</div>
+                <h3>No Workouts Yet</h3>
+                <p>Complete your first workout to see your training history and progress over time.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const sortedWorkouts = [...HyperTrack.state.workouts].sort((a, b) => 
+        new Date(b.date || b.workout_date) - new Date(a.date || a.workout_date)
+    );
+    
+    historyList.innerHTML = sortedWorkouts.map(workout => `
+        <div class="workout-history-item" onclick="viewWorkoutDetails('${workout.id}')">
+            <div class="workout-date">${formatDate(workout.date || workout.workout_date)}</div>
+            <div class="workout-summary">
+                <span>📋 ${workout.exercises?.length || 0} exercises</span>
+                <span>⏱️ ${Math.round((workout.duration || 0) / 60000)} min</span>
+                <span>🏋️ ${workout.split || 'General'}</span>
+            </div>
+            ${workout.notes ? `<div class="workout-notes">${workout.notes}</div>` : ''}
+        </div>
+    `).join('');
+}
+
+function updateAnalyticsDisplay() {
+    const workouts = HyperTrack.state.workouts;
+    
+    // Update stats
+    document.getElementById('totalWorkouts').textContent = workouts.length;
+    
+    const totalSets = workouts.reduce((sum, workout) => 
+        sum + (workout.exercises?.reduce((exerciseSum, exercise) => 
+            exerciseSum + (exercise.sets?.length || 0), 0) || 0), 0);
+    document.getElementById('totalSets').textContent = totalSets;
+    
+    const totalVolume = workouts.reduce((sum, workout) => 
+        sum + (workout.exercises?.reduce((exerciseSum, exercise) => 
+            exerciseSum + (exercise.sets?.reduce((setSum, set) => 
+                setSum + (set.weight * set.reps), 0) || 0), 0) || 0), 0);
+    document.getElementById('totalVolume').textContent = Math.round(totalVolume);
+    
+    const avgDuration = workouts.length > 0 ? 
+        workouts.reduce((sum, w) => sum + (w.duration || 0), 0) / workouts.length / 60000 : 0;
+    document.getElementById('avgDuration').textContent = Math.round(avgDuration);
+}
+
+function viewWorkoutDetails(workoutId) {
+    const workout = HyperTrack.state.workouts.find(w => w.id === workoutId);
+    if (!workout) return;
+    
+    alert(`Workout Details:\n\nDate: ${workout.date || workout.workout_date}\nExercises: ${workout.exercises?.length || 0}\nDuration: ${Math.round((workout.duration || 0) / 60000)} minutes\nNotes: ${workout.notes || 'None'}`);
 }
 
 function openSettings() {
