@@ -68,7 +68,9 @@ const HyperTrack = {
         recommendations: {
             cache: new Map(),
             lastUpdated: null
-        }
+        },
+        progressionGoals: new Map(),
+        plateauAlerts: new Map()
     },
     
     // Research facts to display
@@ -92,6 +94,555 @@ const HyperTrack = {
             const newWorkouts = tylerCompleteWorkouts.filter(w => !existingIds.includes(w.id));
             this.state.workouts = [...this.state.workouts, ...newWorkouts];
             console.log(`✅ Loaded ${newWorkouts.length} historical workouts (${tylerCompleteWorkouts.length} total from CSV)`);
+        }
+    },
+    
+    // Advanced rest timer learning system
+    restTimerLearning: {
+        // Store performance data correlated with rest periods
+        performanceData: new Map(),
+        
+        // Calculate optimal rest time based on historical performance
+        calculateOptimalRestTime(exerciseName, category) {
+            const key = `${exerciseName}_${category}`;
+            const data = this.performanceData.get(key) || [];
+            
+            // If no data, use research-based defaults
+            if (data.length < 3) {
+                return category === 'Compound' ? 150 : 90;
+            }
+            
+            // Calculate success rate for different rest periods
+            const restPeriods = {};
+            data.forEach(entry => {
+                const restTime = Math.floor(entry.restTime / 30) * 30; // Group by 30s intervals
+                if (!restPeriods[restTime]) {
+                    restPeriods[restTime] = { successful: 0, total: 0 };
+                }
+                restPeriods[restTime].total++;
+                if (entry.successful) {
+                    restPeriods[restTime].successful++;
+                }
+            });
+            
+            // Find optimal rest time (highest success rate with enough data)
+            let bestRestTime = category === 'Compound' ? 150 : 90;
+            let bestSuccessRate = 0;
+            
+            for (const [restTime, stats] of Object.entries(restPeriods)) {
+                if (stats.total >= 2) { // Need at least 2 data points
+                    const successRate = stats.successful / stats.total;
+                    if (successRate > bestSuccessRate) {
+                        bestSuccessRate = successRate;
+                        bestRestTime = parseInt(restTime);
+                    }
+                }
+            }
+            
+            return bestRestTime;
+        },
+        
+        // Record performance outcome after rest period
+        recordPerformanceOutcome(exerciseName, category, restTime, targetWeight, targetReps, actualReps, rpe = null) {
+            const key = `${exerciseName}_${category}`;
+            if (!this.performanceData.has(key)) {
+                this.performanceData.set(key, []);
+            }
+            
+            const data = this.performanceData.get(key);
+            const successful = actualReps >= targetReps;
+            
+            const entry = {
+                timestamp: new Date().toISOString(),
+                restTime: restTime,
+                targetWeight: targetWeight,
+                targetReps: targetReps,
+                actualReps: actualReps,
+                successful: successful,
+                rpe: rpe,
+                successRate: successful ? 1 : 0
+            };
+            
+            data.push(entry);
+            
+            // Keep only last 50 entries per exercise
+            if (data.length > 50) {
+                data.shift();
+            }
+            
+            this.performanceData.set(key, data);
+            console.log(`📊 Recorded performance: ${exerciseName} - ${successful ? 'Success' : 'Failure'} after ${restTime}s rest`);
+        },
+        
+        // Get rest time recommendation with reasoning
+        getRestRecommendation(exerciseName, category) {
+            const optimalRest = this.calculateOptimalRestTime(exerciseName, category);
+            const defaultRest = category === 'Compound' ? 150 : 90;
+            
+            let reasoning = '';
+            if (optimalRest !== defaultRest) {
+                const key = `${exerciseName}_${category}`;
+                const data = this.performanceData.get(key) || [];
+                const recentSuccessRate = data.slice(-5).filter(d => d.successful).length / Math.min(data.length, 5);
+                
+                if (optimalRest > defaultRest) {
+                    reasoning = `Extended to ${optimalRest}s based on ${data.length} sessions (${Math.round(recentSuccessRate * 100)}% recent success rate)`;
+                } else {
+                    reasoning = `Reduced to ${optimalRest}s - you consistently perform well with shorter rest`;
+                }
+            } else {
+                reasoning = `Research-based ${category.toLowerCase()} rest period`;
+            }
+            
+            return { restTime: optimalRest, reasoning };
+        }
+    },
+    
+    // Progressive overload system with real-world constraints
+    progressionSystem: {
+        // Available weight increments in most gyms
+        weightIncrements: {
+            barbell: [2.5, 5, 10, 25, 45], // Standard plates
+            dumbbell: [2.5, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50], // Common dumbbell weights
+            machine: [5, 10, 15, 20, 25] // Machine weight stacks
+        },
+        
+        // Calculate next workout recommendation
+        calculateProgression(exerciseName, currentWeight, currentReps, currentSets, targetReps = null, equipment = 'barbell') {
+            const weeklyProgressionRate = HyperTrack.state.settings.progressionRate / 100; // 3.5% default
+            const increments = this.weightIncrements[equipment] || this.weightIncrements.barbell;
+            
+            // Find closest available weight increment
+            const targetWeightIncrease = currentWeight * weeklyProgressionRate;
+            const closestIncrement = increments.reduce((prev, curr) => 
+                Math.abs(curr - targetWeightIncrease) < Math.abs(prev - targetWeightIncrease) ? curr : prev
+            );
+            
+            // Calculate progression options
+            const recommendations = [];
+            
+            // Option 1: Increase weight (if increment is reasonable)
+            if (closestIncrement <= currentWeight * 0.15) { // Max 15% increase
+                recommendations.push({
+                    type: 'weight',
+                    weight: currentWeight + closestIncrement,
+                    reps: currentReps,
+                    sets: currentSets,
+                    reasoning: `Add ${closestIncrement}lbs - standard progression`,
+                    difficulty: 'moderate'
+                });
+            }
+            
+            // Option 2: Increase reps (if current reps < 12)
+            if (currentReps < 12) {
+                recommendations.push({
+                    type: 'reps',
+                    weight: currentWeight,
+                    reps: currentReps + 1,
+                    sets: currentSets,
+                    reasoning: `Add 1 rep - volume progression`,
+                    difficulty: 'easy'
+                });
+            }
+            
+            // Option 3: Add set (if current sets < 4)
+            if (currentSets < 4) {
+                recommendations.push({
+                    type: 'sets',
+                    weight: currentWeight,
+                    reps: currentReps,
+                    sets: currentSets + 1,
+                    reasoning: `Add 1 set - volume increase`,
+                    difficulty: 'moderate'
+                });
+            }
+            
+            // Option 4: Micro-progression (smaller weight increase)
+            const microIncrement = increments.find(inc => inc < targetWeightIncrease) || increments[0];
+            if (microIncrement && microIncrement !== closestIncrement) {
+                recommendations.push({
+                    type: 'micro',
+                    weight: currentWeight + microIncrement,
+                    reps: currentReps,
+                    sets: currentSets,
+                    reasoning: `Conservative ${microIncrement}lbs increase`,
+                    difficulty: 'easy'
+                });
+            }
+            
+            return recommendations.sort((a, b) => {
+                const difficultyOrder = { 'easy': 1, 'moderate': 2, 'hard': 3 };
+                return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+            });
+        },
+        
+        // Detect plateau and suggest interventions
+        detectPlateau(exerciseHistory, exerciseName) {
+            if (exerciseHistory.length < 6) return null;
+            
+            const recent = exerciseHistory.slice(-6);
+            const weights = recent.map(h => h.weight);
+            const reps = recent.map(h => h.totalReps);
+            
+            // Check if weight hasn't increased in 3+ sessions
+            const weightStagnant = weights.slice(-3).every(w => w === weights[0]);
+            
+            // Check if total reps are declining
+            const repsDecline = reps.slice(-2).every((r, i) => r <= reps[reps.length - 3 + i]);
+            
+            if (weightStagnant && repsDecline) {
+                return {
+                    type: 'plateau',
+                    severity: 'moderate',
+                    recommendation: this.getPlateauBreakingStrategy(exerciseName, weights[0]),
+                    reasoning: `No weight progression in 3 sessions with declining reps`
+                };
+            }
+            
+            return null;
+        },
+        
+        // Plateau breaking strategies
+        getPlateauBreakingStrategy(exerciseName, currentWeight) {
+            const strategies = [
+                {
+                    type: 'deload',
+                    weight: Math.round(currentWeight * 0.85),
+                    strategy: 'Reduce weight by 15% and focus on perfect form',
+                    duration: '1-2 weeks'
+                },
+                {
+                    type: 'tempo',
+                    weight: Math.round(currentWeight * 0.9),
+                    strategy: 'Slower eccentric (3-second negative)',
+                    duration: '2-3 weeks'
+                },
+                {
+                    type: 'volume',
+                    weight: Math.round(currentWeight * 0.8),
+                    strategy: 'Increase sets by 1-2 with reduced weight',
+                    duration: '2-3 weeks'
+                },
+                {
+                    type: 'substitution',
+                    exercises: this.getExerciseSubstitutions(exerciseName),
+                    strategy: 'Try exercise variations to break adaptation',
+                    duration: '3-4 weeks'
+                }
+            ];
+            
+            return strategies[Math.floor(Math.random() * strategies.length)];
+        },
+        
+        // Exercise substitution recommendations
+        getExerciseSubstitutions(exerciseName) {
+            const substitutions = {
+                'Barbell Bench Press': ['Incline Dumbbell Press', 'Dumbbell Flyes', 'Push-ups'],
+                'Squats': ['Bulgarian Split Squats', 'Goblet Squats', 'Leg Press'],
+                'Deadlifts': ['Romanian Deadlifts', 'Trap Bar Deadlifts', 'Sumo Deadlifts'],
+                'Pull-ups': ['Lat Pulldowns', 'Assisted Pull-ups', 'Negative Pull-ups'],
+                'Barbell Rows': ['Dumbbell Rows', 'Cable Rows', 'T-Bar Rows']
+            };
+            
+            return substitutions[exerciseName] || [`${exerciseName} variations`, 'Similar movement patterns'];
+        }
+    },
+    
+    // Machine Learning Baseline System for Future AI Development
+    mlBaseline: {
+        // Data collection for future ML model training
+        performanceDataPoints: [],
+        contextualFactors: new Map(),
+        
+        // Collect comprehensive data points for ML training
+        collectDataPoint(exerciseName, performance, context = {}) {
+            const dataPoint = {
+                timestamp: new Date().toISOString(),
+                exercise: exerciseName,
+                performance: {
+                    weight: performance.weight,
+                    reps: performance.reps,
+                    sets: performance.sets,
+                    rpe: performance.rpe || null,
+                    restTime: performance.restTime || null,
+                    targetAchieved: performance.targetAchieved || false
+                },
+                context: {
+                    timeOfDay: new Date().getHours(),
+                    dayOfWeek: new Date().getDay(),
+                    workoutDuration: context.workoutDuration || null,
+                    previousRestQuality: context.sleepQuality || null,
+                    nutritionStatus: context.nutritionStatus || null,
+                    stressLevel: context.stressLevel || null,
+                    energyLevel: context.energyLevel || null,
+                    muscleGroupFatigue: context.muscleGroupFatigue || null,
+                    consecutiveWorkoutDays: context.consecutiveWorkoutDays || 0
+                },
+                outcomes: {
+                    nextSessionPerformance: null, // To be filled in next session
+                    plateauRisk: this.calculateCurrentPlateauRisk(exerciseName),
+                    progressionSuccess: null // To be determined over time
+                }
+            };
+            
+            this.performanceDataPoints.push(dataPoint);
+            
+            // Keep only last 1000 data points to manage memory
+            if (this.performanceDataPoints.length > 1000) {
+                this.performanceDataPoints.shift();
+            }
+            
+            console.log(`🤖 ML Data Point Collected: ${exerciseName} - ${performance.weight}x${performance.reps}`);
+        },
+        
+        // Calculate current plateau risk using basic pattern recognition
+        calculateCurrentPlateauRisk(exerciseName) {
+            const history = getExerciseHistory(exerciseName);
+            if (history.length < 3) return 0;
+            
+            const recent = history.slice(-3);
+            const weightProgression = recent[recent.length - 1].weight - recent[0].weight;
+            const volumeProgression = recent[recent.length - 1].totalReps - recent[0].totalReps;
+            
+            // Simple risk scoring (0-1)
+            let risk = 0;
+            if (weightProgression <= 0) risk += 0.4;
+            if (volumeProgression < 0) risk += 0.3;
+            if (recent.every(r => r.weight === recent[0].weight)) risk += 0.3;
+            
+            return Math.min(risk, 1.0);
+        },
+        
+        // Basic pattern recognition for plateau prediction
+        predictPlateauRisk(exerciseName, lookaheadWeeks = 2) {
+            const history = getExerciseHistory(exerciseName);
+            if (history.length < 6) return { risk: 0, confidence: 0, recommendation: 'Need more data' };
+            
+            // Analyze velocity of progression
+            const recent = history.slice(-6);
+            const progressionVelocity = this.calculateProgressionVelocity(recent);
+            const fatigueIndicators = this.detectFatiguePatterns(recent);
+            const volumeOverreach = this.assessVolumeOverreach(exerciseName);
+            
+            // Combine indicators for risk assessment
+            let risk = 0;
+            let confidence = 0.3; // Base confidence
+            
+            // Velocity indicators
+            if (progressionVelocity.weightVelocity < 0.5) {
+                risk += 0.3;
+                confidence += 0.2;
+            }
+            
+            // Fatigue patterns
+            if (fatigueIndicators.repsDecline > 0.1) {
+                risk += 0.25;
+                confidence += 0.15;
+            }
+            
+            // Volume overreach
+            if (volumeOverreach > 1.5) {
+                risk += 0.2;
+                confidence += 0.1;
+            }
+            
+            // Historical plateau patterns
+            const plateauHistory = this.detectHistoricalPlateaus(exerciseName);
+            if (plateauHistory.frequency > 0.2) {
+                risk += 0.25;
+                confidence += 0.2;
+            }
+            
+            risk = Math.min(risk, 1.0);
+            confidence = Math.min(confidence, 1.0);
+            
+            let recommendation = 'Continue current programming';
+            if (risk > 0.7) recommendation = 'Consider deload or exercise variation';
+            else if (risk > 0.4) recommendation = 'Monitor closely, prepare deload';
+            
+            return { 
+                risk: Math.round(risk * 100) / 100, 
+                confidence: Math.round(confidence * 100) / 100,
+                recommendation,
+                lookaheadWeeks
+            };
+        },
+        
+        // Calculate progression velocity
+        calculateProgressionVelocity(exerciseHistory) {
+            if (exerciseHistory.length < 3) return { weightVelocity: 0, volumeVelocity: 0 };
+            
+            const weights = exerciseHistory.map(h => h.weight);
+            const volumes = exerciseHistory.map(h => h.totalReps * h.weight);
+            
+            const weightChanges = [];
+            const volumeChanges = [];
+            
+            for (let i = 1; i < weights.length; i++) {
+                weightChanges.push((weights[i] - weights[i-1]) / weights[i-1]);
+                volumeChanges.push((volumes[i] - volumes[i-1]) / volumes[i-1]);
+            }
+            
+            const avgWeightVelocity = weightChanges.reduce((sum, change) => sum + change, 0) / weightChanges.length;
+            const avgVolumeVelocity = volumeChanges.reduce((sum, change) => sum + change, 0) / volumeChanges.length;
+            
+            return {
+                weightVelocity: avgWeightVelocity,
+                volumeVelocity: avgVolumeVelocity
+            };
+        },
+        
+        // Detect fatigue patterns
+        detectFatiguePatterns(exerciseHistory) {
+            if (exerciseHistory.length < 4) return { repsDecline: 0, volumeDecline: 0 };
+            
+            const firstHalf = exerciseHistory.slice(0, Math.floor(exerciseHistory.length / 2));
+            const secondHalf = exerciseHistory.slice(Math.floor(exerciseHistory.length / 2));
+            
+            const firstHalfAvgReps = firstHalf.reduce((sum, h) => sum + h.totalReps, 0) / firstHalf.length;
+            const secondHalfAvgReps = secondHalf.reduce((sum, h) => sum + h.totalReps, 0) / secondHalf.length;
+            
+            const repsDecline = (firstHalfAvgReps - secondHalfAvgReps) / firstHalfAvgReps;
+            
+            return {
+                repsDecline: Math.max(0, repsDecline),
+                volumeDecline: 0 // Placeholder for future implementation
+            };
+        },
+        
+        // Assess volume overreach
+        assessVolumeOverreach(exerciseName) {
+            const muscleGroupHistory = this.getMuscleGroupVolumeHistory(exerciseName);
+            if (muscleGroupHistory.length < 4) return 0;
+            
+            const recentAvg = muscleGroupHistory.slice(-2).reduce((sum, v) => sum + v, 0) / 2;
+            const historicalAvg = muscleGroupHistory.slice(0, -2).reduce((sum, v) => sum + v, 0) / (muscleGroupHistory.length - 2);
+            
+            return historicalAvg > 0 ? recentAvg / historicalAvg : 0;
+        },
+        
+        // Get muscle group volume history
+        getMuscleGroupVolumeHistory(exerciseName) {
+            // Simplified implementation - would be enhanced with more sophisticated tracking
+            const history = getExerciseHistory(exerciseName);
+            return history.map(h => h.totalReps * h.weight);
+        },
+        
+        // Detect historical plateau patterns
+        detectHistoricalPlateaus(exerciseName) {
+            const history = getExerciseHistory(exerciseName);
+            if (history.length < 8) return { frequency: 0, averageDuration: 0 };
+            
+            let plateauCount = 0;
+            let currentPlateauLength = 0;
+            let plateauLengths = [];
+            
+            for (let i = 1; i < history.length; i++) {
+                if (history[i].weight === history[i-1].weight) {
+                    currentPlateauLength++;
+                } else {
+                    if (currentPlateauLength >= 2) {
+                        plateauCount++;
+                        plateauLengths.push(currentPlateauLength);
+                    }
+                    currentPlateauLength = 0;
+                }
+            }
+            
+            const frequency = plateauCount / (history.length / 3); // Plateaus per 3-session window
+            const averageDuration = plateauLengths.length > 0 ? 
+                plateauLengths.reduce((sum, len) => sum + len, 0) / plateauLengths.length : 0;
+            
+            return { frequency, averageDuration };
+        },
+        
+        // Generate intelligent recommendations based on collected data
+        generateIntelligentRecommendations(exerciseName) {
+            const plateauPrediction = this.predictPlateauRisk(exerciseName);
+            const dataPoints = this.performanceDataPoints.filter(dp => dp.exercise === exerciseName);
+            
+            if (dataPoints.length < 5) {
+                return {
+                    type: 'insufficient_data',
+                    message: 'Continue tracking to enable AI recommendations',
+                    confidence: 0
+                };
+            }
+            
+            // Analyze patterns in successful vs unsuccessful sessions
+            const successfulSessions = dataPoints.filter(dp => dp.performance.targetAchieved);
+            const unsuccessfulSessions = dataPoints.filter(dp => !dp.performance.targetAchieved);
+            
+            const recommendations = [];
+            
+            // Time of day optimization
+            if (successfulSessions.length >= 3) {
+                const bestTimes = this.findOptimalTimeOfDay(successfulSessions);
+                if (bestTimes.confidence > 0.6) {
+                    recommendations.push({
+                        type: 'timing',
+                        message: `You perform best training ${exerciseName} ${bestTimes.period}`,
+                        confidence: bestTimes.confidence
+                    });
+                }
+            }
+            
+            // Rest time optimization
+            const optimalRest = this.findOptimalRestTime(successfulSessions);
+            if (optimalRest.confidence > 0.5) {
+                recommendations.push({
+                    type: 'rest',
+                    message: `Optimal rest time for ${exerciseName}: ${optimalRest.time}s`,
+                    confidence: optimalRest.confidence
+                });
+            }
+            
+            // Volume recommendations
+            if (plateauPrediction.risk > 0.6) {
+                recommendations.push({
+                    type: 'volume',
+                    message: `Consider reducing volume for ${exerciseName} - plateau risk ${Math.round(plateauPrediction.risk * 100)}%`,
+                    confidence: plateauPrediction.confidence
+                });
+            }
+            
+            return {
+                type: 'recommendations',
+                predictions: plateauPrediction,
+                recommendations: recommendations.sort((a, b) => b.confidence - a.confidence)
+            };
+        },
+        
+        // Find optimal time of day
+        findOptimalTimeOfDay(successfulSessions) {
+            const timeGroups = {
+                'morning': successfulSessions.filter(s => s.context.timeOfDay >= 6 && s.context.timeOfDay < 12).length,
+                'afternoon': successfulSessions.filter(s => s.context.timeOfDay >= 12 && s.context.timeOfDay < 18).length,
+                'evening': successfulSessions.filter(s => s.context.timeOfDay >= 18 && s.context.timeOfDay < 24).length
+            };
+            
+            const bestPeriod = Object.entries(timeGroups).reduce((best, [period, count]) => 
+                count > best.count ? { period, count } : best
+            , { period: 'morning', count: 0 });
+            
+            const confidence = bestPeriod.count / successfulSessions.length;
+            
+            return { period: bestPeriod.period, confidence };
+        },
+        
+        // Find optimal rest time
+        findOptimalRestTime(successfulSessions) {
+            const restTimes = successfulSessions
+                .filter(s => s.performance.restTime)
+                .map(s => s.performance.restTime);
+            
+            if (restTimes.length < 3) return { time: 120, confidence: 0 };
+            
+            const average = restTimes.reduce((sum, time) => sum + time, 0) / restTimes.length;
+            const variance = restTimes.reduce((sum, time) => sum + Math.pow(time - average, 2), 0) / restTimes.length;
+            const confidence = 1 / (1 + variance / 100); // Lower variance = higher confidence
+            
+            return { time: Math.round(average), confidence };
         }
     },
     
@@ -137,13 +688,9 @@ const HyperTrack = {
 // REST TIMER FUNCTIONS
 // ==========================================
 function startRestTimer(exerciseCategory, exerciseName) {
-    // Research-based rest periods
-    const restDurations = {
-        'Compound': HyperTrack.state.settings.compoundRest,
-        'Isolation': HyperTrack.state.settings.isolationRest
-    };
-    
-    const duration = restDurations[exerciseCategory] || 90;
+    // Get intelligent rest recommendation based on performance history
+    const recommendation = HyperTrack.restTimerLearning.getRestRecommendation(exerciseName, exerciseCategory);
+    const duration = recommendation.restTime;
     
     // Clear any existing timer
     if (HyperTrack.state.restTimer.interval) {
@@ -177,9 +724,7 @@ function startRestTimer(exerciseCategory, exerciseName) {
             </div>
             <div style="margin-bottom: 32px;">
                 <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5;">
-                    💡 ${exerciseCategory === 'Compound' ? 
-                        'Compound exercises require 2-3 min rest for optimal recovery and performance' : 
-                        'Isolation exercises need 1-2 min rest between sets'}
+                    🧠 ${recommendation.reasoning}
                 </p>
             </div>
             <div style="display: flex; gap: 12px; justify-content: center;">
@@ -195,6 +740,7 @@ function startRestTimer(exerciseCategory, exerciseName) {
     HyperTrack.state.restTimer.remaining = duration;
     HyperTrack.state.restTimer.active = true;
     HyperTrack.state.restTimer.exerciseJustCompleted = exerciseName;
+    HyperTrack.state.restTimer.startTime = Date.now();
     
     HyperTrack.state.restTimer.interval = setInterval(() => {
         HyperTrack.state.restTimer.remaining--;
@@ -221,8 +767,25 @@ function updateRestTimerDisplay() {
 }
 
 function completeRestTimer() {
+    const exerciseName = HyperTrack.state.restTimer.exerciseJustCompleted;
+    const restDuration = HyperTrack.state.restTimer.startTime ? 
+        Date.now() - HyperTrack.state.restTimer.startTime : null;
+    
+    // Record rest timer performance for learning
+    if (exerciseName && restDuration) {
+        HyperTrack.restTimerLearning.recordPerformanceOutcome(
+            exerciseName,
+            'Compound', // Will be enhanced to get actual category
+            restDuration / 1000, // Convert to seconds
+            0, // targetWeight - to be filled when we have context
+            0, // targetReps - to be filled when we have context
+            0  // actualReps - to be filled after next set
+        );
+    }
+    
     clearInterval(HyperTrack.state.restTimer.interval);
     HyperTrack.state.restTimer.active = false;
+    HyperTrack.state.restTimer.startTime = null;
     
     // Remove overlay
     const overlay = document.getElementById('restTimerOverlay');
@@ -821,22 +1384,9 @@ function updateHistoryTab() {
 }
 
 function updateAnalyticsTab() {
-    const totalWorkouts = HyperTrack.state.workouts.length;
-    const totalSets = HyperTrack.state.workouts.reduce((sum, w) => {
-        const exercises = w.workout_exercises || w.exercises || [];
-        return sum + exercises.reduce((s, e) => s + (e.sets?.length || 0), 0);
-    }, 0);
-    const totalVolume = HyperTrack.state.workouts.reduce((sum, w) => {
-        const exercises = w.workout_exercises || w.exercises || [];
-        return sum + exercises.reduce((s, e) => 
-            s + (e.sets?.reduce((setSum, set) => setSum + (set.weight * set.reps), 0) || 0), 0
-        );
-    }, 0);
-    const avgDuration = totalWorkouts > 0 ? 
-        Math.floor(HyperTrack.state.workouts.reduce((sum, w) => 
-            sum + (w.duration ? w.duration / 1000 / 60 : 90), 0
-        ) / totalWorkouts) : 0;
+    const analytics = calculateAdvancedAnalytics();
     
+    // Update basic stats
     const elements = {
         totalWorkouts: document.getElementById('totalWorkouts'),
         totalSets: document.getElementById('totalSets'),
@@ -844,10 +1394,402 @@ function updateAnalyticsTab() {
         avgDuration: document.getElementById('avgDuration')
     };
     
-    if (elements.totalWorkouts) elements.totalWorkouts.textContent = totalWorkouts;
-    if (elements.totalSets) elements.totalSets.textContent = totalSets;
-    if (elements.totalVolume) elements.totalVolume.textContent = totalVolume.toLocaleString();
-    if (elements.avgDuration) elements.avgDuration.textContent = avgDuration;
+    if (elements.totalWorkouts) elements.totalWorkouts.textContent = analytics.basic.totalWorkouts;
+    if (elements.totalSets) elements.totalSets.textContent = analytics.basic.totalSets;
+    if (elements.totalVolume) elements.totalVolume.textContent = analytics.basic.totalVolume.toLocaleString();
+    if (elements.avgDuration) elements.avgDuration.textContent = analytics.basic.avgDuration;
+    
+    // Create advanced analytics display
+    createAdvancedAnalyticsDisplay(analytics);
+}
+
+function calculateAdvancedAnalytics() {
+    const workouts = HyperTrack.state.workouts;
+    
+    // Basic metrics
+    const totalWorkouts = workouts.length;
+    const totalSets = workouts.reduce((sum, w) => {
+        const exercises = w.workout_exercises || w.exercises || [];
+        return sum + exercises.reduce((s, e) => s + (e.sets?.length || 0), 0);
+    }, 0);
+    const totalVolume = workouts.reduce((sum, w) => {
+        const exercises = w.workout_exercises || w.exercises || [];
+        return sum + exercises.reduce((s, e) => 
+            s + (e.sets?.reduce((setSum, set) => setSum + (set.weight * set.reps), 0) || 0), 0
+        );
+    }, 0);
+    const avgDuration = totalWorkouts > 0 ? 
+        Math.floor(workouts.reduce((sum, w) => 
+            sum + (w.duration ? w.duration / 1000 / 60 : 90), 0
+        ) / totalWorkouts) : 0;
+    
+    // Advanced metrics
+    const muscleGroupStats = calculateMuscleGroupStats(workouts);
+    const exerciseProgression = calculateExerciseProgression(workouts);
+    const volumeTrends = calculateVolumeTrends(workouts);
+    const frequencyAnalysis = calculateFrequencyAnalysis(workouts);
+    const strengthStandards = calculateStrengthStandards(workouts);
+    const plateauRisk = calculatePlateauRisk(workouts);
+    
+    return {
+        basic: { totalWorkouts, totalSets, totalVolume, avgDuration },
+        muscleGroups: muscleGroupStats,
+        progression: exerciseProgression,
+        trends: volumeTrends,
+        frequency: frequencyAnalysis,
+        strength: strengthStandards,
+        plateaus: plateauRisk
+    };
+}
+
+function calculateMuscleGroupStats(workouts) {
+    const stats = {};
+    
+    workouts.forEach(workout => {
+        const exercises = workout.workout_exercises || workout.exercises || [];
+        exercises.forEach(exercise => {
+            const muscleGroup = exercise.muscle_group || 'Other';
+            if (!stats[muscleGroup]) {
+                stats[muscleGroup] = { 
+                    sets: 0, 
+                    volume: 0, 
+                    frequency: 0,
+                    lastTrained: null,
+                    weeklyVolume: 0
+                };
+            }
+            
+            stats[muscleGroup].sets += exercise.sets?.length || 0;
+            stats[muscleGroup].volume += exercise.sets?.reduce((sum, set) => 
+                sum + (set.weight * set.reps), 0) || 0;
+            
+            // Track frequency (unique workout dates)
+            const workoutDate = workout.date || workout.workout_date;
+            if (workoutDate) {
+                if (!stats[muscleGroup].lastTrained || new Date(workoutDate) > new Date(stats[muscleGroup].lastTrained)) {
+                    stats[muscleGroup].lastTrained = workoutDate;
+                }
+            }
+        });
+    });
+    
+    // Calculate weekly volumes (last 7 days)
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    workouts.filter(w => new Date(w.date || w.workout_date) >= oneWeekAgo).forEach(workout => {
+        const exercises = workout.workout_exercises || workout.exercises || [];
+        exercises.forEach(exercise => {
+            const muscleGroup = exercise.muscle_group || 'Other';
+            if (stats[muscleGroup]) {
+                stats[muscleGroup].weeklyVolume += exercise.sets?.length || 0;
+            }
+        });
+    });
+    
+    return stats;
+}
+
+function calculateExerciseProgression(workouts) {
+    const exerciseData = {};
+    
+    workouts.forEach(workout => {
+        const exercises = workout.workout_exercises || workout.exercises || [];
+        exercises.forEach(exercise => {
+            const name = exercise.name;
+            if (!exerciseData[name]) {
+                exerciseData[name] = [];
+            }
+            
+            const maxWeight = exercise.sets?.reduce((max, set) => 
+                Math.max(max, set.weight), 0) || 0;
+            const totalReps = exercise.sets?.reduce((sum, set) => sum + set.reps, 0) || 0;
+            const oneRM = maxWeight * (1 + totalReps / 30); // Brzycki formula approximation
+            
+            exerciseData[name].push({
+                date: workout.date || workout.workout_date,
+                maxWeight,
+                totalReps,
+                estimatedOneRM: oneRM,
+                volume: exercise.sets?.reduce((sum, set) => sum + (set.weight * set.reps), 0) || 0
+            });
+        });
+    });
+    
+    // Calculate progression rates
+    const progressionRates = {};
+    Object.entries(exerciseData).forEach(([exercise, data]) => {
+        if (data.length >= 3) {
+            const sorted = data.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const first = sorted[0];
+            const last = sorted[sorted.length - 1];
+            const daysDiff = (new Date(last.date) - new Date(first.date)) / (1000 * 60 * 60 * 24);
+            const weeksDiff = daysDiff / 7;
+            
+            const weightProgression = weeksDiff > 0 ? 
+                ((last.maxWeight - first.maxWeight) / first.maxWeight / weeksDiff * 100) : 0;
+            const volumeProgression = weeksDiff > 0 ? 
+                ((last.volume - first.volume) / first.volume / weeksDiff * 100) : 0;
+            
+            progressionRates[exercise] = {
+                weightProgressionPerWeek: Math.round(weightProgression * 100) / 100,
+                volumeProgressionPerWeek: Math.round(volumeProgression * 100) / 100,
+                currentOneRM: Math.round(last.estimatedOneRM),
+                trend: weightProgression > 2 ? 'improving' : weightProgression < -1 ? 'declining' : 'stable'
+            };
+        }
+    });
+    
+    return progressionRates;
+}
+
+function calculateVolumeTrends(workouts) {
+    const weeklyVolumes = {};
+    
+    workouts.forEach(workout => {
+        const date = new Date(workout.date || workout.workout_date);
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay()); // Start of week (Sunday)
+        const weekKey = weekStart.toISOString().split('T')[0];
+        
+        if (!weeklyVolumes[weekKey]) {
+            weeklyVolumes[weekKey] = 0;
+        }
+        
+        const exercises = workout.workout_exercises || workout.exercises || [];
+        const workoutVolume = exercises.reduce((sum, exercise) => 
+            sum + (exercise.sets?.reduce((setSum, set) => setSum + (set.weight * set.reps), 0) || 0), 0
+        );
+        
+        weeklyVolumes[weekKey] += workoutVolume;
+    });
+    
+    return weeklyVolumes;
+}
+
+function calculateFrequencyAnalysis(workouts) {
+    const exerciseFrequency = {};
+    const muscleGroupFrequency = {};
+    
+    // Calculate sessions per exercise/muscle group per week
+    const fourWeeksAgo = new Date();
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    
+    const recentWorkouts = workouts.filter(w => 
+        new Date(w.date || w.workout_date) >= fourWeeksAgo
+    );
+    
+    recentWorkouts.forEach(workout => {
+        const exercises = workout.workout_exercises || workout.exercises || [];
+        const exercisesThisWorkout = new Set();
+        const muscleGroupsThisWorkout = new Set();
+        
+        exercises.forEach(exercise => {
+            const name = exercise.name;
+            const muscleGroup = exercise.muscle_group || 'Other';
+            
+            if (!exercisesThisWorkout.has(name)) {
+                exerciseFrequency[name] = (exerciseFrequency[name] || 0) + 1;
+                exercisesThisWorkout.add(name);
+            }
+            
+            if (!muscleGroupsThisWorkout.has(muscleGroup)) {
+                muscleGroupFrequency[muscleGroup] = (muscleGroupFrequency[muscleGroup] || 0) + 1;
+                muscleGroupsThisWorkout.add(muscleGroup);
+            }
+        });
+    });
+    
+    // Convert to per-week frequencies
+    const weeksAnalyzed = Math.max(1, recentWorkouts.length / 7);
+    Object.keys(exerciseFrequency).forEach(exercise => {
+        exerciseFrequency[exercise] = Math.round((exerciseFrequency[exercise] / weeksAnalyzed) * 10) / 10;
+    });
+    Object.keys(muscleGroupFrequency).forEach(muscle => {
+        muscleGroupFrequency[muscle] = Math.round((muscleGroupFrequency[muscle] / weeksAnalyzed) * 10) / 10;
+    });
+    
+    return { exercises: exerciseFrequency, muscleGroups: muscleGroupFrequency };
+}
+
+function calculateStrengthStandards(workouts) {
+    // Simplified strength standards (novice/intermediate/advanced)
+    const standards = {
+        'Barbell Bench Press': { novice: 135, intermediate: 185, advanced: 245 },
+        'Squats': { novice: 155, intermediate: 225, advanced: 315 },
+        'Deadlifts': { novice: 185, intermediate: 275, advanced: 365 },
+        'Pull-ups': { novice: 8, intermediate: 15, advanced: 25 } // reps
+    };
+    
+    const userStandards = {};
+    
+    Object.keys(standards).forEach(exercise => {
+        const exerciseHistory = getExerciseHistory(exercise);
+        if (exerciseHistory.length > 0) {
+            const bestPerformance = exerciseHistory.reduce((best, current) => 
+                current.weight > best.weight ? current : best
+            );
+            
+            const standard = standards[exercise];
+            let level = 'Beginner';
+            
+            if (exercise === 'Pull-ups') {
+                // Handle bodyweight exercises differently
+                if (bestPerformance.totalReps >= standard.advanced) level = 'Advanced';
+                else if (bestPerformance.totalReps >= standard.intermediate) level = 'Intermediate';
+                else if (bestPerformance.totalReps >= standard.novice) level = 'Novice';
+            } else {
+                if (bestPerformance.weight >= standard.advanced) level = 'Advanced';
+                else if (bestPerformance.weight >= standard.intermediate) level = 'Intermediate';
+                else if (bestPerformance.weight >= standard.novice) level = 'Novice';
+            }
+            
+            userStandards[exercise] = {
+                current: bestPerformance.weight,
+                level: level,
+                nextTarget: getNextTarget(bestPerformance.weight, standard, level)
+            };
+        }
+    });
+    
+    return userStandards;
+}
+
+function getNextTarget(current, standards, currentLevel) {
+    switch(currentLevel) {
+        case 'Beginner': return standards.novice;
+        case 'Novice': return standards.intermediate;
+        case 'Intermediate': return standards.advanced;
+        case 'Advanced': return Math.round(current * 1.1); // 10% increase
+        default: return standards.novice;
+    }
+}
+
+function calculatePlateauRisk(workouts) {
+    const risks = {};
+    
+    // Get unique exercises
+    const exercises = new Set();
+    workouts.forEach(workout => {
+        const workoutExercises = workout.workout_exercises || workout.exercises || [];
+        workoutExercises.forEach(ex => exercises.add(ex.name));
+    });
+    
+    exercises.forEach(exerciseName => {
+        const history = getExerciseHistory(exerciseName);
+        if (history.length >= 4) {
+            const recent = history.slice(-4);
+            const weights = recent.map(h => h.weight);
+            
+            // Check for stagnation
+            const noProgression = weights.slice(-3).every(w => w === weights[0]);
+            const volumeDecline = recent[recent.length - 1].totalReps < recent[0].totalReps;
+            
+            let risk = 'Low';
+            if (noProgression && volumeDecline) risk = 'High';
+            else if (noProgression || volumeDecline) risk = 'Medium';
+            
+            risks[exerciseName] = {
+                level: risk,
+                recommendation: getPlateauRecommendation(risk, exerciseName)
+            };
+        }
+    });
+    
+    return risks;
+}
+
+function getPlateauRecommendation(riskLevel, exerciseName) {
+    switch(riskLevel) {
+        case 'High': return `Consider deload or exercise variation for ${exerciseName}`;
+        case 'Medium': return `Monitor progression closely for ${exerciseName}`;
+        case 'Low': return `Continue current progression for ${exerciseName}`;
+        default: return 'Keep training consistently';
+    }
+}
+
+function createAdvancedAnalyticsDisplay(analytics) {
+    const analyticsContainer = document.getElementById('analyticsTab');
+    if (!analyticsContainer) return;
+    
+    // Create advanced analytics section
+    let advancedSection = document.getElementById('advancedAnalytics');
+    if (!advancedSection) {
+        advancedSection = document.createElement('div');
+        advancedSection.id = 'advancedAnalytics';
+        advancedSection.style.cssText = 'margin-top: 32px; padding: 24px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);';
+        analyticsContainer.appendChild(advancedSection);
+    }
+    
+    // Muscle group analysis
+    const muscleGroupHtml = Object.entries(analytics.muscleGroups).map(([muscle, stats]) => `
+        <div style="background: var(--bg-tertiary); padding: 16px; border-radius: var(--radius); margin-bottom: 12px;">
+            <h4 style="margin: 0 0 8px 0; color: var(--primary);">${muscle}</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; font-size: 14px;">
+                <div><strong>Sets/week:</strong> ${stats.weeklyVolume}</div>
+                <div><strong>Total volume:</strong> ${stats.volume.toLocaleString()}</div>
+                <div><strong>Status:</strong> ${stats.weeklyVolume >= 10 && stats.weeklyVolume <= 20 ? '✅ Optimal' : stats.weeklyVolume < 10 ? '⚠️ Low' : '🔥 High'}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Exercise progression
+    const progressionHtml = Object.entries(analytics.progression).slice(0, 5).map(([exercise, data]) => `
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: var(--radius); margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600;">${exercise}</span>
+                <span style="color: var(--${data.trend === 'improving' ? 'success' : data.trend === 'declining' ? 'danger' : 'warning'});">
+                    ${data.trend === 'improving' ? '📈' : data.trend === 'declining' ? '📉' : '➡️'} ${data.weightProgressionPerWeek}%/week
+                </span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                Est. 1RM: ${data.currentOneRM}lbs
+            </div>
+        </div>
+    `).join('');
+    
+    // Plateau risks
+    const plateauHtml = Object.entries(analytics.plateaus).filter(([_, data]) => data.level !== 'Low').map(([exercise, data]) => `
+        <div style="background: var(--bg-tertiary); padding: 12px; border-radius: var(--radius); margin-bottom: 8px; border-left: 4px solid var(--${data.level === 'High' ? 'danger' : 'warning'});">
+            <div style="font-weight: 600; color: var(--${data.level === 'High' ? 'danger' : 'warning'});">
+                ${data.level === 'High' ? '🚨' : '⚠️'} ${exercise} - ${data.level} Risk
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                ${data.recommendation}
+            </div>
+        </div>
+    `).join('');
+    
+    advancedSection.innerHTML = `
+        <h3 style="margin: 0 0 24px 0; color: var(--text-primary);">📊 Advanced Analytics</h3>
+        
+        <div style="margin-bottom: 24px;">
+            <h4 style="margin: 0 0 12px 0; color: var(--text-secondary);">💪 Muscle Group Analysis</h4>
+            ${muscleGroupHtml || '<p style="color: var(--text-muted);">No data available</p>'}
+        </div>
+        
+        <div style="margin-bottom: 24px;">
+            <h4 style="margin: 0 0 12px 0; color: var(--text-secondary);">📈 Exercise Progression</h4>
+            ${progressionHtml || '<p style="color: var(--text-muted);">Complete more workouts to see progression data</p>'}
+        </div>
+        
+        ${plateauHtml ? `
+            <div style="margin-bottom: 24px;">
+                <h4 style="margin: 0 0 12px 0; color: var(--text-secondary);">⚠️ Plateau Alerts</h4>
+                ${plateauHtml}
+            </div>
+        ` : ''}
+        
+        <div style="background: var(--bg-tertiary); padding: 16px; border-radius: var(--radius); border: 1px solid var(--primary);">
+            <h4 style="margin: 0 0 12px 0; color: var(--primary);">🎯 Training Insights</h4>
+            <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary);">
+                <li>Total training volume: ${analytics.basic.totalVolume.toLocaleString()} lbs</li>
+                <li>Average workout: ${analytics.basic.avgDuration} minutes</li>
+                <li>Most trained: ${Object.entries(analytics.muscleGroups).sort((a, b) => b[1].sets - a[1].sets)[0]?.[0] || 'No data'}</li>
+                <li>Recommended focus: ${Object.entries(analytics.muscleGroups).filter(([_, stats]) => stats.weeklyVolume < 10).map(([muscle]) => muscle).join(', ') || 'Maintain current balance'}</li>
+            </ul>
+        </div>
+    `;
 }
 
 function updateSettingsTab() {
@@ -1144,8 +2086,248 @@ function finishExercise() {
         completeRestTimer();
     }
     
+    // Collect ML data for future AI training
+    const bestSet = sets.reduce((best, current) => 
+        (current.weight > best.weight || (current.weight === best.weight && current.reps > best.reps)) 
+            ? current : best
+    );
+    
+    HyperTrack.mlBaseline.collectDataPoint(exerciseName, {
+        weight: bestSet.weight,
+        reps: bestSet.reps,
+        sets: sets.length,
+        targetAchieved: true // Assume target achieved since exercise was completed
+    }, {
+        workoutDuration: HyperTrack.state.currentWorkout ? 
+            (Date.now() - new Date(HyperTrack.state.currentWorkout.startTime)) / 1000 / 60 : null
+    });
+    
     console.log(`✅ Added ${exerciseName} with ${sets.length} sets`);
     showNotification(`${exerciseName} completed - ${sets.length} sets logged!`, 'success');
+    
+    // Show progression recommendations for next workout
+    setTimeout(() => showProgressionRecommendations(exerciseName, sets, exerciseCategory), 2000);
+}
+
+// ==========================================
+// PROGRESSION RECOMMENDATION FUNCTIONS
+// ==========================================
+function showProgressionRecommendations(exerciseName, sets, exerciseCategory) {
+    // Get best set from current session
+    const bestSet = sets.reduce((best, current) => 
+        (current.weight > best.weight || (current.weight === best.weight && current.reps > best.reps)) 
+            ? current : best
+    );
+    
+    // Get historical data for this exercise
+    const exerciseHistory = getExerciseHistory(exerciseName);
+    
+    // Check for plateau
+    const plateauDetection = HyperTrack.progressionSystem.detectPlateau(exerciseHistory, exerciseName);
+    
+    if (plateauDetection) {
+        showPlateauBreakingRecommendations(exerciseName, plateauDetection);
+        return;
+    }
+    
+    // Get progression recommendations
+    const recommendations = HyperTrack.progressionSystem.calculateProgression(
+        exerciseName, 
+        bestSet.weight, 
+        bestSet.reps, 
+        sets.length,
+        null, // target reps
+        getEquipmentType(exerciseName)
+    );
+    
+    if (recommendations.length === 0) return;
+    
+    // Create progression recommendation modal
+    const modal = document.createElement('div');
+    modal.id = 'progressionModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    const recommendationCards = recommendations.slice(0, 3).map((rec, index) => `
+        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; cursor: pointer;" 
+             onclick="selectProgression('${exerciseName}', ${JSON.stringify(rec).replace(/"/g, '&quot;')})">
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 600; color: var(--text-primary);">${rec.type.charAt(0).toUpperCase() + rec.type.slice(1)} Progression</span>
+                <span style="background: var(--${rec.difficulty === 'easy' ? 'success' : rec.difficulty === 'moderate' ? 'warning' : 'danger'}); 
+                             color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">
+                    ${rec.difficulty}
+                </span>
+            </div>
+            <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 8px;">
+                ${rec.reasoning}
+            </div>
+            <div style="font-size: 18px; font-weight: 600; color: var(--primary);">
+                Next: ${rec.weight}lbs × ${rec.reps} reps × ${rec.sets} sets
+            </div>
+        </div>
+    `).join('');
+    
+    modal.innerHTML = `
+        <div style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 32px; text-align: center; max-width: 500px; width: 90%; box-shadow: var(--shadow-lg); border: 1px solid var(--primary);">
+            <h2 style="color: var(--primary-light); margin-bottom: 8px; font-size: 24px;">🎯 Next Workout Progression</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 16px;">
+                Current best: ${bestSet.weight}lbs × ${bestSet.reps} reps
+            </p>
+            <div style="text-align: left; margin-bottom: 24px;">
+                ${recommendationCards}
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button onclick="closeProgressionModal()" style="padding: 12px 24px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius); font-weight: 600; cursor: pointer;">
+                    Maybe Later
+                </button>
+                <button onclick="saveProgressionGoal('${exerciseName}', ${JSON.stringify(recommendations[0]).replace(/"/g, '&quot;')})" style="padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer;">
+                    Set as Goal
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function showPlateauBreakingRecommendations(exerciseName, plateauDetection) {
+    const rec = plateauDetection.recommendation;
+    
+    const modal = document.createElement('div');
+    modal.id = 'plateauModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    let content = '';
+    if (rec.type === 'substitution') {
+        content = `
+            <div style="margin-bottom: 16px;">
+                <h4 style="color: var(--warning); margin-bottom: 8px;">🔄 Try These Alternatives:</h4>
+                ${rec.exercises.map(ex => `<span style="background: var(--bg-tertiary); padding: 4px 8px; border-radius: 4px; margin: 2px; display: inline-block;">${ex}</span>`).join('')}
+            </div>
+        `;
+    } else {
+        content = `
+            <div style="margin-bottom: 16px;">
+                <h4 style="color: var(--warning); margin-bottom: 8px;">💪 Recommended Strategy:</h4>
+                <p style="color: var(--text-secondary);">${rec.strategy}</p>
+                ${rec.weight ? `<p style="font-weight: 600; color: var(--primary);">New weight: ${rec.weight}lbs</p>` : ''}
+                <p style="font-size: 14px; color: var(--text-muted);">Duration: ${rec.duration}</p>
+            </div>
+        `;
+    }
+    
+    modal.innerHTML = `
+        <div style="background: var(--bg-card); border-radius: var(--radius-lg); padding: 32px; text-align: center; max-width: 500px; width: 90%; box-shadow: var(--shadow-lg); border: 1px solid var(--warning);">
+            <h2 style="color: var(--warning); margin-bottom: 8px; font-size: 24px;">⚠️ Plateau Detected</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 16px;">
+                ${plateauDetection.reasoning}
+            </p>
+            ${content}
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+                <button onclick="closePlateauModal()" style="padding: 12px 24px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius); font-weight: 600; cursor: pointer;">
+                    Dismiss
+                </button>
+                <button onclick="applyPlateauStrategy('${exerciseName}', ${JSON.stringify(rec).replace(/"/g, '&quot;')})" style="padding: 12px 24px; background: var(--warning); color: white; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer;">
+                    Apply Strategy
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function getExerciseHistory(exerciseName) {
+    const history = [];
+    HyperTrack.state.workouts.forEach(workout => {
+        const exercise = workout.exercises?.find(ex => ex.name === exerciseName);
+        if (exercise && exercise.sets) {
+            const totalReps = exercise.sets.reduce((sum, set) => sum + set.reps, 0);
+            const maxWeight = Math.max(...exercise.sets.map(set => set.weight));
+            history.push({
+                date: workout.date,
+                weight: maxWeight,
+                totalReps: totalReps,
+                sets: exercise.sets.length
+            });
+        }
+    });
+    return history.sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+function getEquipmentType(exerciseName) {
+    const equipmentMap = {
+        'Barbell': 'barbell',
+        'Dumbbell': 'dumbbell',
+        'Machine': 'machine'
+    };
+    
+    for (const [key, value] of Object.entries(equipmentMap)) {
+        if (exerciseName.includes(key)) return value;
+    }
+    return 'barbell'; // default
+}
+
+function selectProgression(exerciseName, recommendation) {
+    closeProgressionModal();
+    saveProgressionGoal(exerciseName, recommendation);
+}
+
+function saveProgressionGoal(exerciseName, recommendation) {
+    // Store the goal for next workout
+    if (!HyperTrack.state.progressionGoals) {
+        HyperTrack.state.progressionGoals = new Map();
+    }
+    
+    HyperTrack.state.progressionGoals.set(exerciseName, {
+        ...recommendation,
+        setDate: new Date().toISOString()
+    });
+    
+    saveAppData();
+    showNotification(`Goal set for ${exerciseName}: ${recommendation.weight}lbs × ${recommendation.reps} reps`, 'success');
+    closeProgressionModal();
+}
+
+function closeProgressionModal() {
+    const modal = document.getElementById('progressionModal');
+    if (modal) modal.remove();
+}
+
+function closePlateauModal() {
+    const modal = document.getElementById('plateauModal');
+    if (modal) modal.remove();
+}
+
+function applyPlateauStrategy(exerciseName, strategy) {
+    closePlateauModal();
+    showNotification(`Applied ${strategy.type} strategy for ${exerciseName}`, 'info');
+    // Could store this as a special workout note or goal
 }
 
 // ==========================================
