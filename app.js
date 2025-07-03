@@ -680,6 +680,119 @@ const HyperTrack = {
             id: 7, name: "Lat Pulldowns", muscle_group: "Back", category: "Compound", 
             tier: 1, mvc_percentage: 90, equipment: ["lat_pulldown_machine"],
             description: "Machine alternative to pull-ups with adjustable resistance."
+        },
+        { 
+            id: 8, name: "Cable Rows", muscle_group: "Back", category: "Compound", 
+            tier: 2, mvc_percentage: 85, equipment: ["cable_machine"],
+            description: "Excellent for mid-trap and rhomboid development."
+        },
+        
+        // Leg exercises
+        { 
+            id: 10, name: "Squats", muscle_group: "Legs", category: "Compound", 
+            tier: 1, mvc_percentage: 100, equipment: ["barbell", "squat_rack"],
+            description: "The king of all exercises for overall lower body development."
+        },
+        { 
+            id: 11, name: "Deadlifts", muscle_group: "Legs", category: "Compound", 
+            tier: 1, mvc_percentage: 110, equipment: ["barbell"],
+            description: "Supreme posterior chain exercise for hamstrings, glutes, and lower back."
+        },
+        { 
+            id: 12, name: "Romanian Deadlifts", muscle_group: "Legs", category: "Compound", 
+            tier: 1, mvc_percentage: 95, equipment: ["barbell"],
+            description: "Superior hamstring and glute development with hip hinge pattern."
+        },
+        { 
+            id: 13, name: "Bulgarian Split Squats", muscle_group: "Legs", category: "Compound", 
+            tier: 2, mvc_percentage: 88, equipment: ["dumbbells", "bench"],
+            description: "Unilateral leg exercise for balance and single-leg strength."
+        },
+        { 
+            id: 14, name: "Walking Lunges", muscle_group: "Legs", category: "Compound", 
+            tier: 2, mvc_percentage: 82, equipment: ["dumbbells"],
+            description: "Dynamic movement for functional leg strength and stability."
+        },
+        { 
+            id: 15, name: "Leg Press", muscle_group: "Legs", category: "Compound", 
+            tier: 2, mvc_percentage: 90, equipment: ["leg_press_machine"],
+            description: "Machine-based quad development with heavy loading potential."
+        },
+        
+        // Shoulder exercises
+        { 
+            id: 20, name: "Overhead Press", muscle_group: "Shoulders", category: "Compound", 
+            tier: 1, mvc_percentage: 92, equipment: ["barbell"],
+            description: "Primary shoulder development with core stability requirements."
+        },
+        { 
+            id: 21, name: "Dumbbell Shoulder Press", muscle_group: "Shoulders", category: "Compound", 
+            tier: 1, mvc_percentage: 88, equipment: ["dumbbells"],
+            description: "Unilateral shoulder development with stabilizer activation."
+        },
+        { 
+            id: 22, name: "Lateral Raises", muscle_group: "Shoulders", category: "Isolation", 
+            tier: 1, mvc_percentage: 95, equipment: ["dumbbells"],
+            description: "Highest medial deltoid activation for shoulder width."
+        },
+        { 
+            id: 23, name: "Rear Delt Flyes", muscle_group: "Shoulders", category: "Isolation", 
+            tier: 1, mvc_percentage: 88, equipment: ["dumbbells"],
+            description: "Essential for posterior deltoid development and shoulder health."
+        },
+        { 
+            id: 24, name: "Face Pulls", muscle_group: "Shoulders", category: "Isolation", 
+            tier: 1, mvc_percentage: 85, equipment: ["cable_machine"],
+            description: "Superior rear deltoid and external rotator activation."
+        },
+        
+        // Arm exercises
+        { 
+            id: 30, name: "Barbell Curls", muscle_group: "Arms", category: "Isolation", 
+            tier: 1, mvc_percentage: 90, equipment: ["barbell"],
+            description: "Classic bicep development with maximum loading potential."
+        },
+        { 
+            id: 31, name: "Hammer Curls", muscle_group: "Arms", category: "Isolation", 
+            tier: 1, mvc_percentage: 85, equipment: ["dumbbells"],
+            description: "Targets brachialis for arm thickness and forearm development."
+        },
+        { 
+            id: 32, name: "Tricep Dips", muscle_group: "Arms", category: "Compound", 
+            tier: 1, mvc_percentage: 88, equipment: ["dip_station"],
+            description: "Bodyweight tricep exercise with progressive overload options."
+        },
+        { 
+            id: 33, name: "Close-Grip Bench Press", muscle_group: "Arms", category: "Compound", 
+            tier: 1, mvc_percentage: 92, equipment: ["barbell", "bench"],
+            description: "Heavy tricep development with compound movement benefits."
+        },
+        { 
+            id: 34, name: "Overhead Tricep Extension", muscle_group: "Arms", category: "Isolation", 
+            tier: 2, mvc_percentage: 78, equipment: ["dumbbells"],
+            description: "Long head tricep focus for overall arm mass."
+        },
+        { 
+            id: 35, name: "Preacher Curls", muscle_group: "Arms", category: "Isolation", 
+            tier: 2, mvc_percentage: 82, equipment: ["preacher_bench", "barbell"],
+            description: "Isolated bicep development with controlled range of motion."
+        },
+        
+        // Additional compound movements
+        { 
+            id: 40, name: "Pull-ups (Weighted)", muscle_group: "Back", category: "Compound", 
+            tier: 1, mvc_percentage: 125, equipment: ["pull_up_bar", "weight_belt"],
+            description: "Advanced pull-up variation for maximum lat development."
+        },
+        { 
+            id: 41, name: "Push-ups", muscle_group: "Chest", category: "Compound", 
+            tier: 2, mvc_percentage: 75, equipment: ["bodyweight"],
+            description: "Bodyweight chest exercise with numerous progression options."
+        },
+        { 
+            id: 42, name: "Farmer's Walk", muscle_group: "Full Body", category: "Compound", 
+            tier: 2, mvc_percentage: 80, equipment: ["dumbbells"],
+            description: "Full-body strength and conditioning with grip emphasis."
         }
     ]
 };
@@ -1881,50 +1994,6 @@ async function finishWorkout() {
     }
 }
 
-function selectExercise(exerciseId) {
-    const exercise = HyperTrack.state.exercises.find(ex => ex.id === exerciseId);
-    if (!exercise) return;
-    
-    openExerciseModal(exercise);
-}
-
-function openExerciseModal(exercise) {
-    const modal = document.getElementById('exerciseModal');
-    const exerciseName = document.getElementById('modalExerciseName');
-    const setInputs = document.getElementById('setInputs');
-    
-    if (!modal || !exerciseName || !setInputs) {
-        console.error('❌ Modal elements not found');
-        return;
-    }
-    
-    exerciseName.textContent = exercise.name;
-    setInputs.innerHTML = '';
-    modal.dataset.exerciseId = exercise.id;
-    modal.dataset.exerciseName = exercise.name;
-    modal.dataset.exerciseCategory = exercise.category;
-    modal.dataset.muscleGroup = exercise.muscle_group || exercise.muscleGroup;
-    
-    modal.style.display = 'flex';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    modal.style.zIndex = '1000';
-    modal.style.justifyContent = 'center';
-    modal.style.alignItems = 'center';
-    
-    // Display weight recommendation
-    displayWeightRecommendation(exercise.name);
-    
-    setTimeout(() => {
-        addSet();
-    }, 50);
-    
-    console.log(`🏋️ Opened exercise modal for ${exercise.name}`);
-}
 
 function closeExerciseModal() {
     const modal = document.getElementById('exerciseModal');
@@ -2986,4 +3055,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('✅ HyperTrack Pro initialization complete');
+    
+    // Test basic functionality
+    console.log('🧪 Running basic functionality tests...');
+    console.log(`📊 Exercise database loaded: ${HyperTrack.exerciseDatabase.length} exercises`);
+    console.log(`📈 Historical workouts: ${HyperTrack.state.workouts.length} workouts`);
+    
+    // Test function availability
+    const requiredFunctions = ['startWorkout', 'switchTab', 'selectExercise', 'openExerciseModal', 'finishExercise'];
+    requiredFunctions.forEach(func => {
+        console.log(`🔧 ${func}: ${typeof window[func] === 'function' ? '✅ Available' : '❌ Missing'}`);
+    });
+    
+    // Test DOM elements
+    const requiredElements = ['workoutTab', 'exerciseList', 'exerciseModal'];
+    requiredElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        console.log(`🏗️ ${elementId}: ${element ? '✅ Found' : '❌ Missing'}`);
+    });
 });

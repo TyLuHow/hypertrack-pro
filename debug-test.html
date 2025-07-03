@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    <button onclick="testFunction()">Test Button</button>
+    <div id="output"></div>
+
+    <script src="tyler-data-integration.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Debug test
+        function testFunction() {
+            console.log('Test function called');
+            document.getElementById('output').innerHTML = 'Test worked!';
+        }
+        
+        // Check if key functions exist
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== DEBUGGING HYPERTRACK APP ===');
+            console.log('HyperTrack object:', typeof HyperTrack);
+            console.log('switchTab function:', typeof switchTab);
+            console.log('startWorkout function:', typeof startWorkout);
+            console.log('loadAppData function:', typeof loadAppData);
+            console.log('populateExerciseList function:', typeof populateExerciseList);
+            console.log('setupEventListeners function:', typeof setupEventListeners);
+            console.log('updateUI function:', typeof updateUI);
+            console.log('tylerCompleteWorkouts:', typeof tylerCompleteWorkouts);
+            
+            // Test if DOM elements exist
+            console.log('workoutTab element:', document.getElementById('workoutTab'));
+            console.log('exerciseList element:', document.getElementById('exerciseList'));
+            console.log('startWorkout element:', document.getElementById('startWorkout'));
+            console.log('nav buttons:', document.querySelectorAll('.nav-btn').length);
+            
+            // Test exercise database
+            if (typeof HyperTrack !== 'undefined' && HyperTrack.exerciseDatabase) {
+                console.log('Exercise database length:', HyperTrack.exerciseDatabase.length);
+            }
+        });
+    </script>
+</body>
+</html>
