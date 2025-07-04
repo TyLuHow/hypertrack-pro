@@ -387,37 +387,6 @@ function updateCurrentWorkoutDisplay() {
     `).join('');
 }
 
-function setupExerciseClickHandlers(container) {
-    // Remove any existing listeners
-    container.removeEventListener('click', handleExerciseClick);
-    
-    // Add event delegation
-    container.addEventListener('click', handleExerciseClick);
-}
-
-function handleExerciseClick(event) {
-    console.log('Exercise click detected:', event.target);
-    
-    const exerciseCard = event.target.closest('.exercise-card');
-    if (!exerciseCard) {
-        console.log('No exercise card found');
-        return;
-    }
-    
-    console.log('Exercise card found:', exerciseCard);
-    
-    const exerciseName = exerciseCard.dataset.exercise;
-    const muscleGroup = exerciseCard.dataset.muscle;
-    const category = exerciseCard.dataset.category;
-    
-    console.log('Exercise data:', { exerciseName, muscleGroup, category });
-    
-    if (exerciseName && muscleGroup && category) {
-        selectExercise(exerciseName, muscleGroup, category);
-    } else {
-        console.log('Missing exercise data');
-    }
-}
 
 function updateExerciseList(selectedCategory = 'all') {
     const container = document.getElementById('exerciseList');
@@ -457,8 +426,12 @@ function updateExerciseList(selectedCategory = 'all') {
         html += `<div style="margin-bottom: 20px;"><h4 style="color: #3d7070; margin-bottom: 12px;">🎯 Recommended ${selectedCategory} Exercises</h4>`;
         recommendations.forEach(rec => {
             if (rec.exercise) {
+                const safeName = rec.exercise.name.replace(/'/g, "\\'");
+                const safeMuscle = rec.exercise.muscle_group.replace(/'/g, "\\'");
+                const safeCategory = rec.exercise.category.replace(/'/g, "\\'");
+                
                 html += `
-                    <div class="exercise-card recommended" data-exercise="${rec.exercise.name}" data-muscle="${rec.exercise.muscle_group}" data-category="${rec.exercise.category}" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
+                    <div class="exercise-card recommended" onclick="selectExercise('${safeName}', '${safeMuscle}', '${safeCategory}')" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
                         <div class="exercise-info">
                             <div class="exercise-name">${rec.exercise.name} ⭐</div>
                             <div class="exercise-muscle">${rec.exercise.muscle_group}</div>
@@ -477,8 +450,12 @@ function updateExerciseList(selectedCategory = 'all') {
         html += '<div style="margin-bottom: 20px;"><h4 style="color: #3d7070; margin-bottom: 12px;">🎯 Overall Recommendations</h4>';
         recommendations.forEach(rec => {
             if (rec.exercise) {
+                const safeName = rec.exercise.name.replace(/'/g, "\\'");
+                const safeMuscle = rec.exercise.muscle_group.replace(/'/g, "\\'");
+                const safeCategory = rec.exercise.category.replace(/'/g, "\\'");
+                
                 html += `
-                    <div class="exercise-card recommended" data-exercise="${rec.exercise.name}" data-muscle="${rec.exercise.muscle_group}" data-category="${rec.exercise.category}" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
+                    <div class="exercise-card recommended" onclick="selectExercise('${safeName}', '${safeMuscle}', '${safeCategory}')" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
                         <div class="exercise-info">
                             <div class="exercise-name">${rec.exercise.name} ⭐</div>
                             <div class="exercise-muscle">${rec.exercise.muscle_group}</div>
@@ -505,8 +482,13 @@ function updateExerciseList(selectedCategory = 'all') {
         html += `<h4 style="color: #d1d5db; margin-bottom: 12px;">${selectedCategory === 'all' ? 'All' : selectedCategory} Exercises</h4>`;
         html += filteredExercises.map(exercise => {
             const isRecommended = recommendedExerciseNames.includes(exercise.name);
+            // Escape single quotes to prevent onclick issues
+            const safeName = exercise.name.replace(/'/g, "\\'");
+            const safeMuscle = exercise.muscle_group.replace(/'/g, "\\'");
+            const safeCategory = exercise.category.replace(/'/g, "\\'");
+            
             return `
-                <div class="exercise-card ${isRecommended ? 'dimmed' : ''}" data-exercise="${exercise.name}" data-muscle="${exercise.muscle_group}" data-category="${exercise.category}" style="cursor: pointer; ${isRecommended ? 'opacity: 0.6;' : ''}">
+                <div class="exercise-card ${isRecommended ? 'dimmed' : ''}" onclick="selectExercise('${safeName}', '${safeMuscle}', '${safeCategory}')" style="cursor: pointer; ${isRecommended ? 'opacity: 0.6;' : ''}">
                     <div class="exercise-info">
                         <div class="exercise-name">${exercise.name}</div>
                         <div class="exercise-muscle">${exercise.muscle_group}</div>
@@ -522,9 +504,6 @@ function updateExerciseList(selectedCategory = 'all') {
     }
     
     container.innerHTML = html;
-    
-    // Add event delegation for exercise cards
-    setupExerciseClickHandlers(container);
 }
 
 function updateHistoryDisplay() {
@@ -1494,12 +1473,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize UI
     updateUI();
     updateExerciseList();
-    
-    // Ensure exercise selection works on initial load
-    const exerciseContainer = document.getElementById('exerciseList');
-    if (exerciseContainer) {
-        setupExerciseClickHandlers(exerciseContainer);
-    }
     
     // Start research facts rotation
     updateResearchBanner();
