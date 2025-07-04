@@ -214,7 +214,7 @@ function closeExerciseModal() {
 
 function addSet(defaultWeight = '', defaultReps = '') {
     const setInputs = document.getElementById('setInputs');
-    const setNumber = setInputs.children.filter(child => child.classList.contains('set-input-row')).length + 1;
+    const setNumber = Array.from(setInputs.children).filter(child => child.classList.contains('set-input-row')).length + 1;
     
     const setDiv = document.createElement('div');
     setDiv.className = 'set-input-row';
