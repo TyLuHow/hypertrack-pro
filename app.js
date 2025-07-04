@@ -150,12 +150,16 @@ function finishWorkout() {
 }
 
 function selectExercise(exerciseName, muscleGroup, category) {
+    console.log(`🎯 selectExercise called with:`, { exerciseName, muscleGroup, category });
+    console.log(`🎯 Current workout state:`, HyperTrack.state.currentWorkout);
+    
     if (!HyperTrack.state.currentWorkout) {
+        console.log('❌ No current workout - showing warning');
         showNotification('Please start a workout first', 'warning');
         return;
     }
     
-    console.log(`🎯 Selected: ${exerciseName}`);
+    console.log(`✅ Opening modal for: ${exerciseName}`);
     openExerciseModal(exerciseName, muscleGroup, category);
 }
 
@@ -389,8 +393,15 @@ function updateCurrentWorkoutDisplay() {
 
 
 function updateExerciseList(selectedCategory = 'all') {
+    console.log(`🔄 updateExerciseList called with category: ${selectedCategory}`);
+    
     const container = document.getElementById('exerciseList');
-    if (!container) return;
+    if (!container) {
+        console.log('❌ Exercise list container not found');
+        return;
+    }
+    
+    console.log('✅ Exercise list container found:', container);
     
     // Check current daily volume to determine if recommendations should show
     const currentDailyVolume = getCurrentDailyVolume();
@@ -503,7 +514,13 @@ function updateExerciseList(selectedCategory = 'all') {
         }).join('');
     }
     
+    console.log('📝 Generated HTML length:', html.length);
+    console.log('📝 First 500 chars of HTML:', html.substring(0, 500));
+    
     container.innerHTML = html;
+    
+    console.log('✅ HTML inserted into container');
+    console.log('📊 Exercise cards in DOM:', container.querySelectorAll('.exercise-card').length);
 }
 
 function updateHistoryDisplay() {
@@ -1461,6 +1478,18 @@ function generateVolumeRecommendation(muscleGroup, currentVolume) {
         color: '#3b82f6'
     };
 }
+
+// Debug function - can be called from browser console
+window.testExerciseSelection = function() {
+    console.log('🧪 Testing exercise selection...');
+    selectExercise('Lat Pulldowns', 'Back', 'Compound');
+};
+
+window.debugHyperTrack = function() {
+    console.log('🔍 HyperTrack state:', HyperTrack.state);
+    console.log('🔍 Exercise database:', HyperTrack.exerciseDatabase);
+    console.log('🔍 Exercise list container:', document.getElementById('exerciseList'));
+};
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
