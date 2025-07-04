@@ -1,16 +1,10 @@
 {
   "version": 2,
   "name": "hypertrack-pro",
-  "builds": [
+  "redirects": [
     {
-      "src": "index.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -62,19 +56,6 @@
       ]
     }
   ],
-  "functions": {
-    "app.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  },
   "cleanUrls": true,
   "trailingSlash": false
 }
