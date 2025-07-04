@@ -45,7 +45,13 @@
         <!-- Research Banner -->
         <div class="research-banner" id="researchBanner">
             <div class="research-content">
-                <span class="research-icon">🔬</span>
+                <div class="research-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11a3 3 0 1 1 6 0"></path>
+                        <path d="M17.5 17.5 23 23"></path>
+                        <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
+                </div>
                 <p class="research-text" id="researchText">Loading research insights...</p>
             </div>
         </div>
@@ -72,7 +78,13 @@
                             <h2>Ready to Train?</h2>
                             <p>Start a new workout session to begin tracking your progress with evidence-based training principles.</p>
                             <button class="btn btn-primary btn-large" onclick="startWorkout()">
-                                <span class="btn-icon">💪</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                    <path d="M6.5 6.5h11v11h-11z"></path>
+                                    <path d="M6.5 6.5L2 2"></path>
+                                    <path d="M17.5 6.5L22 2"></path>
+                                    <path d="M6.5 17.5L2 22"></path>
+                                    <path d="M17.5 17.5L22 22"></path>
+                                </svg>
                                 Start New Workout
                             </button>
                         </div>
@@ -123,7 +135,15 @@
                     <h2>Workout History</h2>
                     <div id="historyList" class="history-list">
                         <div class="empty-state">
-                            <div class="empty-icon">📖</div>
+                            <div class="empty-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    <path d="M8 7h8"></path>
+                                    <path d="M8 11h8"></path>
+                                    <path d="M8 15h6"></path>
+                                </svg>
+                            </div>
                             <h3>No Workouts Yet</h3>
                             <p>Complete your first workout to see your training history and progress over time.</p>
                         </div>
@@ -169,6 +189,15 @@
             <div id="settingsTab" class="tab-content">
                 <div class="settings-container">
                     <h2>Settings</h2>
+                    
+                    <!-- Database Test Section -->
+                    <div class="settings-section">
+                        <h3>Database Connection</h3>
+                        <button class="btn btn-secondary" onclick="testDatabaseConnection()">Test Database</button>
+                        <div id="dbTestResults" style="margin-top: 10px; padding: 10px; background: #3D6A71; border-radius: 8px; display: none;">
+                            <p id="dbTestStatus">Testing...</p>
+                        </div>
+                    </div>
                     
                     <div class="settings-section">
                         <h3>Preferences</h3>
@@ -245,26 +274,55 @@
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
             <button class="nav-btn active" onclick="switchTab('workout')" data-tab="workout">
-                <div class="nav-icon">💪</div>
+                <div class="nav-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6.5 6.5h11v11h-11z"></path>
+                        <path d="M6.5 6.5L2 2"></path>
+                        <path d="M17.5 6.5L22 2"></path>
+                        <path d="M6.5 17.5L2 22"></path>
+                        <path d="M17.5 17.5L22 22"></path>
+                    </svg>
+                </div>
                 <div class="nav-label">Workout</div>
             </button>
             <button class="nav-btn" onclick="switchTab('history')" data-tab="history">
-                <div class="nav-icon">📖</div>
+                <div class="nav-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        <path d="M8 7h8"></path>
+                        <path d="M8 11h8"></path>
+                        <path d="M8 15h6"></path>
+                    </svg>
+                </div>
                 <div class="nav-label">History</div>
             </button>
             <button class="nav-btn" onclick="switchTab('analytics')" data-tab="analytics">
-                <div class="nav-icon">📊</div>
+                <div class="nav-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18"></path>
+                        <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+                    </svg>
+                </div>
                 <div class="nav-label">Analytics</div>
             </button>
             <button class="nav-btn" onclick="switchTab('settings')" data-tab="settings">
-                <div class="nav-icon">⚙️</div>
+                <div class="nav-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </div>
                 <div class="nav-label">Settings</div>
             </button>
         </nav>
 
         <!-- Floating Action Button -->
         <button class="fab" id="fab" onclick="toggleWorkout()" aria-label="Start workout">
-            <span id="fabIcon">+</span>
+            <svg id="fabIcon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
         </button>
     </div>
 
@@ -310,10 +368,30 @@
                 <div class="auth-footer">
                     <p><strong>Why create an account?</strong></p>
                     <ul>
-                        <li>✅ Sync workouts across all your devices</li>
-                        <li>✅ Never lose your training data</li>
-                        <li>✅ Access advanced analytics and insights</li>
-                        <li>✅ Get personalized recommendations</li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94C17B" stroke-width="2" style="margin-right: 8px; display: inline;">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            Sync workouts across all your devices
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94C17B" stroke-width="2" style="margin-right: 8px; display: inline;">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            Never lose your training data
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94C17B" stroke-width="2" style="margin-right: 8px; display: inline;">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            Access advanced analytics and insights
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94C17B" stroke-width="2" style="margin-right: 8px; display: inline;">
+                                <polyline points="20,6 9,17 4,12"></polyline>
+                            </svg>
+                            Get personalized recommendations
+                        </li>
                     </ul>
                     <p class="privacy-note">Your data is secure and private. We never share your information.</p>
                 </div>

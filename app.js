@@ -1189,7 +1189,12 @@ function showStartWorkout() {
     if (exerciseDiv) exerciseDiv.style.display = 'none';
     
     const fabIcon = document.getElementById('fabIcon');
-    if (fabIcon) fabIcon.textContent = '+';
+    if (fabIcon) {
+        fabIcon.innerHTML = `
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        `;
+    }
 }
 
 function showCurrentWorkout() {
@@ -1202,7 +1207,11 @@ function showCurrentWorkout() {
     if (exerciseDiv) exerciseDiv.style.display = 'block';
     
     const fabIcon = document.getElementById('fabIcon');
-    if (fabIcon) fabIcon.textContent = '✓';
+    if (fabIcon) {
+        fabIcon.innerHTML = `
+            <polyline points="20,6 9,17 4,12"></polyline>
+        `;
+    }
     
     updateCurrentWorkoutDisplay();
 }
@@ -2994,3 +3003,166 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 console.log('🚀 HyperTrack Pro loaded successfully');
+
+// Database Connection Test Function
+async function testDatabaseConnection() {
+    const resultsDiv = document.getElementById('dbTestResults');
+    const statusP = document.getElementById('dbTestStatus');
+    
+    resultsDiv.style.display = 'block';
+    statusP.innerHTML = '🔄 Testing database connection...';
+    
+    try {
+        // Debug: Check what's available
+        console.log('window.supabase:', typeof window.supabase);
+        console.log('window.supabase object:', window.supabase);
+        
+        // Initialize Supabase if not already done
+        if (!window.supabaseClient) {
+            if (typeof window.supabase === 'undefined') {
+                statusP.innerHTML = '❌ Supabase CDN not loaded - check internet connection';
+                return;
+            }
+            
+            // Check if supabase has createClient method
+            if (typeof window.supabase.createClient !== 'function') {
+                statusP.innerHTML = '❌ Supabase createClient method not found';
+                console.error('Available methods:', Object.keys(window.supabase));
+                return;
+            }
+            
+            window.supabaseClient = window.supabase.createClient(
+                'https://zrmkzgwrmohhbmjfdxdf.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWt6Z3dybW9oaGJtamZkeGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNjYwODgsImV4cCI6MjA2Njc0MjA4OH0.DJC-PLTnxG8IG-iV7_irb2pnEZJFacDOd9O7RDWwTVU'
+            );
+            
+            console.log('Supabase client created:', window.supabaseClient);
+        }
+        
+        statusP.innerHTML = '🔄 Testing exercises table...';
+        
+        // Verify client has from method
+        if (typeof window.supabaseClient.from !== 'function') {
+            statusP.innerHTML = '❌ Supabase client invalid - from method missing';
+            console.error('Client methods:', Object.keys(window.supabaseClient));
+            return;
+        }
+        
+        // Test exercises table
+        let { data: exercises, error: exerciseError } = await window.supabaseClient
+            .from('exercises')
+            .select('id, name, muscle_group')
+            .limit(3);
+            
+        if (exerciseError) {
+            statusP.innerHTML = `❌ Exercises table error: ${exerciseError.message}`;
+            return;
+        }
+        
+        // If no exercises found, seed some basic ones
+        if (exercises.length === 0) {
+            statusP.innerHTML = '🔄 No exercises found, seeding database...';
+            
+            const sampleExercises = [
+                {
+                    name: 'Lat Pulldowns',
+                    muscle_group: 'Vertical Pull',
+                    category: 'Compound',
+                    tier: 1,
+                    mvc_percentage: 90,
+                    equipment: 'cable',
+                    gym_types: ['commercial', 'barbell', 'crossfit'],
+                    biomechanical_function: 'Shoulder Adduction',
+                    target_rep_range: '8-12',
+                    rest_period: 180
+                },
+                {
+                    name: 'Barbell Bench Press',
+                    muscle_group: 'Horizontal Push',
+                    category: 'Compound',
+                    tier: 1,
+                    mvc_percentage: 100,
+                    equipment: 'barbell',
+                    gym_types: ['barbell', 'crossfit'],
+                    biomechanical_function: 'Shoulder Horizontal Adduction',
+                    target_rep_range: '6-10',
+                    rest_period: 180
+                },
+                {
+                    name: 'Dumbbell Bicep Curls',
+                    muscle_group: 'Biceps',
+                    category: 'Isolation',
+                    tier: 1,
+                    mvc_percentage: 90,
+                    equipment: 'dumbbell',
+                    gym_types: ['commercial', 'minimalist', 'planet_fitness'],
+                    biomechanical_function: 'Elbow Flexion',
+                    target_rep_range: '10-15',
+                    rest_period: 90
+                }
+            ];
+            
+            const { data: seedData, error: seedError } = await window.supabaseClient
+                .from('exercises')
+                .insert(sampleExercises)
+                .select('id, name, muscle_group');
+                
+            if (seedError) {
+                statusP.innerHTML = `❌ Failed to seed exercises: ${seedError.message}`;
+                return;
+            }
+            
+            statusP.innerHTML = '🔄 Exercises seeded, re-testing...';
+            
+            // Re-fetch exercises
+            const { data: newExercises, error: newError } = await window.supabaseClient
+                .from('exercises')
+                .select('id, name, muscle_group')
+                .limit(3);
+                
+            if (newError) {
+                statusP.innerHTML = `❌ Error after seeding: ${newError.message}`;
+                return;
+            }
+            
+            exercises = newExercises;
+        }
+        
+        statusP.innerHTML = '🔄 Testing all tables...';
+        
+        // Test all tables
+        const tables = ['users', 'workouts', 'workout_exercises', 'sets', 'user_settings'];
+        const results = [];
+        
+        for (const table of tables) {
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from(table)
+                    .select('*', { head: true });
+                    
+                if (error) {
+                    results.push(`❌ ${table}: ${error.message}`);
+                } else {
+                    results.push(`✅ ${table}: OK`);
+                }
+            } catch (err) {
+                results.push(`❌ ${table}: ${err.message}`);
+            }
+        }
+        
+        // Show results
+        statusP.innerHTML = `
+            <strong>✅ Database Connection Test Results:</strong><br>
+            <strong>Exercises found:</strong> ${exercises.length} exercises<br>
+            ${exercises.map(ex => `- ${ex.name} (${ex.muscle_group})`).join('<br>')}<br><br>
+            <strong>Table Status:</strong><br>
+            ${results.join('<br>')}
+        `;
+        
+    } catch (error) {
+        statusP.innerHTML = `❌ Connection failed: ${error.message}`;
+    }
+}
+
+// Make function globally available
+window.testDatabaseConnection = testDatabaseConnection;

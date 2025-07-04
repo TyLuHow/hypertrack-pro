@@ -9,8 +9,8 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #f8fafc;
+    background: linear-gradient(135deg, #17282B 0%, #30525C 100%);
+    color: white;
     line-height: 1.6;
     min-height: 100vh;
 }
@@ -24,7 +24,7 @@ body {
 
 /* Header */
 .header {
-    background: linear-gradient(135deg, #1b4e4e, #2c5f5f);
+    background: linear-gradient(135deg, #17282B, #30525C);
     padding: 20px;
     display: flex;
     align-items: center;
@@ -70,8 +70,8 @@ body {
 
 /* Research Banner */
 .research-banner {
-    background: #2a2c2f;
-    border-bottom: 1px solid #374151;
+    background: #30525C;
+    border-bottom: 1px solid #3D6A71;
     padding: 16px 20px;
 }
 
@@ -83,9 +83,15 @@ body {
     margin: 0 auto;
 }
 
+.research-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .research-text {
     font-size: 14px;
-    color: #cbd5e1;
+    color: white;
     margin: 0;
 }
 
@@ -111,8 +117,8 @@ body {
 /* Welcome Card */
 .welcome-card {
     text-align: center;
-    background: linear-gradient(135deg, #2a2c2f, #334155);
-    border: 1px solid #374151;
+    background: linear-gradient(135deg, #30525C, #3D6A71);
+    border: 1px solid #4C848D;
     border-radius: 16px;
     padding: 40px 24px;
     margin-bottom: 24px;
@@ -121,11 +127,11 @@ body {
 .welcome-card h2 {
     font-size: 24px;
     margin-bottom: 12px;
-    color: #f8fafc;
+    color: white;
 }
 
 .welcome-card p {
-    color: #cbd5e1;
+    color: white;
     margin-bottom: 24px;
     font-size: 16px;
 }
@@ -154,24 +160,25 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #1b4e4e, #2c5f5f);
+    background: linear-gradient(135deg, #4C848D, #708090);
     color: white;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary:hover {
+    background: linear-gradient(135deg, #708090, #94C17B);
     transform: translateY(-1px);
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
 }
 
 .btn-secondary {
-    background: #334155;
-    color: #f8fafc;
-    border: 1px solid #374151;
+    background: #3D6A71;
+    color: white;
+    border: 1px solid #4C848D;
 }
 
 .btn-secondary:hover {
-    background: #475569;
+    background: #4C848D;
 }
 
 .btn-danger {
@@ -184,12 +191,12 @@ body {
 }
 
 .btn-success {
-    background: #10b981;
+    background: #94C17B;
     color: white;
 }
 
 .btn-success:hover {
-    background: #059669;
+    background: #4C848D;
 }
 
 .btn-remove {
@@ -208,8 +215,8 @@ body {
 
 /* Current Workout */
 .current-workout {
-    background: #2a2c2f;
-    border: 1px solid #2c5f5f;
+    background: #30525C;
+    border: 1px solid #4C848D;
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 24px;
@@ -223,7 +230,7 @@ body {
 }
 
 .workout-timer {
-    background: #2c5f5f;
+    background: #4C848D;
     color: white;
     padding: 8px 16px;
     border-radius: 12px;
@@ -238,14 +245,14 @@ body {
 }
 
 .current-exercise {
-    background: #334155;
+    background: #3D6A71;
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 12px;
 }
 
 .current-exercise h4 {
-    color: #f8fafc;
+    color: white;
     margin-bottom: 8px;
 }
 
@@ -256,8 +263,8 @@ body {
 }
 
 .set-summary {
-    background: #475569;
-    color: #cbd5e1;
+    background: #4C848D;
+    color: white;
     padding: 4px 8px;
     border-radius: 6px;
     font-size: 12px;
@@ -273,17 +280,17 @@ body {
 .search-input {
     width: 100%;
     padding: 16px 20px 16px 50px;
-    background: #334155;
-    border: 1px solid #374151;
+    background: #3D6A71;
+    border: 1px solid #4C848D;
     border-radius: 12px;
-    color: #f8fafc;
+    color: white;
     font-size: 16px;
 }
 
 .search-input:focus {
     outline: none;
-    border-color: #2c5f5f;
-    box-shadow: 0 0 0 3px rgba(44, 95, 95, 0.1);
+    border-color: #4C848D;
+    box-shadow: 0 0 0 3px rgba(76, 132, 141, 0.1);
 }
 
 .search-icon {
@@ -291,7 +298,7 @@ body {
     left: 16px;
     top: 50%;
     transform: translateY(-50%);
-    color: #94a3b8;
+    color: #DCAA89;
 }
 
 /* Muscle Groups */
@@ -305,9 +312,9 @@ body {
 
 .muscle-btn {
     padding: 8px 16px;
-    background: #334155;
-    color: #cbd5e1;
-    border: 1px solid #374151;
+    background: #3D6A71;
+    color: white;
+    border: 1px solid #4C848D;
     border-radius: 20px;
     font-size: 14px;
     font-weight: 500;
@@ -318,9 +325,9 @@ body {
 
 .muscle-btn.active,
 .muscle-btn:hover {
-    background: #2c5f5f;
+    background: #4C848D;
     color: white;
-    border-color: #2c5f5f;
+    border-color: #4C848D;
 }
 
 /* Exercise List */
@@ -330,8 +337,8 @@ body {
 }
 
 .exercise-item {
-    background: #334155;
-    border: 1px solid #374151;
+    background: #3D6A71;
+    border: 1px solid #4C848D;
     border-radius: 12px;
     padding: 16px;
     cursor: pointer;
@@ -339,14 +346,14 @@ body {
 }
 
 .exercise-item:hover {
-    background: #1e293b;
-    border-color: #2c5f5f;
+    background: #4C848D;
+    border-color: #708090;
     transform: translateY(-1px);
 }
 
 .exercise-name {
     font-weight: 600;
-    color: #f8fafc;
+    color: white;
     margin-bottom: 4px;
 }
 
@@ -354,7 +361,7 @@ body {
     display: flex;
     gap: 12px;
     font-size: 14px;
-    color: #94a3b8;
+    color: #DCAA89;
 }
 
 /* Stats Grid */
@@ -366,8 +373,8 @@ body {
 }
 
 .stat-card {
-    background: #2a2c2f;
-    border: 1px solid #374151;
+    background: #30525C;
+    border: 1px solid #4C848D;
     border-radius: 12px;
     padding: 20px;
     text-align: center;
@@ -376,20 +383,20 @@ body {
 .stat-value {
     font-size: 32px;
     font-weight: 800;
-    color: #3d7070;
+    color: #4C848D;
     margin-bottom: 8px;
 }
 
 .stat-label {
     font-size: 14px;
-    color: #94a3b8;
+    color: white;
     font-weight: 500;
 }
 
 /* Workout History */
 .workout-history-item {
-    background: #334155;
-    border: 1px solid #374151;
+    background: #3D6A71;
+    border: 1px solid #4C848D;
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 12px;
@@ -398,13 +405,13 @@ body {
 }
 
 .workout-history-item:hover {
-    background: #475569;
-    border-color: #2c5f5f;
+    background: #4C848D;
+    border-color: #708090;
 }
 
 .workout-date {
     font-weight: 600;
-    color: #f8fafc;
+    color: white;
     margin-bottom: 8px;
 }
 
@@ -412,13 +419,13 @@ body {
     display: flex;
     gap: 16px;
     font-size: 14px;
-    color: #94a3b8;
+    color: #DCAA89;
     margin-bottom: 8px;
 }
 
 .workout-notes {
     font-size: 14px;
-    color: #cbd5e1;
+    color: white;
     font-style: italic;
 }
 
@@ -428,7 +435,7 @@ body {
 }
 
 .settings-section h3 {
-    color: #f8fafc;
+    color: white;
     margin-bottom: 16px;
     font-size: 18px;
 }
@@ -442,14 +449,14 @@ body {
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    color: #f8fafc;
+    color: white;
     font-weight: 500;
 }
 
 .setting-label input[type="checkbox"] {
     width: 20px;
     height: 20px;
-    accent-color: #2c5f5f;
+    accent-color: #4C848D;
 }
 
 /* Empty State */
@@ -462,6 +469,9 @@ body {
     font-size: 48px;
     margin-bottom: 16px;
     opacity: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .empty-state h3 {
@@ -510,6 +520,9 @@ body {
 }
 
 .nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 24px;
 }
 
@@ -1011,20 +1024,22 @@ body {
 
 /* Color Variables */
 :root {
-    --primary: #3d7070;
-    --primary-light: #5c9b9b;
-    --success: #10b981;
-    --warning: #f59e0b;
+    --primary: #4C848D;
+    --primary-light: #708090;
+    --success: #94C17B;
+    --warning: #DCAA89;
     --danger: #ef4444;
-    --bg-card: #1f2937;
-    --bg-tertiary: #374151;
-    --text-primary: #f8fafc;
-    --text-secondary: #d1d5db;
-    --text-muted: #9ca3af;
-    --border: #4b5563;
+    --bg-card: #30525C;
+    --bg-tertiary: #3D6A71;
+    --text-primary: #DCAA89;
+    --text-secondary: #708090;
+    --text-muted: #4C848D;
+    --border: #3D6A71;
     --radius: 8px;
     --radius-lg: 12px;
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+    --bg-primary: #17282B;
+    --bg-secondary: #30525C;
 }
 
 /* Authentication Styles */
