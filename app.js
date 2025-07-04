@@ -223,7 +223,8 @@ function addSet(defaultWeight = '', defaultReps = '') {
         <div class="input-group">
             <input type="number" class="set-input" placeholder="Weight (lbs)" min="0" step="2.5" value="${defaultWeight}">
             <input type="number" class="set-input" placeholder="Reps" min="1" max="50" value="${defaultReps}">
-            <button type="button" class="remove-set-btn" onclick="removeSet(this)">×</button>
+            <button type="button" class="complete-set-btn" onclick="completeSet(this)" title="Complete set and start rest timer">✓</button>
+            <button type="button" class="remove-set-btn" onclick="removeSet(this)" title="Remove set">×</button>
         </div>
     `;
     
@@ -232,6 +233,49 @@ function addSet(defaultWeight = '', defaultReps = '') {
     // Focus on weight input
     const weightInput = setDiv.querySelector('input');
     if (weightInput) weightInput.focus();
+}
+
+function completeSet(button) {
+    const setRow = button.closest('.set-input-row');
+    const inputs = setRow.querySelectorAll('.set-input');
+    const weight = parseFloat(inputs[0].value);
+    const reps = parseInt(inputs[1].value);
+    
+    if (!weight || weight <= 0) {
+        showNotification('Please enter a valid weight', 'warning');
+        inputs[0].focus();
+        return;
+    }
+    
+    if (!reps || reps <= 0) {
+        showNotification('Please enter valid reps', 'warning');
+        inputs[1].focus();
+        return;
+    }
+    
+    // Mark set as completed visually
+    setRow.style.backgroundColor = '#1f2937';
+    setRow.style.border = '1px solid #22c55e';
+    button.style.backgroundColor = '#22c55e';
+    button.style.color = '#ffffff';
+    button.disabled = true;
+    button.textContent = '✓';
+    
+    // Disable inputs to prevent changes
+    inputs[0].disabled = true;
+    inputs[1].disabled = true;
+    
+    // Calculate rest time based on exercise and reps
+    const restTime = calculateOptimalRestTime(HyperTrack.state.currentExercise, reps);
+    const restMinutes = Math.round(restTime / 60 * 10) / 10;
+    
+    // Start rest timer if enabled
+    if (HyperTrack.state.settings.autoStartRestTimer) {
+        const exerciseName = HyperTrack.state.currentExercise?.name || 'Exercise';
+        startRestTimer(restTime, `${exerciseName} - Set completed`);
+    }
+    
+    showNotification(`Set completed! ${weight}lbs × ${reps} reps. Rest ${restMinutes}min recommended.`, 'success');
 }
 
 function removeSet(button) {
@@ -250,15 +294,35 @@ function removeSet(button) {
 }
 
 function finishExercise() {
-    if (!HyperTrack.state.currentExercise || !HyperTrack.state.currentWorkout) return;
+    console.log('🏁 finishExercise called');
+    console.log('🔍 Current exercise:', HyperTrack.state.currentExercise);
+    console.log('🔍 Current workout:', HyperTrack.state.currentWorkout);
+    
+    if (!HyperTrack.state.currentExercise || !HyperTrack.state.currentWorkout) {
+        console.log('❌ Missing current exercise or workout');
+        return;
+    }
     
     const setInputs = document.getElementById('setInputs');
     const sets = [];
     
-    Array.from(setInputs.children).forEach(row => {
+    console.log('📊 Set inputs container:', setInputs);
+    console.log('📊 Children count:', setInputs.children.length);
+    
+    Array.from(setInputs.children).forEach((row, index) => {
+        console.log(`📝 Processing row ${index}:`, row);
+        
+        // Skip non-set rows (like recommendation banners)
+        if (!row.classList.contains('set-input-row')) {
+            console.log(`⏭️ Skipping non-set row ${index}`);
+            return;
+        }
+        
         const inputs = row.querySelectorAll('.set-input');
         const weight = parseFloat(inputs[0].value);
         const reps = parseInt(inputs[1].value);
+        
+        console.log(`⚖️ Set ${index}: ${weight}lbs × ${reps} reps`);
         
         if (weight > 0 && reps > 0) {
             sets.push({
@@ -266,10 +330,16 @@ function finishExercise() {
                 reps: reps,
                 timestamp: new Date().toISOString()
             });
+            console.log(`✅ Added set ${index} to exercise`);
+        } else {
+            console.log(`❌ Invalid set ${index}: weight=${weight}, reps=${reps}`);
         }
     });
     
+    console.log(`📊 Total valid sets collected: ${sets.length}`);
+    
     if (sets.length === 0) {
+        console.log('❌ No valid sets found');
         showNotification('Please enter at least one valid set', 'warning');
         return;
     }
@@ -283,7 +353,11 @@ function finishExercise() {
         sets: sets
     };
     
+    console.log('🏋️ Adding exercise to workout:', exercise);
+    
     HyperTrack.state.currentWorkout.exercises.push(exercise);
+    
+    console.log('✅ Exercise added. Current workout exercises:', HyperTrack.state.currentWorkout.exercises.length);
     
     closeExerciseModal();
     updateUI();
@@ -1489,6 +1563,11 @@ window.debugHyperTrack = function() {
     console.log('🔍 HyperTrack state:', HyperTrack.state);
     console.log('🔍 Exercise database:', HyperTrack.exerciseDatabase);
     console.log('🔍 Exercise list container:', document.getElementById('exerciseList'));
+};
+
+window.testFinishExercise = function() {
+    console.log('🧪 Testing finish exercise...');
+    finishExercise();
 };
 
 // Initialize Application
