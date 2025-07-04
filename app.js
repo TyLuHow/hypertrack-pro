@@ -76,30 +76,38 @@ const HyperTrack = {
     ],
     
     exerciseDatabase: [
-        // Back Exercises
-        { id: 1, name: "Lat Pulldowns", muscle_group: "Back", category: "Compound", tier: 1, mvc_percentage: 90 },
-        { id: 2, name: "Smith Machine Rows", muscle_group: "Back", category: "Compound", tier: 1, mvc_percentage: 95 },
-        { id: 3, name: "Face Pulls", muscle_group: "Back", category: "Isolation", tier: 2, mvc_percentage: 75 },
+        // Vertical Pull (Back - Lat dominant)
+        { id: 1, name: "Lat Pulldowns", muscle_group: "Vertical Pull", category: "Compound", tier: 1, mvc_percentage: 90 },
         
-        // Arms Exercises  
-        { id: 4, name: "Dumbbell Bicep Curls", muscle_group: "Arms", category: "Isolation", tier: 1, mvc_percentage: 90 },
-        { id: 5, name: "Cable Hammer Curls", muscle_group: "Arms", category: "Isolation", tier: 2, mvc_percentage: 85 },
-        { id: 6, name: "Tricep Cable Rope Pulldowns", muscle_group: "Arms", category: "Isolation", tier: 1, mvc_percentage: 80 },
-        { id: 7, name: "Close-Grip Smith Machine Press", muscle_group: "Arms", category: "Compound", tier: 1, mvc_percentage: 85 },
+        // Horizontal Pull (Back - Mid-trap/rhomboid dominant)  
+        { id: 2, name: "Smith Machine Rows", muscle_group: "Horizontal Pull", category: "Compound", tier: 1, mvc_percentage: 95 },
+        { id: 3, name: "Face Pulls", muscle_group: "Rear Delts", category: "Isolation", tier: 2, mvc_percentage: 75 },
         
-        // Chest Exercises
+        // Biceps (Elbow flexion)
+        { id: 4, name: "Dumbbell Bicep Curls", muscle_group: "Biceps", category: "Isolation", tier: 1, mvc_percentage: 90 },
+        { id: 5, name: "Cable Hammer Curls", muscle_group: "Biceps", category: "Isolation", tier: 2, mvc_percentage: 85 },
+        
+        // Triceps (Elbow extension)
+        { id: 6, name: "Tricep Cable Rope Pulldowns", muscle_group: "Triceps", category: "Isolation", tier: 1, mvc_percentage: 80 },
+        { id: 7, name: "Close-Grip Smith Machine Press", muscle_group: "Triceps", category: "Compound", tier: 1, mvc_percentage: 85 },
+        
+        // Horizontal Push (Chest dominant)
         { id: 8, name: "Dumbbell Flyes", muscle_group: "Chest", category: "Isolation", tier: 2, mvc_percentage: 80 },
         { id: 9, name: "Bodyweight Dips", muscle_group: "Chest", category: "Compound", tier: 1, mvc_percentage: 95 },
         { id: 10, name: "Incline Dumbbell Press", muscle_group: "Chest", category: "Compound", tier: 1, mvc_percentage: 90 },
         { id: 11, name: "Smith Machine Bench Press", muscle_group: "Chest", category: "Compound", tier: 1, mvc_percentage: 95 },
         
-        // Shoulders Exercises
-        { id: 12, name: "Dumbbell Lateral Raises", muscle_group: "Shoulders", category: "Isolation", tier: 1, mvc_percentage: 75 },
-        { id: 13, name: "Smith Machine Barbell Shrugs", muscle_group: "Shoulders", category: "Isolation", tier: 2, mvc_percentage: 85 },
-        { id: 14, name: "Cable Lateral Raises", muscle_group: "Shoulders", category: "Isolation", tier: 2, mvc_percentage: 70 },
-        { id: 15, name: "Dumbbell Reverse Flyes", muscle_group: "Shoulders", category: "Isolation", tier: 2, mvc_percentage: 70 },
-        { id: 16, name: "Kettlebell Prone Y Raises", muscle_group: "Shoulders", category: "Isolation", tier: 3, mvc_percentage: 65 },
-        { id: 17, name: "Cable External Rotations", muscle_group: "Shoulders", category: "Isolation", tier: 3, mvc_percentage: 60 }
+        // Side Delts (Shoulder abduction)
+        { id: 12, name: "Dumbbell Lateral Raises", muscle_group: "Side Delts", category: "Isolation", tier: 1, mvc_percentage: 75 },
+        { id: 14, name: "Cable Lateral Raises", muscle_group: "Side Delts", category: "Isolation", tier: 2, mvc_percentage: 70 },
+        
+        // Traps (Shoulder elevation)
+        { id: 13, name: "Smith Machine Barbell Shrugs", muscle_group: "Traps", category: "Isolation", tier: 2, mvc_percentage: 85 },
+        
+        // Rear Delts (Shoulder horizontal abduction)
+        { id: 15, name: "Dumbbell Reverse Flyes", muscle_group: "Rear Delts", category: "Isolation", tier: 2, mvc_percentage: 70 },
+        { id: 16, name: "Kettlebell Prone Y Raises", muscle_group: "Rear Delts", category: "Isolation", tier: 3, mvc_percentage: 65 },
+        { id: 17, name: "Cable External Rotations", muscle_group: "Rear Delts", category: "Isolation", tier: 3, mvc_percentage: 60 }
     ],
     
     loadHistoricalData() {
@@ -214,7 +222,17 @@ function closeExerciseModal() {
 
 function addSet(defaultWeight = '', defaultReps = '') {
     const setInputs = document.getElementById('setInputs');
-    const setNumber = Array.from(setInputs.children).filter(child => child.classList.contains('set-input-row')).length + 1;
+    const existingSetRows = Array.from(setInputs.children).filter(child => child.classList.contains('set-input-row'));
+    const setNumber = existingSetRows.length + 1;
+    
+    // Auto-populate with previous set's data if no defaults provided
+    if (!defaultWeight && !defaultReps && existingSetRows.length > 0) {
+        const lastSetRow = existingSetRows[existingSetRows.length - 1];
+        const lastInputs = lastSetRow.querySelectorAll('.set-input');
+        defaultWeight = lastInputs[0].value || '';
+        defaultReps = lastInputs[1].value || '';
+        console.log(`🔄 Auto-populating from previous set: ${defaultWeight}lbs × ${defaultReps} reps`);
+    }
     
     const setDiv = document.createElement('div');
     setDiv.className = 'set-input-row';
@@ -252,6 +270,10 @@ function completeSet(button) {
         inputs[1].focus();
         return;
     }
+    
+    // Store completion timestamp for rest calculation
+    const completionTime = new Date();
+    setRow.dataset.completedAt = completionTime.toISOString();
     
     // Mark set as completed visually
     setRow.style.backgroundColor = '#1f2937';
@@ -325,10 +347,14 @@ function finishExercise() {
         console.log(`⚖️ Set ${index}: ${weight}lbs × ${reps} reps`);
         
         if (weight > 0 && reps > 0) {
+            // Check if this set was completed (has completion timestamp)
+            const completedTimestamp = row.dataset.completedAt || new Date().toISOString();
+            
             sets.push({
                 weight: weight,
                 reps: reps,
-                timestamp: new Date().toISOString()
+                timestamp: completedTimestamp,
+                restTimeAfter: null // Will be calculated after all sets are processed
             });
             console.log(`✅ Added set ${index} to exercise`);
         } else {
@@ -357,22 +383,34 @@ function finishExercise() {
     
     HyperTrack.state.currentWorkout.exercises.push(exercise);
     
+    // Calculate rest times between sets
+    for (let i = 0; i < exercise.sets.length - 1; i++) {
+        const currentSet = exercise.sets[i];
+        const nextSet = exercise.sets[i + 1];
+        
+        if (currentSet.timestamp && nextSet.timestamp) {
+            const restSeconds = Math.round((new Date(nextSet.timestamp) - new Date(currentSet.timestamp)) / 1000);
+            currentSet.restTimeAfter = restSeconds;
+            console.log(`⏱️ Rest after set ${i + 1}: ${restSeconds} seconds`);
+        }
+    }
+    
     console.log('✅ Exercise added. Current workout exercises:', HyperTrack.state.currentWorkout.exercises.length);
     
     closeExerciseModal();
     updateUI();
     saveAppData();
     
-    // Generate evidence-based recommendations and start rest timer
-    const restTime = calculateOptimalRestTime(HyperTrack.state.currentExercise, sets[sets.length - 1].reps);
-    const restMinutes = Math.round(restTime / 60 * 10) / 10;
+    // Generate evidence-based recommendations and start rest timer between exercises
+    const betweenExerciseRest = 180; // 3 minutes between exercises (research-based)
+    const restMinutes = Math.round(betweenExerciseRest / 60 * 10) / 10;
     
-    // Auto-start rest timer if enabled
+    // Auto-start rest timer between exercises if enabled
     if (HyperTrack.state.settings.autoStartRestTimer) {
-        startRestTimer(restTime, exercise.name);
+        startRestTimer(betweenExerciseRest, `${exercise.name} complete - Rest before next exercise`);
     }
     
-    showNotification(`${exercise.name} completed - ${sets.length} sets logged! Rest ${restMinutes}min (research-based)`, 'success');
+    showNotification(`✅ ${exercise.name} completed - ${sets.length} sets logged! Rest ${restMinutes}min before next exercise.`, 'success');
 }
 
 function switchTab(tabName) {
@@ -617,14 +655,17 @@ function updateHistoryDisplay() {
     );
     
     container.innerHTML = sortedWorkouts.map(workout => `
-        <div class="workout-history-item" onclick="viewWorkoutDetails('${workout.id}')">
-            <div class="workout-date">${formatDate(workout.date || workout.workout_date)}</div>
-            <div class="workout-summary">
-                <span>📋 ${workout.exercises?.length || 0} exercises</span>
-                <span>⏱️ ${Math.round((workout.duration || 0) / 60000)} min</span>
-                <span>🏋️ ${workout.split || 'General'}</span>
+        <div class="workout-history-item">
+            <div class="workout-content" onclick="viewWorkoutDetails('${workout.id}')" style="flex: 1; cursor: pointer;">
+                <div class="workout-date">${formatDate(workout.date || workout.workout_date)}</div>
+                <div class="workout-summary">
+                    <span>📋 ${workout.exercises?.length || 0} exercises</span>
+                    <span>⏱️ ${Math.round((workout.duration || 0) / 60000)} min</span>
+                    <span>🏋️ ${workout.split || 'General'}</span>
+                </div>
+                ${workout.notes ? `<div class="workout-notes">${workout.notes}</div>` : ''}
             </div>
-            ${workout.notes ? `<div class="workout-notes">${workout.notes}</div>` : ''}
+            <button class="delete-workout-btn" onclick="deleteWorkout('${workout.id}')" title="Delete workout" style="margin-left: 12px; background: #dc2626; color: white; border: none; border-radius: 4px; padding: 8px; cursor: pointer;">🗑️</button>
         </div>
     `).join('');
 }
@@ -987,6 +1028,28 @@ function importData() {
     input.click();
 }
 
+function deleteWorkout(workoutId) {
+    const workout = HyperTrack.state.workouts.find(w => w.id == workoutId);
+    if (!workout) return;
+    
+    const workoutDate = formatDate(workout.date || workout.workout_date);
+    const exerciseCount = workout.exercises?.length || 0;
+    
+    if (confirm(`🗑️ Delete workout from ${workoutDate}?\n${exerciseCount} exercises will be permanently removed.`)) {
+        console.log(`🗑️ Deleting workout ${workoutId}`);
+        
+        HyperTrack.state.workouts = HyperTrack.state.workouts.filter(w => w.id != workoutId);
+        
+        saveAppData();
+        updateHistoryDisplay();
+        updateAnalyticsDisplay();
+        
+        showNotification(`Workout from ${workoutDate} deleted`, 'info');
+        
+        console.log(`✅ Workout deleted. Remaining workouts: ${HyperTrack.state.workouts.length}`);
+    }
+}
+
 function clearAllData() {
     if (confirm('⚠️ This will permanently delete all your workout data. Are you sure?')) {
         if (confirm('This action cannot be undone. Continue?')) {
@@ -1278,8 +1341,8 @@ function getExerciseRecommendations() {
         });
     });
     
-    // Find underworked muscle groups
-    const allMuscles = ['Chest', 'Back', 'Shoulders', 'Arms'];
+    // Find underworked muscle groups (research-based categories)
+    const allMuscles = ['Chest', 'Vertical Pull', 'Horizontal Pull', 'Side Delts', 'Rear Delts', 'Biceps', 'Triceps', 'Traps'];
     const underworkedMuscles = allMuscles.filter(muscle => 
         (muscleGroupFrequency[muscle] || 0) < 2
     );
