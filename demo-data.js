@@ -433,7 +433,9 @@ class DemoDataGenerator {
         localStorage.setItem('hypertrack_demo_user', JSON.stringify(this.userProfile));
         localStorage.setItem('hypertrack_demo_mode', 'true');
 
-        console.log('🎭 Demo mode initialized with 45 research-aligned workouts');
+        console.log('🎭 Demo mode initialized with', workouts.length, 'research-aligned workouts');
+        console.log('🎭 First workout:', workouts[0]?.date, 'Last workout:', workouts[workouts.length - 1]?.date);
+        console.log('🎭 Analytics:', analytics);
         return true;
     }
 

@@ -792,6 +792,11 @@ const HyperTrack = {
                 if (demoWorkouts && demoWorkouts.length > 0) {
                     this.state.workouts = demoWorkouts;
                     console.log(`🎭 Loaded ${demoWorkouts.length} demo workouts`);
+                    
+                    // Update all displays with demo data
+                    setTimeout(() => {
+                        this.updateAllDisplays();
+                    }, 100);
                     return;
                 }
             }
@@ -857,6 +862,36 @@ const HyperTrack = {
         localStorage.setItem('hypertrack_workouts', JSON.stringify(this.state.workouts));
         console.log('✅ Workout deleted from localStorage');
         return { success: true };
+    },
+    
+    // Update all displays with current data (for demo mode)
+    updateAllDisplays() {
+        console.log('🔄 Updating all displays with current data...');
+        
+        // Update workout history display
+        if (typeof updateHistoryDisplay === 'function') {
+            updateHistoryDisplay();
+        }
+        
+        // Update analytics display
+        if (typeof updateAnalyticsDisplay === 'function') {
+            updateAnalyticsDisplay();
+        }
+        
+        // Update intelligence displays
+        if (typeof updatePlateauAnalysis === 'function') {
+            updatePlateauAnalysis();
+        }
+        
+        if (typeof updateProgressionOptimization === 'function') {
+            updateProgressionOptimization();
+        }
+        
+        if (typeof updatePeriodizationStatus === 'function') {
+            updatePeriodizationStatus();
+        }
+        
+        console.log('✅ All displays updated');
     }
 };
 

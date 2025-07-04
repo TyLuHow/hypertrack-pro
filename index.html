@@ -512,13 +512,16 @@
     <script src="tyler-data-integration.js"></script>
     <script src="app.js"></script>
     <script>
+        // Demo mode utilities
+        function isDemoMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
+        }
+
         // Initialize demo mode banner
         function initializeDemoMode() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const isDemoMode = urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
-            
             const demoBanner = document.getElementById('demoBanner');
-            if (isDemoMode && demoBanner) {
+            if (isDemoMode() && demoBanner) {
                 demoBanner.style.display = 'block';
                 console.log('🎭 Demo mode activated');
             }
@@ -536,6 +539,31 @@
         // Initialize app when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             initializeDemoMode();
+            
+            // If in demo mode, load data after a short delay to ensure all scripts are loaded
+            if (isDemoMode()) {
+                setTimeout(() => {
+                    console.log('🎭 Initializing demo data...');
+                    
+                    // Test demo data generation directly
+                    if (window.DemoDataGenerator) {
+                        const demoGen = new window.DemoDataGenerator();
+                        console.log('🎭 Demo generator created, isDemo:', demoGen.isDemo);
+                        const success = demoGen.initializeDemoMode();
+                        console.log('🎭 Demo initialization result:', success);
+                        
+                        if (success) {
+                            const workouts = demoGen.getDemoWorkouts();
+                            console.log('🎭 Demo workouts retrieved:', workouts?.length);
+                        }
+                    }
+                    
+                    // Load historical data normally
+                    if (window.HyperTrack && window.HyperTrack.data) {
+                        HyperTrack.data.loadHistoricalData();
+                    }
+                }, 500);
+            }
         });
     </script>
 </body>
