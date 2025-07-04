@@ -4,7 +4,19 @@ console.log('🚀 HyperTrack Pro Loading...');
 // Demo Mode Detection
 const isDemoMode = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
+    const demoParam = urlParams.get('demo');
+    const hashDemo = window.location.hash.includes('demo');
+    const isDemo = demoParam === 'true' || hashDemo;
+    
+    console.log('🔍 Demo mode detection:', {
+        url: window.location.href,
+        searchParams: window.location.search,
+        demoParam: demoParam,
+        hashDemo: hashDemo,
+        isDemo: isDemo
+    });
+    
+    return isDemo;
 };
 
 // Global Application State
@@ -783,11 +795,20 @@ const HyperTrack = {
         }
         
         // Priority 1: Demo mode overrides everything
+        console.log('🔍 Data loading - demoMode state:', this.state.demoMode);
+        
         if (this.state.demoMode) {
+            console.log('🎭 Demo mode detected - initializing demo data...');
             if (window.DemoDataGenerator) {
+                console.log('🎭 DemoDataGenerator found, creating instance...');
                 const demoGenerator = new window.DemoDataGenerator();
-                demoGenerator.initializeDemoMode();
+                console.log('🎭 DemoDataGenerator instance created, calling initializeDemoMode...');
+                const initResult = demoGenerator.initializeDemoMode();
+                console.log('🎭 initializeDemoMode result:', initResult);
+                
                 const demoWorkouts = demoGenerator.getDemoWorkouts();
+                console.log('🎭 getDemoWorkouts result:', demoWorkouts?.length);
+                
                 if (demoWorkouts && demoWorkouts.length > 0) {
                     this.state.workouts = demoWorkouts;
                     console.log(`🎭 Demo mode: Loaded ${demoWorkouts.length} generated demo workouts`);
@@ -800,7 +821,11 @@ const HyperTrack = {
                         this.updateAllDisplays();
                     }, 100);
                     return;
+                } else {
+                    console.log('🎭 Demo workouts array is empty or null');
                 }
+            } else {
+                console.log('🎭 DemoDataGenerator not found in window object');
             }
             // If demo data generation fails, still don't load real data
             console.log('🎭 Demo mode: Failed to generate demo data, showing empty state');

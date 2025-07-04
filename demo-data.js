@@ -17,7 +17,18 @@ class DemoDataGenerator {
 
     checkDemoMode() {
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
+        const demoParam = urlParams.get('demo');
+        const hashDemo = window.location.hash.includes('demo');
+        const isDemo = demoParam === 'true' || hashDemo;
+        
+        console.log('🎭 DemoDataGenerator checkDemoMode:', {
+            url: window.location.href,
+            demoParam: demoParam,
+            hashDemo: hashDemo,
+            isDemo: isDemo
+        });
+        
+        return isDemo;
     }
 
     // Research-based exercise database for demo
