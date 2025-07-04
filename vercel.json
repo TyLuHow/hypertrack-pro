@@ -3,9 +3,9 @@
   "name": "hypertrack-pro",
   "buildCommand": "echo 'No build step required'",
   "outputDirectory": ".",
-  "redirects": [
+  "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!.*\\.).*)",
       "destination": "/index.html"
     }
   ],
