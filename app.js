@@ -1316,7 +1316,12 @@ function updateExerciseList(selectedCategory = 'all') {
                 html += `
                     <div class="exercise-card recommended" onclick="selectExercise('${safeName}', '${safeMuscle}', '${safeCategory}')" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
                         <div class="exercise-info">
-                            <div class="exercise-name">${rec.exercise.name} ⭐</div>
+                            <div class="exercise-name">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#94C17B" stroke="#94C17B" stroke-width="2" style="margin-right: 6px; display: inline;">
+                                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                                </svg>
+                                ${rec.exercise.name}
+                            </div>
                             <div class="exercise-muscle">${rec.exercise.muscle_group}</div>
                             <div class="exercise-category">${rec.exercise.category}</div>
                         </div>
@@ -1340,7 +1345,12 @@ function updateExerciseList(selectedCategory = 'all') {
                 html += `
                     <div class="exercise-card recommended" onclick="selectExercise('${safeName}', '${safeMuscle}', '${safeCategory}')" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
                         <div class="exercise-info">
-                            <div class="exercise-name">${rec.exercise.name} ⭐</div>
+                            <div class="exercise-name">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#94C17B" stroke="#94C17B" stroke-width="2" style="margin-right: 6px; display: inline;">
+                                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                                </svg>
+                                ${rec.exercise.name}
+                            </div>
                             <div class="exercise-muscle">${rec.exercise.muscle_group}</div>
                             <div class="exercise-category">${rec.exercise.category}</div>
                         </div>
@@ -1419,13 +1429,42 @@ function updateHistoryDisplay() {
             <div class="workout-content" onclick="viewWorkoutDetails('${workout.id}')" style="flex: 1; cursor: pointer;">
                 <div class="workout-date">${formatDate(workout.date || workout.workout_date)}</div>
                 <div class="workout-summary">
-                    <span>📋 ${workout.exercises?.length || 0} exercises</span>
-                    <span>⏱️ ${Math.round((workout.duration || 0) / 60000)} min</span>
-                    <span>🏋️ ${workout.split || 'General'}</span>
+                    <span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#708090" stroke-width="2" style="margin-right: 6px; display: inline;">
+                            <path d="M9 11H6l4-4 4 4h-3v4h-2v-4z"></path>
+                            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+                        </svg>
+                        ${workout.exercises?.length || 0} exercises
+                    </span>
+                    <span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#708090" stroke-width="2" style="margin-right: 6px; display: inline;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12,6 12,12 16,14"></polyline>
+                        </svg>
+                        ${Math.round((workout.duration || 0) / 60000)} min
+                    </span>
+                    <span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#708090" stroke-width="2" style="margin-right: 6px; display: inline;">
+                            <path d="M6.5 6.5h11v11h-11z"></path>
+                            <path d="M6.5 6.5L2 2"></path>
+                            <path d="M17.5 6.5L22 2"></path>
+                            <path d="M6.5 17.5L2 22"></path>
+                            <path d="M17.5 17.5L22 22"></path>
+                        </svg>
+                        ${workout.split || 'General'}
+                    </span>
                 </div>
                 ${workout.notes ? `<div class="workout-notes">${workout.notes}</div>` : ''}
             </div>
-            <button class="delete-workout-btn" onclick="deleteWorkout('${workout.id}')" title="Delete workout" style="margin-left: 12px; background: #dc2626; color: white; border: none; border-radius: 4px; padding: 8px; cursor: pointer;">🗑️</button>
+            <button class="delete-workout-btn" onclick="deleteWorkout('${workout.id}')" title="Delete workout" style="margin-left: 12px; background: #dc2626; color: white; border: none; border-radius: 4px; padding: 8px; cursor: pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3,6 5,6 21,6"></polyline>
+                    <path d="M19,6 L19,20 C19,21 18,22 17,22 L7,22 C6,22 5,21 5,20 L5,6"></path>
+                    <path d="M8,6 L8,4 C8,3 9,2 10,2 L14,2 C15,2 16,3 16,4 L16,6"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+            </button>
         </div>
     `).join('');
 }
@@ -3031,23 +3070,26 @@ async function testDatabaseConnection() {
     const statusP = document.getElementById('dbTestStatus');
     
     resultsDiv.style.display = 'block';
-    statusP.innerHTML = '🔄 Testing database connection...';
+    statusP.innerHTML = 'Testing database connection...';
     
     try {
         // Debug: Check what's available
         console.log('window.supabase:', typeof window.supabase);
         console.log('window.supabase object:', window.supabase);
         
-        // Initialize Supabase if not already done
-        if (!window.supabaseClient) {
+        // Try to get existing client first
+        if (window.supabaseService && window.supabaseService.supabase) {
+            window.supabaseClient = window.supabaseService.supabase;
+            console.log('Using existing Supabase client from service');
+        } else if (!window.supabaseClient) {
             if (typeof window.supabase === 'undefined') {
-                statusP.innerHTML = '❌ Supabase CDN not loaded - check internet connection';
+                statusP.innerHTML = 'Supabase CDN not loaded - check internet connection';
                 return;
             }
             
             // Check if supabase has createClient method
             if (typeof window.supabase.createClient !== 'function') {
-                statusP.innerHTML = '❌ Supabase createClient method not found';
+                statusP.innerHTML = 'Supabase createClient method not found';
                 console.error('Available methods:', Object.keys(window.supabase));
                 return;
             }
@@ -3060,12 +3102,13 @@ async function testDatabaseConnection() {
             console.log('Supabase client created:', window.supabaseClient);
         }
         
-        statusP.innerHTML = '🔄 Testing exercises table...';
+        statusP.innerHTML = 'Testing exercises table...';
         
         // Verify client has from method
-        if (typeof window.supabaseClient.from !== 'function') {
-            statusP.innerHTML = '❌ Supabase client invalid - from method missing';
-            console.error('Client methods:', Object.keys(window.supabaseClient));
+        if (!window.supabaseClient || typeof window.supabaseClient.from !== 'function') {
+            statusP.innerHTML = 'Supabase client invalid - from method missing';
+            console.error('Client:', window.supabaseClient);
+            console.error('Client methods:', window.supabaseClient ? Object.keys(window.supabaseClient) : 'null');
             return;
         }
         
@@ -3076,13 +3119,13 @@ async function testDatabaseConnection() {
             .limit(3);
             
         if (exerciseError) {
-            statusP.innerHTML = `❌ Exercises table error: ${exerciseError.message}`;
+            statusP.innerHTML = `Exercises table error: ${exerciseError.message}`;
             return;
         }
         
         // If no exercises found, seed some basic ones
         if (exercises.length === 0) {
-            statusP.innerHTML = '🔄 No exercises found, seeding database...';
+            statusP.innerHTML = 'No exercises found, seeding database...';
             
             const sampleExercises = [
                 {
@@ -3129,11 +3172,11 @@ async function testDatabaseConnection() {
                 .select('id, name, muscle_group');
                 
             if (seedError) {
-                statusP.innerHTML = `❌ Failed to seed exercises: ${seedError.message}`;
+                statusP.innerHTML = `Failed to seed exercises: ${seedError.message}`;
                 return;
             }
             
-            statusP.innerHTML = '🔄 Exercises seeded, re-testing...';
+            statusP.innerHTML = 'Exercises seeded, re-testing...';
             
             // Re-fetch exercises
             const { data: newExercises, error: newError } = await window.supabaseClient
@@ -3142,14 +3185,14 @@ async function testDatabaseConnection() {
                 .limit(3);
                 
             if (newError) {
-                statusP.innerHTML = `❌ Error after seeding: ${newError.message}`;
+                statusP.innerHTML = `Error after seeding: ${newError.message}`;
                 return;
             }
             
             exercises = newExercises;
         }
         
-        statusP.innerHTML = '🔄 Testing all tables...';
+        statusP.innerHTML = 'Testing all tables...';
         
         // Test all tables
         const tables = ['users', 'workouts', 'workout_exercises', 'sets', 'user_settings'];
@@ -3190,7 +3233,7 @@ async function testDatabaseConnection() {
         `;
         
     } catch (error) {
-        statusP.innerHTML = `❌ Connection failed: ${error.message}`;
+        statusP.innerHTML = `Connection failed: ${error.message}`;
     }
 }
 
