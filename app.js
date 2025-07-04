@@ -693,6 +693,47 @@ const HyperTrack = {
             biomechanical_function: "Plantar Flexion",
             target_rep_range: "15-25",
             rest_period: 90
+        },
+        
+        // ADDITIONAL EXERCISES FROM TYLER'S DATA
+        { 
+            id: 44, 
+            name: "Cable Crunch Machine", 
+            muscle_group: "Abs", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 70,
+            equipment: "cable",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Spinal Flexion",
+            target_rep_range: "15-25",
+            rest_period: 60
+        },
+        { 
+            id: 45, 
+            name: "Reverse Grip EZ Bar Curl", 
+            muscle_group: "Biceps", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 80,
+            equipment: "barbell",
+            gym_types: ["commercial", "barbell", "crossfit"],
+            biomechanical_function: "Elbow Flexion",
+            target_rep_range: "10-15",
+            rest_period: 90
+        },
+        { 
+            id: 46, 
+            name: "EZ Bar Upright Rows", 
+            muscle_group: "Side Delts", 
+            category: "Compound", 
+            tier: 3, 
+            mvc_percentage: 65,
+            equipment: "barbell",
+            gym_types: ["commercial", "barbell", "crossfit"],
+            biomechanical_function: "Shoulder Abduction",
+            target_rep_range: "12-20",
+            rest_period: 90
         }
     ],
     
