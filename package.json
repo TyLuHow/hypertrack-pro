@@ -3,10 +3,50 @@
   "version": "1.0.0",
   "description": "Evidence-Based Hypertrophy Optimization PWA",
   "main": "index.html",
-  "scripts": {
-    "start": "python3 -m http.server 3000"
+  "homepage": "https://hypertrack-pro.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TyLuHow/hypertrack-pro.git"
   },
-  "keywords": ["fitness", "workout", "tracking", "pwa"],
-  "author": "Tyler",
-  "license": "MIT"
+  "bugs": {
+    "url": "https://github.com/TyLuHow/hypertrack-pro/issues"
+  },
+  "scripts": {
+    "start": "python3 -m http.server 3000",
+    "dev": "python3 -m http.server 3000",
+    "serve": "npx serve -s . -p 3000",
+    "build": "echo 'No build step required - static files ready for deployment'",
+    "deploy": "./deploy.sh",
+    "setup": "./setup.sh",
+    "test": "echo 'Manual testing required - see CONTRIBUTING.md for test cases'"
+  },
+  "keywords": [
+    "fitness",
+    "workout",
+    "tracking",
+    "pwa",
+    "progressive-web-app",
+    "hypertrophy",
+    "strength-training",
+    "evidence-based",
+    "research-backed",
+    "vanilla-javascript"
+  ],
+  "author": {
+    "name": "Tyler",
+    "url": "https://github.com/TyLuHow"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {
+    "serve": "^14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
 }
