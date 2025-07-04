@@ -9,32 +9,50 @@ const HyperTrack = {
         settings: {
             showResearchFacts: true,
             darkMode: true,
-            // Evidence-based rest periods (2024 meta-analysis)
-            compoundRest: 120,          // 2 minutes minimum for compounds
-            isolationRest: 90,          // 1.5 minutes for isolation exercises
-            heavyRest: 180,             // 3 minutes for heavy sets (≤5 reps)
+            // Training experience level
+            trainingLevel: 'intermediate',  // novice, intermediate, advanced
+            
+            // Evidence-based rest periods (Schoenfeld et al. 2016)
+            compoundRest: 180,          // 3 minutes for compounds (optimal for hypertrophy)
+            isolationRest: 120,         // 2 minutes for isolation exercises  
+            heavyRest: 300,             // 5 minutes for heavy sets (≤5 reps)
             autoStartRestTimer: true,
-            // Progression rates by training experience
+            
+            // Progression rates by training experience (intermediate-focused)
             noviceProgression: 7.5,     // 5-10% weekly (research range)
-            intermediateProgression: 3.5,  // 2-5% weekly (evidence-based)
+            intermediateProgression: 3.5,  // 2-5% weekly (evidence-based optimal)
             advancedProgression: 1.5,   // <2% monthly (trained lifters)
-            // Volume recommendations (Baz-Valle et al. 2022)
+            
+            // Volume recommendations (10-20 sets sweet spot for intermediates)
             minEffectiveVolume: 10,     // MEV per muscle per week
-            optimalVolumeMin: 12,       // Optimal range start
-            optimalVolumeMax: 20,       // Optimal range end (diminishing returns beyond)
-            // Plateau detection and periodization
+            optimalVolumeMin: 14,       // Intermediate range start (higher than novice)
+            optimalVolumeMax: 20,       // Upper limit before diminishing returns
+            
+            // Plateau detection and autoregulation
             plateauThreshold: 3,        // No progress for 2-3 workouts = plateau
+            rpeTarget: 8,               // Target RPE for hypertrophy sets (7-9 range)
+            velocityLossThreshold: 0.2, // Stop set at 20% velocity loss
+            
+            // Exercise rotation for intermediates
+            exerciseRotationWeeks: 8,   // Rotate exercises every 6-8 weeks
             deloadFrequency: 6,         // Deload every 4-8 weeks (6 week default)
             deloadReduction: 0.5,       // Reduce volume by 50% during deload
+            
+            // Periodization preferences
+            periodizationStyle: 'undulating', // linear, undulating, block
+            
             // Protein requirements (meta-analysis evidence)
             proteinPerKg: 1.8,          // 1.6-2.2 g/kg daily (midpoint)
             proteinPerMeal: 0.4,        // 0.4 g/kg per meal for optimal MPS
+            
             // Sleep optimization thresholds
             minSleepHours: 7,           // Minimum for recovery
             optimalSleepHours: 8,       // Optimal for hypertrophy
+            
             // Stress and recovery markers
             maxStressLevel: 7,          // >7/10 stress = high stress state
             hrvDropThreshold: 0.3,      // >30% HRV drop = poor recovery
+            
             // Training frequency (evidence-based)
             optimalFrequency: 2,        // 2x per week per muscle optimal
             maxFrequency: 3             // No benefit beyond 3x when volume matched
@@ -44,16 +62,16 @@ const HyperTrack = {
     },
     
     researchFacts: [
-        "Meta-analysis: 2+ minute rest periods yield significantly more hypertrophy than <60s rest",
-        "Evidence shows 10-20 sets per muscle per week optimizes growth (Baz-Valle et al. 2022)",
-        "Novices can progress 5-10% weekly, intermediates 2-5%, advanced <2% monthly",
-        "Pull-ups activate lats at 117% MVC - highest of all back exercises (EMG research)",
-        "Training each muscle 2x per week is optimal - no benefit from 3x when volume matched",
-        "Plateau = no progress for 2-3 workouts (evidence-based detection threshold)",
-        "6-12 reps most efficient for hypertrophy, but 5-30 reps all effective near failure",
-        "Deloads every 4-8 weeks prevent overtraining and maintain long-term progress",
-        "Compound exercises should be 70% of volume - isolation fills specific gaps",
-        "Double progression: add reps to range top, then increase weight ~5% (research optimal)"
+        "Schoenfeld 2016: 3-minute rest periods produce significantly more hypertrophy than 1-minute",
+        "Intermediate lifters need 14-20 sets per muscle per week for optimal growth (vs 10-12 for novices)",
+        "2-5% weekly progression optimal for intermediates - slower than novice gains but sustainable",
+        "RPE 7-9 range optimal for hypertrophy - avoid constant failure training (causes excess fatigue)",
+        "Exercise rotation every 6-8 weeks prevents plateaus and ensures complete muscle development",
+        "Compound + isolation combo beats either alone - compounds for efficiency, isolation for completeness",
+        "20% velocity loss per set gives similar hypertrophy to failure with less fatigue accumulation",
+        "Undulating periodization and linear periodization show equal hypertrophy when volume matched",
+        "Plateau detection: 2-3 workouts without progress indicates need for program adjustment",
+        "Training 2x per week per muscle optimal - 3x only beneficial for very high volume distribution"
     ],
     
     exerciseDatabase: [
@@ -765,29 +783,42 @@ function calculateProgressiveSuggestion(exercise, previousSets) {
     const { settings } = HyperTrack.state;
     const lastSet = previousSets[previousSets.length - 1];
     
-    // Determine progression rate based on training experience
-    let progressionRate = settings.intermediateProgression / 100; // Default to intermediate
+    // Get progression rate based on training level
+    let progressionRate;
+    switch (settings.trainingLevel) {
+        case 'novice':
+            progressionRate = settings.noviceProgression / 100;
+            break;
+        case 'advanced':
+            progressionRate = settings.advancedProgression / 100;
+            break;
+        default: // intermediate
+            progressionRate = settings.intermediateProgression / 100;
+    }
     
-    // Progressive overload logic
+    // Double progression for intermediates (reps then weight)
     if (lastSet.reps >= 12) {
-        // Increase weight by progression rate
-        const newWeight = Math.round(lastSet.weight * (1 + progressionRate) * 4) / 4; // Round to nearest 2.5lbs
+        // Increase weight by 2.5-5lbs (typical intermediate increment)
+        const isUpperBody = ['Chest', 'Shoulders', 'Arms', 'Back'].includes(exercise.muscle_group);
+        const increment = isUpperBody ? 2.5 : 5; // Smaller increments for upper body
+        const newWeight = lastSet.weight + increment;
+        
         return {
             weight: newWeight,
-            reps: 8,
-            note: "Weight increased - evidence-based progression"
+            reps: 8, // Reset to bottom of hypertrophy range
+            note: `+${increment}lbs - intermediate double progression`
         };
     } else if (lastSet.reps < 6) {
-        // Reduce weight slightly
-        const newWeight = Math.round(lastSet.weight * 0.95 * 4) / 4;
+        // Weight too heavy for hypertrophy range
+        const newWeight = Math.round(lastSet.weight * 0.9 * 4) / 4; // 10% reduction
         return {
             weight: newWeight,
             reps: 8,
-            note: "Weight reduced for optimal hypertrophy range"
+            note: "Weight reduced to optimal hypertrophy range (6-12 reps)"
         };
     }
     
-    // Add reps if in optimal range
+    // Add reps within hypertrophy range (6-12 optimal for intermediates)
     return {
         weight: lastSet.weight,
         reps: Math.min(lastSet.reps + 1, 12),
@@ -829,29 +860,45 @@ function calculateOptimalRestTime(exercise, setIntensity) {
 function generateVolumeRecommendation(muscleGroup, currentVolume) {
     const { settings } = HyperTrack.state;
     
-    if (currentVolume < settings.minEffectiveVolume) {
+    // Adjust recommendations based on training level
+    let mev = settings.minEffectiveVolume;
+    let optimalMin = settings.optimalVolumeMin;
+    let optimalMax = settings.optimalVolumeMax;
+    
+    if (settings.trainingLevel === 'novice') {
+        mev = 8;
+        optimalMin = 10;
+        optimalMax = 16;
+    } else if (settings.trainingLevel === 'advanced') {
+        mev = 12;
+        optimalMin = 16;
+        optimalMax = 24;
+    }
+    // Intermediate defaults are already set
+    
+    if (currentVolume < mev) {
         return {
             status: 'low',
-            message: `Add ${settings.minEffectiveVolume - currentVolume} more sets for ${muscleGroup}`,
+            message: `Add ${mev - currentVolume} more sets for ${muscleGroup} (${settings.trainingLevel} MEV)`,
             color: '#ef4444'
         };
-    } else if (currentVolume >= settings.optimalVolumeMin && currentVolume <= settings.optimalVolumeMax) {
+    } else if (currentVolume >= optimalMin && currentVolume <= optimalMax) {
         return {
             status: 'optimal',
-            message: `${muscleGroup} volume is in optimal range (${currentVolume} sets)`,
+            message: `${muscleGroup} volume optimal for ${settings.trainingLevel} (${currentVolume} sets)`,
             color: '#22c55e'
         };
-    } else if (currentVolume > settings.optimalVolumeMax) {
+    } else if (currentVolume > optimalMax) {
         return {
             status: 'high',
-            message: `${muscleGroup} volume may be excessive (${currentVolume} sets)`,
+            message: `${muscleGroup} volume excessive for ${settings.trainingLevel} (${currentVolume} sets) - risk of junk volume`,
             color: '#f59e0b'
         };
     }
     
     return {
         status: 'moderate',
-        message: `${muscleGroup} volume is moderate (${currentVolume} sets)`,
+        message: `${muscleGroup} approaching optimal range (${currentVolume}/${optimalMin}-${optimalMax} sets)`,
         color: '#3b82f6'
     };
 }

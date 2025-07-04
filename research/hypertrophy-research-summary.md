@@ -79,12 +79,40 @@ Based on meta-analyses and systematic reviews (2020-2024):
 - EMG studies for exercise selection
 - Multiple meta-analyses on rest periods, frequency, rep ranges
 
+## Intermediate-Specific Findings (2025 Update)
+
+### Progressive Overload for Intermediates:
+- **Optimal progression**: 2-5% weekly increases (3.5% average)
+- **Double progression method**: Add reps to 12, then increase weight by 2.5-5lbs
+- **Upper body**: 2.5lb increments typical
+- **Lower body**: 5lb increments feasible
+
+### Volume Optimization:
+- **Intermediate sweet spot**: 14-20 sets per muscle per week
+- **MEV threshold**: 10 sets minimum (higher than novice 8 sets)
+- **No benefit beyond 20 sets** for most muscles (Bibarne et al. 2023)
+
+### Rest Period Research:
+- **Compounds**: 3 minutes minimum (Schoenfeld et al. 2016)
+- **Isolation**: 2 minutes sufficient
+- **Heavy sets**: 3-5 minutes for maximum performance
+
+### RPE and Autoregulation:
+- **Target RPE**: 7-9 for hypertrophy (avoid constant failure)
+- **Velocity loss**: 20% per set gives similar gains to failure with less fatigue
+- **Plateau detection**: 2-3 workouts without progress
+
+### Exercise Rotation Strategy:
+- **Frequency**: Every 6-8 weeks for intermediates
+- **Rationale**: Prevents adaptation, ensures complete muscle development
+- **Method**: Rotate within exercise families (squat variations, press variations)
+
 ## Implementation in HyperTrack Pro
 
 These parameters are implemented in the app's algorithms for:
-- Progressive overload calculations
-- Volume recommendations  
-- Rest timer settings
-- Exercise selection and rotation
-- Plateau detection and mitigation
-- Periodization suggestions
+- Progressive overload calculations based on training experience
+- Volume recommendations adjusted for intermediate vs novice vs advanced
+- Rest timer settings using optimal research-based durations
+- Exercise selection and 6-8 week rotation scheduling
+- Plateau detection with RPE and performance monitoring
+- Periodization suggestions (linear vs undulating options)
