@@ -58,7 +58,8 @@ const HyperTrack = {
             maxFrequency: 3             // No benefit beyond 3x when volume matched
         },
         user: { name: 'Tyler' },
-        restTimer: { active: false, interval: null, remaining: 0 }
+        workoutTimer: { active: false, interval: null, startTime: null, elapsed: 0 },
+        restTimer: { active: false, interval: null, remaining: 0, exerciseName: '' }
     },
     
     researchFacts: [
@@ -120,6 +121,9 @@ function startWorkout() {
         exercises: []
     };
     
+    // Start workout timer
+    startWorkoutTimer();
+    
     updateUI();
     showNotification('Workout started! Select an exercise to begin.', 'success');
 }
@@ -130,6 +134,10 @@ function finishWorkout() {
     const workout = HyperTrack.state.currentWorkout;
     workout.endTime = new Date().toISOString();
     workout.duration = new Date(workout.endTime) - new Date(workout.startTime);
+    
+    // Stop timers
+    stopWorkoutTimer();
+    stopRestTimer();
     
     HyperTrack.state.workouts.push(workout);
     HyperTrack.state.currentWorkout = null;
@@ -162,8 +170,34 @@ function openExerciseModal(exerciseName, muscleGroup, category) {
     // Store current exercise
     HyperTrack.state.currentExercise = { name: exerciseName, muscle_group: muscleGroup, category: category };
     
-    // Add first set input
-    addSet();
+    // Get weight recommendation
+    const recommendation = getWeightRecommendation(exerciseName);
+    
+    // Show recommendation banner
+    const recommendationBanner = document.createElement('div');
+    recommendationBanner.className = 'recommendation-banner';
+    recommendationBanner.style.cssText = `
+        background: #374151;
+        border: 1px solid #3d7070;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+        text-align: center;
+    `;
+    recommendationBanner.innerHTML = `
+        <div style="color: #3d7070; font-weight: 600; margin-bottom: 4px;">💡 Recommendation</div>
+        <div style="color: #f8fafc; font-size: 18px; font-weight: bold;">
+            ${recommendation.weight}lbs × ${recommendation.reps} reps
+        </div>
+        <div style="color: #d1d5db; font-size: 14px; margin-top: 4px;">
+            ${recommendation.note}
+        </div>
+    `;
+    
+    setInputs.appendChild(recommendationBanner);
+    
+    // Add first set input with pre-filled recommendation
+    addSet(recommendation.weight, recommendation.reps);
     
     modal.style.display = 'flex';
 }
@@ -174,17 +208,17 @@ function closeExerciseModal() {
     HyperTrack.state.currentExercise = null;
 }
 
-function addSet() {
+function addSet(defaultWeight = '', defaultReps = '') {
     const setInputs = document.getElementById('setInputs');
-    const setNumber = setInputs.children.length + 1;
+    const setNumber = setInputs.children.filter(child => child.classList.contains('set-input-row')).length + 1;
     
     const setDiv = document.createElement('div');
     setDiv.className = 'set-input-row';
     setDiv.innerHTML = `
         <div class="set-number">Set ${setNumber}</div>
         <div class="input-group">
-            <input type="number" class="set-input" placeholder="Weight (lbs)" min="0" step="2.5">
-            <input type="number" class="set-input" placeholder="Reps" min="1" max="50">
+            <input type="number" class="set-input" placeholder="Weight (lbs)" min="0" step="2.5" value="${defaultWeight}">
+            <input type="number" class="set-input" placeholder="Reps" min="1" max="50" value="${defaultReps}">
             <button type="button" class="remove-set-btn" onclick="removeSet(this)">×</button>
         </div>
     `;
@@ -251,9 +285,14 @@ function finishExercise() {
     updateUI();
     saveAppData();
     
-    // Generate evidence-based recommendations
+    // Generate evidence-based recommendations and start rest timer
     const restTime = calculateOptimalRestTime(HyperTrack.state.currentExercise, sets[sets.length - 1].reps);
     const restMinutes = Math.round(restTime / 60 * 10) / 10;
+    
+    // Auto-start rest timer if enabled
+    if (HyperTrack.state.settings.autoStartRestTimer) {
+        startRestTimer(restTime, exercise.name);
+    }
     
     showNotification(`${exercise.name} completed - ${sets.length} sets logged! Rest ${restMinutes}min (research-based)`, 'success');
 }
@@ -352,19 +391,54 @@ function updateExerciseList() {
     const container = document.getElementById('exerciseList');
     if (!container) return;
     
-    container.innerHTML = HyperTrack.exerciseDatabase.map(exercise => `
-        <div class="exercise-card" onclick="selectExercise('${exercise.name}', '${exercise.muscle_group}', '${exercise.category}')">
-            <div class="exercise-info">
-                <div class="exercise-name">${exercise.name}</div>
-                <div class="exercise-muscle">${exercise.muscle_group}</div>
-                <div class="exercise-category">${exercise.category}</div>
+    // Get recommendations if in a workout
+    const recommendations = HyperTrack.state.currentWorkout ? getExerciseRecommendations() : [];
+    const recommendedExerciseNames = recommendations.map(r => r.exercise?.name);
+    
+    // Show recommendations first if any
+    let html = '';
+    if (recommendations.length > 0 && HyperTrack.state.currentWorkout) {
+        html += '<div style="margin-bottom: 20px;"><h4 style="color: #3d7070; margin-bottom: 12px;">🎯 Recommended Exercises</h4>';
+        recommendations.forEach(rec => {
+            if (rec.exercise) {
+                html += `
+                    <div class="exercise-card recommended" onclick="selectExercise('${rec.exercise.name}', '${rec.exercise.muscle_group}', '${rec.exercise.category}')" style="border: 2px solid #3d7070; background: #1f2937;">
+                        <div class="exercise-info">
+                            <div class="exercise-name">${rec.exercise.name} ⭐</div>
+                            <div class="exercise-muscle">${rec.exercise.muscle_group}</div>
+                            <div class="exercise-category">${rec.exercise.category}</div>
+                        </div>
+                        <div class="exercise-meta">
+                            <span class="tier-badge tier-${rec.exercise.tier}">Tier ${rec.exercise.tier}</span>
+                            <div style="font-size: 12px; color: #3d7070; margin-top: 4px;">${rec.priority}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        html += '</div>';
+    }
+    
+    // Show all exercises
+    html += '<h4 style="color: #d1d5db; margin-bottom: 12px;">All Exercises</h4>';
+    html += HyperTrack.exerciseDatabase.map(exercise => {
+        const isRecommended = recommendedExerciseNames.includes(exercise.name);
+        return `
+            <div class="exercise-card ${isRecommended ? 'dimmed' : ''}" onclick="selectExercise('${exercise.name}', '${exercise.muscle_group}', '${exercise.category}')" ${isRecommended ? 'style="opacity: 0.6;"' : ''}>
+                <div class="exercise-info">
+                    <div class="exercise-name">${exercise.name}</div>
+                    <div class="exercise-muscle">${exercise.muscle_group}</div>
+                    <div class="exercise-category">${exercise.category}</div>
+                </div>
+                <div class="exercise-meta">
+                    <span class="tier-badge tier-${exercise.tier}">Tier ${exercise.tier}</span>
+                    <span class="mvc-badge">${exercise.mvc_percentage}% MVC</span>
+                </div>
             </div>
-            <div class="exercise-meta">
-                <span class="tier-badge tier-${exercise.tier}">Tier ${exercise.tier}</span>
-                <span class="mvc-badge">${exercise.mvc_percentage}% MVC</span>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
 }
 
 function updateHistoryDisplay() {
@@ -776,6 +850,277 @@ function clearAllData() {
             showNotification('All data cleared.', 'info');
         }
     }
+}
+
+// Timer Functions
+function startWorkoutTimer() {
+    const timer = HyperTrack.state.workoutTimer;
+    timer.active = true;
+    timer.startTime = Date.now();
+    timer.elapsed = 0;
+    
+    timer.interval = setInterval(() => {
+        timer.elapsed = Date.now() - timer.startTime;
+        updateWorkoutTimerDisplay();
+    }, 1000);
+}
+
+function stopWorkoutTimer() {
+    const timer = HyperTrack.state.workoutTimer;
+    if (timer.interval) {
+        clearInterval(timer.interval);
+        timer.interval = null;
+    }
+    timer.active = false;
+}
+
+function updateWorkoutTimerDisplay() {
+    const timerElement = document.getElementById('workoutTime');
+    if (timerElement && HyperTrack.state.workoutTimer.active) {
+        const elapsed = HyperTrack.state.workoutTimer.elapsed;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function startRestTimer(seconds, exerciseName) {
+    // Stop any existing rest timer
+    stopRestTimer();
+    
+    const timer = HyperTrack.state.restTimer;
+    timer.active = true;
+    timer.remaining = seconds;
+    timer.exerciseName = exerciseName;
+    
+    // Show rest timer notification
+    showRestTimerModal(seconds, exerciseName);
+    
+    timer.interval = setInterval(() => {
+        timer.remaining--;
+        updateRestTimerDisplay();
+        
+        if (timer.remaining <= 0) {
+            stopRestTimer();
+            showNotification(`Rest complete! Ready for next set of ${exerciseName}`, 'success');
+            // Play notification sound if available
+            playNotificationSound();
+        }
+    }, 1000);
+}
+
+function stopRestTimer() {
+    const timer = HyperTrack.state.restTimer;
+    if (timer.interval) {
+        clearInterval(timer.interval);
+        timer.interval = null;
+    }
+    timer.active = false;
+    timer.remaining = 0;
+    
+    // Hide rest timer modal
+    const modal = document.getElementById('restTimerModal');
+    if (modal) modal.remove();
+}
+
+function updateRestTimerDisplay() {
+    const timerElement = document.getElementById('restTimerDisplay');
+    if (timerElement && HyperTrack.state.restTimer.active) {
+        const remaining = HyperTrack.state.restTimer.remaining;
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function showRestTimerModal(totalSeconds, exerciseName) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('restTimerModal');
+    if (existingModal) existingModal.remove();
+    
+    const modal = document.createElement('div');
+    modal.id = 'restTimerModal';
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.style.zIndex = '10001';
+    
+    const minutes = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    const timeDisplay = `${minutes}:${secs.toString().padStart(2, '0')}`;
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header">
+                <h3>🕐 Rest Timer</h3>
+                <button class="close-btn" onclick="stopRestTimer()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px;">Resting after <strong>${exerciseName}</strong></p>
+                <div id="restTimerDisplay" style="font-size: 48px; font-weight: bold; color: #3d7070; margin: 20px 0;">
+                    ${timeDisplay}
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button class="btn btn-secondary" onclick="addRestTime(30)">+30s</button>
+                    <button class="btn btn-secondary" onclick="addRestTime(-30)">-30s</button>
+                    <button class="btn btn-primary" onclick="stopRestTimer()">Skip Rest</button>
+                </div>
+                <p style="font-size: 14px; color: #9ca3af; margin-top: 16px;">
+                    Research-based rest period for optimal hypertrophy
+                </p>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) stopRestTimer();
+    });
+}
+
+function addRestTime(seconds) {
+    if (HyperTrack.state.restTimer.active) {
+        HyperTrack.state.restTimer.remaining = Math.max(0, HyperTrack.state.restTimer.remaining + seconds);
+        updateRestTimerDisplay();
+    }
+}
+
+function playNotificationSound() {
+    // Create audio context for notification sound
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (error) {
+        console.log('Audio notification not available');
+    }
+}
+
+// Recommendation Functions
+function getExerciseRecommendations() {
+    const workouts = HyperTrack.state.workouts;
+    if (workouts.length === 0) {
+        return getBeginnerRecommendations();
+    }
+    
+    // Analyze recent workout history
+    const recentWorkouts = workouts.slice(-5); // Last 5 workouts
+    const exerciseFrequency = {};
+    const muscleGroupFrequency = {};
+    
+    recentWorkouts.forEach(workout => {
+        workout.exercises?.forEach(exercise => {
+            exerciseFrequency[exercise.name] = (exerciseFrequency[exercise.name] || 0) + 1;
+            muscleGroupFrequency[exercise.muscle_group] = (muscleGroupFrequency[exercise.muscle_group] || 0) + 1;
+        });
+    });
+    
+    // Find underworked muscle groups
+    const allMuscles = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs'];
+    const underworkedMuscles = allMuscles.filter(muscle => 
+        (muscleGroupFrequency[muscle] || 0) < 2
+    );
+    
+    // Get recommendations based on underworked muscles
+    if (underworkedMuscles.length > 0) {
+        return getRecommendationsForMuscles(underworkedMuscles);
+    }
+    
+    // If all muscles are trained, recommend based on optimal frequency
+    return getBalancedRecommendations();
+}
+
+function getBeginnerRecommendations() {
+    return [
+        { exercise: HyperTrack.exerciseDatabase.find(e => e.name === "Smith Machine Bench Press"), priority: "High - Compound chest movement" },
+        { exercise: HyperTrack.exerciseDatabase.find(e => e.name === "Lat Pulldowns"), priority: "High - Back development" },
+        { exercise: HyperTrack.exerciseDatabase.find(e => e.name === "Dumbbell Lateral Raises"), priority: "Medium - Shoulder width" }
+    ];
+}
+
+function getRecommendationsForMuscles(targetMuscles) {
+    const recommendations = [];
+    
+    targetMuscles.forEach(muscle => {
+        const exercises = HyperTrack.exerciseDatabase.filter(e => e.muscle_group === muscle);
+        // Prioritize tier 1 exercises
+        const topExercise = exercises.find(e => e.tier === 1) || exercises[0];
+        if (topExercise) {
+            recommendations.push({
+                exercise: topExercise,
+                priority: `High - ${muscle} needs attention`
+            });
+        }
+    });
+    
+    return recommendations;
+}
+
+function getBalancedRecommendations() {
+    // Return a balanced selection of exercises
+    return [
+        { exercise: HyperTrack.exerciseDatabase.find(e => e.name === "Smith Machine Rows"), priority: "Maintain back development" },
+        { exercise: HyperTrack.exerciseDatabase.find(e => e.name === "Incline Dumbbell Press"), priority: "Upper chest focus" },
+        { exercise: HyperTrack.exerciseDatabase.find(e => e.name === "Dumbbell Bicep Curls"), priority: "Arm specialization" }
+    ];
+}
+
+function getWeightRecommendation(exerciseName) {
+    const workouts = HyperTrack.state.workouts;
+    const exerciseHistory = [];
+    
+    // Collect all instances of this exercise
+    workouts.forEach(workout => {
+        workout.exercises?.forEach(exercise => {
+            if (exercise.name === exerciseName) {
+                exerciseHistory.push(exercise);
+            }
+        });
+    });
+    
+    if (exerciseHistory.length === 0) {
+        return getBeginnerWeightRecommendation(exerciseName);
+    }
+    
+    // Get most recent performance
+    const lastExercise = exerciseHistory[exerciseHistory.length - 1];
+    const lastSets = lastExercise.sets || [];
+    
+    if (lastSets.length === 0) {
+        return getBeginnerWeightRecommendation(exerciseName);
+    }
+    
+    // Use the evidence-based progression algorithm
+    return calculateProgressiveSuggestion(lastExercise, lastSets);
+}
+
+function getBeginnerWeightRecommendation(exerciseName) {
+    const exercise = HyperTrack.exerciseDatabase.find(e => e.name === exerciseName);
+    
+    // Conservative starting weights based on exercise type
+    const startingWeights = {
+        'Smith Machine Bench Press': { weight: 95, reps: 8, note: "Start with bar + light plates" },
+        'Smith Machine Rows': { weight: 85, reps: 10, note: "Focus on form first" },
+        'Lat Pulldowns': { weight: 70, reps: 10, note: "Start light, focus on lat engagement" },
+        'Incline Dumbbell Press': { weight: 25, reps: 8, note: "25lb dumbbells each hand" },
+        'Dumbbell Bicep Curls': { weight: 20, reps: 10, note: "20lb dumbbells each hand" },
+        'Dumbbell Lateral Raises': { weight: 10, reps: 12, note: "Start very light for shoulders" }
+    };
+    
+    return startingWeights[exerciseName] || { weight: 30, reps: 10, note: "Conservative starting weight" };
 }
 
 // Evidence-Based Algorithm Functions
