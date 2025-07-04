@@ -234,6 +234,82 @@ class IntelligentTraining {
         
         return this.modifyCurrentPhase(phase, currentPhaseAnalysis);
     }
+    
+    analyzeCurrentPhase(currentPhase, trainingHistory) {
+        // Analyze current training phase effectiveness
+        const recentWorkouts = trainingHistory.slice(0, 8); // Last 8 workouts
+        const effectiveness = this.calculatePhaseEffectiveness(recentWorkouts);
+        const fatigue = this.calculateAccumulatedFatigue(recentWorkouts);
+        const duration = Math.floor(recentWorkouts.length / 2); // Assuming 2 workouts per week
+        
+        return {
+            phase: currentPhase,
+            duration: duration,
+            effectiveness: effectiveness,
+            fatigue: fatigue,
+            workoutsCompleted: recentWorkouts.length
+        };
+    }
+    
+    calculatePhaseEffectiveness(recentWorkouts) {
+        if (recentWorkouts.length < 2) return 0.5;
+        
+        const volumeTrend = this.calculateTrend(recentWorkouts.map(w => w.totalVolume || 0));
+        const consistencyScore = recentWorkouts.length / 8; // Expecting 8 workouts
+        
+        return Math.max(0, Math.min(1, (volumeTrend * 0.7 + consistencyScore * 0.3)));
+    }
+    
+    calculateAccumulatedFatigue(recentWorkouts) {
+        if (recentWorkouts.length === 0) return 0;
+        
+        const avgVolume = recentWorkouts.reduce((sum, w) => sum + (w.totalVolume || 0), 0) / recentWorkouts.length;
+        const volumeIncrease = avgVolume > 0 ? Math.min(1, avgVolume / 10000) : 0; // Normalize volume
+        
+        return Math.max(0, Math.min(1, volumeIncrease));
+    }
+    
+    recommendDeload() {
+        return {
+            phase: 'deload',
+            duration: 1,
+            volumeReduction: 0.5,
+            intensityReduction: 0.8,
+            recommendation: 'Implement deload week to manage fatigue'
+        };
+    }
+    
+    progressToNextPhase(currentPhase) {
+        const phaseProgression = {
+            'accumulation': 'intensification',
+            'intensification': 'realization', 
+            'realization': 'deload',
+            'deload': 'accumulation'
+        };
+        
+        return {
+            phase: phaseProgression[currentPhase] || 'accumulation',
+            duration: 4,
+            recommendation: `Transition to ${phaseProgression[currentPhase]} phase`
+        };
+    }
+    
+    extendCurrentPhase(currentPhase) {
+        return {
+            phase: currentPhase,
+            duration: 2,
+            recommendation: `Extend current ${currentPhase} phase for 2 more weeks`
+        };
+    }
+    
+    modifyCurrentPhase(currentPhase, analysis) {
+        return {
+            phase: currentPhase,
+            duration: analysis.duration + 1,
+            volumeAdjustment: analysis.effectiveness < 0.5 ? 0.9 : 1.1,
+            recommendation: `Modify current ${currentPhase} phase based on effectiveness`
+        };
+    }
 
     // 4. RECOVERY-BASED LOAD MANAGEMENT
     implementRecoveryBasedLoadManagement(recoveryData, plannedWorkout) {
