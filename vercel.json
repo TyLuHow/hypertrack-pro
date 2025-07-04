@@ -1,6 +1,8 @@
 {
   "version": 2,
   "name": "hypertrack-pro",
+  "buildCommand": "echo 'No build step required'",
+  "outputDirectory": ".",
   "redirects": [
     {
       "source": "/(.*)",
