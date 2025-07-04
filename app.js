@@ -1456,7 +1456,7 @@ function updateHistoryDisplay() {
                 </div>
                 ${workout.notes ? `<div class="workout-notes">${workout.notes}</div>` : ''}
             </div>
-            <button class="delete-workout-btn" onclick="deleteWorkout('${workout.id}')" title="Delete workout" style="margin-left: 12px; background: #dc2626; color: white; border: none; border-radius: 4px; padding: 8px; cursor: pointer;">
+            <button class="delete-workout-btn" onclick="deleteWorkout('${workout.id}')" title="Delete workout" style="margin-left: 12px; background: #8B4513; color: white; border: none; border-radius: 4px; padding: 8px; cursor: pointer;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3,6 5,6 21,6"></polyline>
                     <path d="M19,6 L19,20 C19,21 18,22 17,22 L7,22 C6,22 5,21 5,20 L5,6"></path>

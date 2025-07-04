@@ -182,12 +182,12 @@ body {
 }
 
 .btn-danger {
-    background: #ef4444;
+    background: #8B4513;
     color: white;
 }
 
 .btn-danger:hover {
-    background: #dc2626;
+    background: #654321;
 }
 
 .btn-success {
@@ -200,7 +200,7 @@ body {
 }
 
 .btn-remove {
-    background: #ef4444;
+    background: #8B4513;
     color: white;
     border: none;
     width: 30px;
@@ -917,7 +917,7 @@ body {
 }
 
 .remove-set-btn {
-    background: #ef4444;
+    background: #8B4513;
     color: white;
     border: none;
     border-radius: 4px;
@@ -932,7 +932,7 @@ body {
 }
 
 .remove-set-btn:hover {
-    background: #dc2626;
+    background: #654321;
 }
 
 /* Current Workout Display */
@@ -1028,7 +1028,7 @@ body {
     --primary-light: #708090;
     --success: #94C17B;
     --warning: #DCAA89;
-    --danger: #ef4444;
+    --danger: #8B4513;
     --bg-card: #30525C;
     --bg-tertiary: #3D6A71;
     --text-primary: #DCAA89;
