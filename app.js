@@ -863,9 +863,9 @@ async function finishWorkout() {
         updateUI();
         
         const duration = Math.round(workout.duration / 60000);
-        showNotification(`🎉 Workout completed! ${workout.exercises.length} exercises • ${duration} minutes`, 'success');
+        showNotification(`Workout completed! ${workout.exercises.length} exercises • ${duration} minutes`, 'success');
     } else {
-        showNotification(`❌ Error saving workout: ${result.error}`, 'error');
+        showNotification(`Error saving workout: ${result.error}`, 'error');
     }
 }
 
@@ -909,11 +909,18 @@ function openExerciseModal(exerciseName, muscleGroup, category) {
         text-align: center;
     `;
     recommendationBanner.innerHTML = `
-        <div style="color: #3d7070; font-weight: 600; margin-bottom: 4px;">💡 Recommendation</div>
+        <div style="color: #DCAA89; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DCAA89" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <path d="M12 17h.01"></path>
+            </svg>
+            Recommendation
+        </div>
         <div style="color: #f8fafc; font-size: 18px; font-weight: bold;">
             ${recommendation.weight}lbs × ${recommendation.reps} reps
         </div>
-        <div style="color: #d1d5db; font-size: 14px; margin-top: 4px;">
+        <div style="color: #708090; font-size: 14px; margin-top: 4px;">
             ${recommendation.note}
         </div>
     `;
@@ -1122,7 +1129,7 @@ function finishExercise() {
         startRestTimer(betweenExerciseRest, `${exercise.name} complete - Rest before next exercise`);
     }
     
-    showNotification(`✅ ${exercise.name} completed - ${sets.length} sets logged! Rest ${restMinutes}min before next exercise.`, 'success');
+    showNotification(`${exercise.name} completed - ${sets.length} sets logged! Rest ${restMinutes}min before next exercise.`, 'success');
 }
 
 function switchTab(tabName) {
@@ -1277,15 +1284,29 @@ function updateExerciseList(selectedCategory = 'all') {
     if (currentDailyVolume >= maxEffectiveVolume && HyperTrack.state.currentWorkout) {
         html += `
             <div style="background: #374151; border-left: 4px solid #f59e0b; padding: 12px; margin-bottom: 16px; border-radius: 6px;">
-                <div style="color: #f59e0b; font-weight: 600;">⚠️ High Volume Warning</div>
-                <div style="color: #d1d5db; font-size: 14px;">You've reached ${currentDailyVolume} sets today. Consider finishing your workout to optimize recovery.</div>
+                <div style="color: #DCAA89; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DCAA89" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    High Volume Warning
+                </div>
+                <div style="color: #708090; font-size: 14px;">You've reached ${currentDailyVolume} sets today. Consider finishing your workout to optimize recovery.</div>
             </div>
         `;
     }
     
     // Show category-specific recommendations
     if (recommendations.length > 0 && selectedCategory !== 'all') {
-        html += `<div style="margin-bottom: 20px;"><h4 style="color: #3d7070; margin-bottom: 12px;">🎯 Recommended ${selectedCategory} Exercises</h4>`;
+        html += `<div style="margin-bottom: 20px;"><h4 style="color: #DCAA89; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DCAA89" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M16 12l-4-4-4 4"></path>
+                <path d="M12 16V8"></path>
+            </svg>
+            Recommended ${selectedCategory} Exercises
+        </h4>`;
         recommendations.forEach(rec => {
             if (rec.exercise) {
                 const safeName = rec.exercise.name.replace(/'/g, "\\'");
@@ -1309,7 +1330,7 @@ function updateExerciseList(selectedCategory = 'all') {
         });
         html += '</div>';
     } else if (recommendations.length > 0 && selectedCategory === 'all') {
-        html += '<div style="margin-bottom: 20px;"><h4 style="color: #3d7070; margin-bottom: 12px;">🎯 Overall Recommendations</h4>';
+        html += '<div style="margin-bottom: 20px;"><h4 style="color: #DCAA89; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DCAA89" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16 12l-4-4-4 4"></path><path d="M12 16V8"></path></svg>Overall Recommendations</h4>';
         recommendations.forEach(rec => {
             if (rec.exercise) {
                 const safeName = rec.exercise.name.replace(/'/g, "\\'");
@@ -3141,22 +3162,31 @@ async function testDatabaseConnection() {
                     .select('*', { head: true });
                     
                 if (error) {
-                    results.push(`❌ ${table}: ${error.message}`);
+                    results.push(`<span style="color: #ef4444;">✗ ${table}: ${error.message}</span>`);
                 } else {
-                    results.push(`✅ ${table}: OK`);
+                    results.push(`<span style="color: #94C17B;">✓ ${table}: OK</span>`);
                 }
             } catch (err) {
-                results.push(`❌ ${table}: ${err.message}`);
+                results.push(`<span style="color: #ef4444;">✗ ${table}: ${err.message}</span>`);
             }
         }
         
         // Show results
         statusP.innerHTML = `
-            <strong>✅ Database Connection Test Results:</strong><br>
-            <strong>Exercises found:</strong> ${exercises.length} exercises<br>
-            ${exercises.map(ex => `- ${ex.name} (${ex.muscle_group})`).join('<br>')}<br><br>
-            <strong>Table Status:</strong><br>
-            ${results.join('<br>')}
+            <div style="color: #94C17B; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94C17B" stroke-width="2">
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                </svg>
+                Database Connection Test Results
+            </div>
+            <div style="color: #DCAA89; font-weight: 600; margin-bottom: 8px;">Exercises found: ${exercises.length} exercises</div>
+            <div style="color: #708090; margin-bottom: 12px;">
+                ${exercises.map(ex => `• ${ex.name} (${ex.muscle_group})`).join('<br>')}
+            </div>
+            <div style="color: #DCAA89; font-weight: 600; margin-bottom: 8px;">Table Status:</div>
+            <div style="color: #708090;">
+                ${results.join('<br>')}
+            </div>
         `;
         
     } catch (error) {

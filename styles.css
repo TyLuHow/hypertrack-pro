@@ -868,8 +868,8 @@ body {
 .tier-3 { background: #7c2d12; color: #fb923c; }
 
 .mvc-badge {
-    background: #374151;
-    color: #d1d5db;
+    background: #3D6A71;
+    color: #DCAA89;
     padding: 2px 6px;
     border-radius: 8px;
     font-size: 10px;
@@ -889,7 +889,7 @@ body {
 
 .set-number {
     font-weight: 600;
-    color: #3d7070;
+    color: #DCAA89;
     min-width: 50px;
 }
 
@@ -912,8 +912,8 @@ body {
 
 .set-input:focus {
     outline: none;
-    border-color: #3d7070;
-    box-shadow: 0 0 0 2px rgba(61, 112, 112, 0.2);
+    border-color: #DCAA89;
+    box-shadow: 0 0 0 2px rgba(220, 170, 137, 0.2);
 }
 
 .remove-set-btn {
@@ -955,7 +955,7 @@ body {
     font-family: 'JetBrains Mono', monospace;
     font-size: 18px;
     font-weight: 600;
-    color: #3d7070;
+    color: #708090;
 }
 
 .current-exercises {
@@ -984,8 +984,8 @@ body {
 }
 
 .set-badge {
-    background: #1f2937;
-    color: #d1d5db;
+    background: #3D6A71;
+    color: #708090;
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 12px;
