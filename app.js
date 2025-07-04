@@ -796,30 +796,34 @@ const HyperTrack = {
         
         // Priority 1: Demo mode overrides everything
         console.log('🔍 Data loading - demoMode state:', this.state.demoMode);
+        console.log('🔍 URL search params:', window.location.search);
+        console.log('🔍 Current URL:', window.location.href);
         
         if (this.state.demoMode) {
             console.log('🎭 Demo mode detected - loading static demo data...');
             try {
-                // Load static demo data from JSON file
-                fetch('./demo-workouts.json')
-                    .then(response => response.json())
-                    .then(demoWorkouts => {
-                        this.state.workouts = demoWorkouts;
-                        this.state.user = { name: 'Demo User' };
-                        console.log(`🎭 Demo mode: Loaded ${demoWorkouts.length} static demo workouts`);
-                        
-                        // Update all displays with demo data
-                        setTimeout(() => {
-                            this.updateAllDisplays();
-                        }, 100);
-                    })
-                    .catch(error => {
-                        console.error('🎭 Failed to load demo data:', error);
-                        this.state.workouts = [];
-                    });
-                return; // Exit early for demo mode
+                // Load static demo data from JSON file with await
+                const response = await fetch('./demo-workouts.json');
+                console.log('🎭 Demo fetch response:', response.status, response.ok);
+                
+                if (response.ok) {
+                    const demoWorkouts = await response.json();
+                    this.state.workouts = demoWorkouts;
+                    this.state.user = { name: 'Demo User' };
+                    console.log(`🎭 Demo mode: Loaded ${demoWorkouts.length} static demo workouts`);
+                    console.log('🎭 First demo workout:', demoWorkouts[0]?.id);
+                    
+                    // Update all displays with demo data
+                    setTimeout(() => {
+                        this.updateAllDisplays();
+                    }, 100);
+                    
+                    return; // Exit early for demo mode
+                } else {
+                    throw new Error(`Failed to fetch demo data: ${response.status}`);
+                }
             } catch (error) {
-                console.error('🎭 Demo mode error:', error);
+                console.error('🎭 Failed to load demo data:', error);
                 this.state.workouts = [];
                 return;
             }
@@ -832,12 +836,16 @@ const HyperTrack = {
             return;
         }
         
-        // Priority 3: Real user data (localStorage) 
-        const localWorkouts = localStorage.getItem('hypertrack_workouts');
-        if (localWorkouts) {
-            this.state.workouts = JSON.parse(localWorkouts);
-            console.log(`✅ Loaded ${this.state.workouts.length} workouts from localStorage`);
-            return;
+        // Priority 3: Real user data (localStorage) - only if NOT in demo mode
+        if (!this.state.demoMode) {
+            const localWorkouts = localStorage.getItem('hypertrack_workouts');
+            if (localWorkouts) {
+                this.state.workouts = JSON.parse(localWorkouts);
+                console.log(`✅ Loaded ${this.state.workouts.length} workouts from localStorage`);
+                return;
+            }
+        } else {
+            console.log('🎭 Skipping localStorage check - demo mode active');
         }
     },
     
@@ -1825,10 +1833,20 @@ function loadAppData() {
         const saved = localStorage.getItem('hypertrackData');
         if (saved) {
             const data = JSON.parse(saved);
-            if (data.workouts) HyperTrack.state.workouts = data.workouts;
+            
+            // Only load workouts if NOT in demo mode
+            if (data.workouts && !HyperTrack.state.demoMode) {
+                HyperTrack.state.workouts = data.workouts;
+                console.log('📂 Workouts loaded from localStorage');
+            } else if (HyperTrack.state.demoMode) {
+                console.log('🎭 Skipping workout data load - demo mode active');
+            }
+            
+            // Settings and current workout can be loaded regardless of demo mode
             if (data.settings) HyperTrack.state.settings = {...HyperTrack.state.settings, ...data.settings};
-            if (data.currentWorkout) HyperTrack.state.currentWorkout = data.currentWorkout;
-            console.log('📂 Data loaded');
+            if (data.currentWorkout && !HyperTrack.state.demoMode) HyperTrack.state.currentWorkout = data.currentWorkout;
+            
+            console.log('📂 App data loaded');
         }
     } catch (error) {
         console.error('❌ Load error:', error);
