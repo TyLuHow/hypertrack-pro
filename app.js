@@ -387,6 +387,38 @@ function updateCurrentWorkoutDisplay() {
     `).join('');
 }
 
+function setupExerciseClickHandlers(container) {
+    // Remove any existing listeners
+    container.removeEventListener('click', handleExerciseClick);
+    
+    // Add event delegation
+    container.addEventListener('click', handleExerciseClick);
+}
+
+function handleExerciseClick(event) {
+    console.log('Exercise click detected:', event.target);
+    
+    const exerciseCard = event.target.closest('.exercise-card');
+    if (!exerciseCard) {
+        console.log('No exercise card found');
+        return;
+    }
+    
+    console.log('Exercise card found:', exerciseCard);
+    
+    const exerciseName = exerciseCard.dataset.exercise;
+    const muscleGroup = exerciseCard.dataset.muscle;
+    const category = exerciseCard.dataset.category;
+    
+    console.log('Exercise data:', { exerciseName, muscleGroup, category });
+    
+    if (exerciseName && muscleGroup && category) {
+        selectExercise(exerciseName, muscleGroup, category);
+    } else {
+        console.log('Missing exercise data');
+    }
+}
+
 function updateExerciseList(selectedCategory = 'all') {
     const container = document.getElementById('exerciseList');
     if (!container) return;
@@ -426,7 +458,7 @@ function updateExerciseList(selectedCategory = 'all') {
         recommendations.forEach(rec => {
             if (rec.exercise) {
                 html += `
-                    <div class="exercise-card recommended" onclick="selectExercise('${rec.exercise.name}', '${rec.exercise.muscle_group}', '${rec.exercise.category}')" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
+                    <div class="exercise-card recommended" data-exercise="${rec.exercise.name}" data-muscle="${rec.exercise.muscle_group}" data-category="${rec.exercise.category}" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
                         <div class="exercise-info">
                             <div class="exercise-name">${rec.exercise.name} ⭐</div>
                             <div class="exercise-muscle">${rec.exercise.muscle_group}</div>
@@ -446,7 +478,7 @@ function updateExerciseList(selectedCategory = 'all') {
         recommendations.forEach(rec => {
             if (rec.exercise) {
                 html += `
-                    <div class="exercise-card recommended" onclick="selectExercise('${rec.exercise.name}', '${rec.exercise.muscle_group}', '${rec.exercise.category}')" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
+                    <div class="exercise-card recommended" data-exercise="${rec.exercise.name}" data-muscle="${rec.exercise.muscle_group}" data-category="${rec.exercise.category}" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
                         <div class="exercise-info">
                             <div class="exercise-name">${rec.exercise.name} ⭐</div>
                             <div class="exercise-muscle">${rec.exercise.muscle_group}</div>
@@ -474,7 +506,7 @@ function updateExerciseList(selectedCategory = 'all') {
         html += filteredExercises.map(exercise => {
             const isRecommended = recommendedExerciseNames.includes(exercise.name);
             return `
-                <div class="exercise-card ${isRecommended ? 'dimmed' : ''}" onclick="selectExercise('${exercise.name}', '${exercise.muscle_group}', '${exercise.category}')" style="cursor: pointer; ${isRecommended ? 'opacity: 0.6;' : ''}">
+                <div class="exercise-card ${isRecommended ? 'dimmed' : ''}" data-exercise="${exercise.name}" data-muscle="${exercise.muscle_group}" data-category="${exercise.category}" style="cursor: pointer; ${isRecommended ? 'opacity: 0.6;' : ''}">
                     <div class="exercise-info">
                         <div class="exercise-name">${exercise.name}</div>
                         <div class="exercise-muscle">${exercise.muscle_group}</div>
@@ -490,6 +522,9 @@ function updateExerciseList(selectedCategory = 'all') {
     }
     
     container.innerHTML = html;
+    
+    // Add event delegation for exercise cards
+    setupExerciseClickHandlers(container);
 }
 
 function updateHistoryDisplay() {
@@ -1459,6 +1494,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize UI
     updateUI();
     updateExerciseList();
+    
+    // Ensure exercise selection works on initial load
+    const exerciseContainer = document.getElementById('exerciseList');
+    if (exerciseContainer) {
+        setupExerciseClickHandlers(exerciseContainer);
+    }
     
     // Start research facts rotation
     updateResearchBanner();
