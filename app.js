@@ -387,22 +387,66 @@ function updateCurrentWorkoutDisplay() {
     `).join('');
 }
 
-function updateExerciseList() {
+function updateExerciseList(selectedCategory = 'all') {
     const container = document.getElementById('exerciseList');
     if (!container) return;
     
-    // Get recommendations if in a workout
-    const recommendations = HyperTrack.state.currentWorkout ? getExerciseRecommendations() : [];
+    // Check current daily volume to determine if recommendations should show
+    const currentDailyVolume = getCurrentDailyVolume();
+    const maxEffectiveVolume = 25; // Max effective sets per day
+    const showRecommendations = currentDailyVolume < maxEffectiveVolume;
+    
+    // Get category-specific recommendations only if category is selected and under volume limit
+    let recommendations = [];
+    if (HyperTrack.state.currentWorkout && showRecommendations) {
+        if (selectedCategory === 'all') {
+            recommendations = getExerciseRecommendations();
+        } else {
+            recommendations = getCategoryRecommendations(selectedCategory);
+        }
+    }
+    
     const recommendedExerciseNames = recommendations.map(r => r.exercise?.name);
     
-    // Show recommendations first if any
     let html = '';
-    if (recommendations.length > 0 && HyperTrack.state.currentWorkout) {
-        html += '<div style="margin-bottom: 20px;"><h4 style="color: #3d7070; margin-bottom: 12px;">🎯 Recommended Exercises</h4>';
+    
+    // Show volume warning if at max
+    if (currentDailyVolume >= maxEffectiveVolume && HyperTrack.state.currentWorkout) {
+        html += `
+            <div style="background: #374151; border-left: 4px solid #f59e0b; padding: 12px; margin-bottom: 16px; border-radius: 6px;">
+                <div style="color: #f59e0b; font-weight: 600;">⚠️ High Volume Warning</div>
+                <div style="color: #d1d5db; font-size: 14px;">You've reached ${currentDailyVolume} sets today. Consider finishing your workout to optimize recovery.</div>
+            </div>
+        `;
+    }
+    
+    // Show category-specific recommendations
+    if (recommendations.length > 0 && selectedCategory !== 'all') {
+        html += `<div style="margin-bottom: 20px;"><h4 style="color: #3d7070; margin-bottom: 12px;">🎯 Recommended ${selectedCategory} Exercises</h4>`;
         recommendations.forEach(rec => {
             if (rec.exercise) {
                 html += `
-                    <div class="exercise-card recommended" onclick="selectExercise('${rec.exercise.name}', '${rec.exercise.muscle_group}', '${rec.exercise.category}')" style="border: 2px solid #3d7070; background: #1f2937;">
+                    <div class="exercise-card recommended" onclick="selectExercise('${rec.exercise.name}', '${rec.exercise.muscle_group}', '${rec.exercise.category}')" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
+                        <div class="exercise-info">
+                            <div class="exercise-name">${rec.exercise.name} ⭐</div>
+                            <div class="exercise-muscle">${rec.exercise.muscle_group}</div>
+                            <div class="exercise-category">${rec.exercise.category}</div>
+                        </div>
+                        <div class="exercise-meta">
+                            <span class="tier-badge tier-${rec.exercise.tier}">Tier ${rec.exercise.tier}</span>
+                            <div style="font-size: 12px; color: #3d7070; margin-top: 4px;">${rec.priority}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        html += '</div>';
+    } else if (recommendations.length > 0 && selectedCategory === 'all') {
+        html += '<div style="margin-bottom: 20px;"><h4 style="color: #3d7070; margin-bottom: 12px;">🎯 Overall Recommendations</h4>';
+        recommendations.forEach(rec => {
+            if (rec.exercise) {
+                html += `
+                    <div class="exercise-card recommended" onclick="selectExercise('${rec.exercise.name}', '${rec.exercise.muscle_group}', '${rec.exercise.category}')" style="border: 2px solid #3d7070; background: #1f2937; cursor: pointer;">
                         <div class="exercise-info">
                             <div class="exercise-name">${rec.exercise.name} ⭐</div>
                             <div class="exercise-muscle">${rec.exercise.muscle_group}</div>
@@ -419,24 +463,31 @@ function updateExerciseList() {
         html += '</div>';
     }
     
-    // Show all exercises
-    html += '<h4 style="color: #d1d5db; margin-bottom: 12px;">All Exercises</h4>';
-    html += HyperTrack.exerciseDatabase.map(exercise => {
-        const isRecommended = recommendedExerciseNames.includes(exercise.name);
-        return `
-            <div class="exercise-card ${isRecommended ? 'dimmed' : ''}" onclick="selectExercise('${exercise.name}', '${exercise.muscle_group}', '${exercise.category}')" ${isRecommended ? 'style="opacity: 0.6;"' : ''}>
-                <div class="exercise-info">
-                    <div class="exercise-name">${exercise.name}</div>
-                    <div class="exercise-muscle">${exercise.muscle_group}</div>
-                    <div class="exercise-category">${exercise.category}</div>
+    // Filter exercises by category
+    const filteredExercises = selectedCategory === 'all' 
+        ? HyperTrack.exerciseDatabase 
+        : HyperTrack.exerciseDatabase.filter(ex => ex.muscle_group === selectedCategory);
+    
+    // Show filtered exercises
+    if (filteredExercises.length > 0) {
+        html += `<h4 style="color: #d1d5db; margin-bottom: 12px;">${selectedCategory === 'all' ? 'All' : selectedCategory} Exercises</h4>`;
+        html += filteredExercises.map(exercise => {
+            const isRecommended = recommendedExerciseNames.includes(exercise.name);
+            return `
+                <div class="exercise-card ${isRecommended ? 'dimmed' : ''}" onclick="selectExercise('${exercise.name}', '${exercise.muscle_group}', '${exercise.category}')" style="cursor: pointer; ${isRecommended ? 'opacity: 0.6;' : ''}">
+                    <div class="exercise-info">
+                        <div class="exercise-name">${exercise.name}</div>
+                        <div class="exercise-muscle">${exercise.muscle_group}</div>
+                        <div class="exercise-category">${exercise.category}</div>
+                    </div>
+                    <div class="exercise-meta">
+                        <span class="tier-badge tier-${exercise.tier}">Tier ${exercise.tier}</span>
+                        <span class="mvc-badge">${exercise.mvc_percentage}% MVC</span>
+                    </div>
                 </div>
-                <div class="exercise-meta">
-                    <span class="tier-badge tier-${exercise.tier}">Tier ${exercise.tier}</span>
-                    <span class="mvc-badge">${exercise.mvc_percentage}% MVC</span>
-                </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    }
     
     container.innerHTML = html;
 }
@@ -644,17 +695,8 @@ function filterByMuscle(muscleGroup) {
     document.querySelectorAll('.muscle-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
     
-    const exercises = document.querySelectorAll('.exercise-card');
-    
-    exercises.forEach(exercise => {
-        const muscle = exercise.querySelector('.exercise-muscle')?.textContent || '';
-        
-        if (muscleGroup === 'all' || muscle === muscleGroup) {
-            exercise.style.display = 'block';
-        } else {
-            exercise.style.display = 'none';
-        }
-    });
+    // Update exercise list with category-specific recommendations
+    updateExerciseList(muscleGroup);
 }
 
 function updateResearchBanner() {
@@ -1009,6 +1051,103 @@ function playNotificationSound() {
     }
 }
 
+// Volume and Recommendation Helper Functions
+function getCurrentDailyVolume() {
+    if (!HyperTrack.state.currentWorkout) return 0;
+    
+    return HyperTrack.state.currentWorkout.exercises?.reduce((total, exercise) => {
+        return total + (exercise.sets?.length || 0);
+    }, 0) || 0;
+}
+
+function getCategoryRecommendations(category) {
+    const workouts = HyperTrack.state.workouts;
+    if (workouts.length === 0) {
+        return getCategoryBeginnerRecommendations(category);
+    }
+    
+    // Check if this muscle group is underworked
+    const recentWorkouts = workouts.slice(-5);
+    const categoryFrequency = recentWorkouts.reduce((count, workout) => {
+        return count + (workout.exercises?.filter(ex => ex.muscle_group === category).length || 0);
+    }, 0);
+    
+    // If underworked, recommend exercises from this category
+    if (categoryFrequency < 3) {
+        const categoryExercises = HyperTrack.exerciseDatabase.filter(ex => ex.muscle_group === category);
+        const topExercise = categoryExercises.find(ex => ex.tier === 1) || categoryExercises[0];
+        
+        if (topExercise) {
+            return [{
+                exercise: topExercise,
+                priority: `${category} needs attention - only ${categoryFrequency} recent sets`
+            }];
+        }
+    }
+    
+    // Check for plateau in this category
+    const plateauExercise = detectCategoryPlateau(category);
+    if (plateauExercise) {
+        // Recommend different exercise in same category
+        const alternatives = HyperTrack.exerciseDatabase.filter(ex => 
+            ex.muscle_group === category && ex.name !== plateauExercise.name
+        );
+        const alternative = alternatives.find(ex => ex.tier <= plateauExercise.tier) || alternatives[0];
+        
+        if (alternative) {
+            return [{
+                exercise: alternative,
+                priority: `Break ${plateauExercise.name} plateau with variation`
+            }];
+        }
+    }
+    
+    return [];
+}
+
+function getCategoryBeginnerRecommendations(category) {
+    const categoryExercises = HyperTrack.exerciseDatabase.filter(ex => ex.muscle_group === category);
+    const topExercise = categoryExercises.find(ex => ex.tier === 1);
+    
+    if (topExercise) {
+        return [{
+            exercise: topExercise,
+            priority: `Start with tier 1 ${category} exercise`
+        }];
+    }
+    
+    return [];
+}
+
+function detectCategoryPlateau(category) {
+    const workouts = HyperTrack.state.workouts.slice(-6); // Last 6 workouts
+    const categoryExercises = {};
+    
+    // Group exercises by name in this category
+    workouts.forEach(workout => {
+        workout.exercises?.forEach(exercise => {
+            if (exercise.muscle_group === category) {
+                if (!categoryExercises[exercise.name]) {
+                    categoryExercises[exercise.name] = [];
+                }
+                categoryExercises[exercise.name].push(exercise);
+            }
+        });
+    });
+    
+    // Check each exercise for plateau
+    for (const [exerciseName, exerciseHistory] of Object.entries(categoryExercises)) {
+        if (exerciseHistory.length >= 3) {
+            const isPlateaued = detectPlateau(exerciseHistory);
+            if (isPlateaued) {
+                return { name: exerciseName, muscle_group: category };
+            }
+        }
+    }
+    
+    return null;
+}
+
 // Recommendation Functions
 function getExerciseRecommendations() {
     const workouts = HyperTrack.state.workouts;
@@ -1016,7 +1155,13 @@ function getExerciseRecommendations() {
         return getBeginnerRecommendations();
     }
     
-    // Analyze recent workout history
+    // Priority 1: Check for plateaus and recommend exercise variations
+    const plateauRecommendations = getPlateauRecommendations();
+    if (plateauRecommendations.length > 0) {
+        return plateauRecommendations;
+    }
+    
+    // Priority 2: Analyze recent workout history for muscle balance
     const recentWorkouts = workouts.slice(-5); // Last 5 workouts
     const exerciseFrequency = {};
     const muscleGroupFrequency = {};
@@ -1029,7 +1174,7 @@ function getExerciseRecommendations() {
     });
     
     // Find underworked muscle groups
-    const allMuscles = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs'];
+    const allMuscles = ['Chest', 'Back', 'Shoulders', 'Arms'];
     const underworkedMuscles = allMuscles.filter(muscle => 
         (muscleGroupFrequency[muscle] || 0) < 2
     );
@@ -1041,6 +1186,49 @@ function getExerciseRecommendations() {
     
     // If all muscles are trained, recommend based on optimal frequency
     return getBalancedRecommendations();
+}
+
+function getPlateauRecommendations() {
+    const workouts = HyperTrack.state.workouts.slice(-6);
+    const exerciseHistory = {};
+    const recommendations = [];
+    
+    // Group exercises by name
+    workouts.forEach(workout => {
+        workout.exercises?.forEach(exercise => {
+            if (!exerciseHistory[exercise.name]) {
+                exerciseHistory[exercise.name] = [];
+            }
+            exerciseHistory[exercise.name].push(exercise);
+        });
+    });
+    
+    // Check each exercise for plateau
+    for (const [exerciseName, history] of Object.entries(exerciseHistory)) {
+        if (history.length >= 3) {
+            const isPlateaued = detectPlateau(history);
+            if (isPlateaued) {
+                // Find alternative exercise in same muscle group
+                const originalExercise = HyperTrack.exerciseDatabase.find(ex => ex.name === exerciseName);
+                if (originalExercise) {
+                    const alternatives = HyperTrack.exerciseDatabase.filter(ex => 
+                        ex.muscle_group === originalExercise.muscle_group && 
+                        ex.name !== exerciseName
+                    );
+                    
+                    const alternative = alternatives.find(ex => ex.tier <= originalExercise.tier) || alternatives[0];
+                    if (alternative) {
+                        recommendations.push({
+                            exercise: alternative,
+                            priority: `Break ${exerciseName} plateau - try exercise variation`
+                        });
+                    }
+                }
+            }
+        }
+    }
+    
+    return recommendations.slice(0, 2); // Max 2 plateau recommendations
 }
 
 function getBeginnerRecommendations() {
@@ -1173,20 +1361,32 @@ function calculateProgressiveSuggestion(exercise, previousSets) {
 
 function detectPlateau(exerciseHistory) {
     const { settings } = HyperTrack.state;
-    const recentWorkouts = exerciseHistory.slice(-settings.plateauThreshold);
+    const recentExercises = exerciseHistory.slice(-settings.plateauThreshold);
     
-    if (recentWorkouts.length < settings.plateauThreshold) return false;
+    if (recentExercises.length < settings.plateauThreshold) return false;
     
-    // Check if no improvement in volume for plateau threshold workouts
-    const volumes = recentWorkouts.map(workout => 
-        workout.sets.reduce((sum, set) => sum + (set.weight * set.reps), 0)
-    );
+    // Check if no improvement in total volume for plateau threshold exercises
+    const volumes = recentExercises.map(exercise => {
+        if (!exercise.sets || exercise.sets.length === 0) return 0;
+        return exercise.sets.reduce((sum, set) => sum + (set.weight * set.reps), 0);
+    });
     
-    const hasImprovement = volumes.some((vol, i) => 
+    // Also check max weight progression
+    const maxWeights = recentExercises.map(exercise => {
+        if (!exercise.sets || exercise.sets.length === 0) return 0;
+        return Math.max(...exercise.sets.map(set => set.weight));
+    });
+    
+    // No improvement if neither volume nor max weight increased
+    const volumeImprovement = volumes.some((vol, i) => 
         i > 0 && vol > volumes[i - 1]
     );
     
-    return !hasImprovement;
+    const weightImprovement = maxWeights.some((weight, i) => 
+        i > 0 && weight > maxWeights[i - 1]
+    );
+    
+    return !volumeImprovement && !weightImprovement;
 }
 
 function calculateOptimalRestTime(exercise, setIntensity) {
