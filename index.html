@@ -185,6 +185,65 @@
                 </div>
             </div>
 
+            <!-- Intelligence Tab -->
+            <div id="intelligenceTab" class="tab-content">
+                <div class="intelligence-container">
+                    <h2>AI Training Intelligence</h2>
+                    
+                    <!-- Recovery Status -->
+                    <div class="settings-section">
+                        <h3>Recovery & Readiness</h3>
+                        <div id="recoveryStatus" class="recovery-status">
+                            <div class="recovery-score">
+                                <div class="score-circle" id="recoveryCircle">
+                                    <span id="recoveryNumber">--</span>
+                                </div>
+                                <div class="recovery-label">Recovery Score</div>
+                            </div>
+                            <div class="recovery-details" id="recoveryDetails">
+                                <div class="readiness-level" id="readinessLevel">Calculating...</div>
+                                <div class="recovery-recommendations" id="recoveryRecommendations"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Plateau Prediction -->
+                    <div class="settings-section">
+                        <h3>Plateau Prediction</h3>
+                        <div id="plateauAnalysis" class="plateau-analysis">
+                            <div class="analysis-loading">Analyzing your training patterns...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progression Optimization -->
+                    <div class="settings-section">
+                        <h3>Personalized Progression</h3>
+                        <div id="progressionOptimization" class="progression-optimization">
+                            <div class="optimization-loading">Calculating optimal progressions...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Periodization -->
+                    <div class="settings-section">
+                        <h3>Auto-Periodization</h3>
+                        <div id="periodizationStatus" class="periodization-status">
+                            <div class="current-phase">
+                                <div class="phase-name" id="currentPhaseName">Accumulation Phase</div>
+                                <div class="phase-week" id="currentPhaseWeek">Week 1 of 4</div>
+                            </div>
+                            <div class="phase-progress" id="phaseProgress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill" style="width: 25%"></div>
+                                </div>
+                            </div>
+                            <div class="next-phase" id="nextPhase">
+                                Next: Intensification Phase in 3 weeks
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Settings Tab -->
             <div id="settingsTab" class="tab-content">
                 <div class="settings-container">
@@ -275,7 +334,7 @@
         <nav class="bottom-nav">
             <button class="nav-btn active" onclick="switchTab('workout')" data-tab="workout">
                 <div class="nav-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M6.5 6.5h11v11h-11z"></path>
                         <path d="M6.5 6.5L2 2"></path>
                         <path d="M17.5 6.5L22 2"></path>
@@ -287,7 +346,7 @@
             </button>
             <button class="nav-btn" onclick="switchTab('history')" data-tab="history">
                 <div class="nav-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                         <path d="M8 7h8"></path>
@@ -299,16 +358,28 @@
             </button>
             <button class="nav-btn" onclick="switchTab('analytics')" data-tab="analytics">
                 <div class="nav-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 3v18h18"></path>
                         <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
                     </svg>
                 </div>
                 <div class="nav-label">Analytics</div>
             </button>
+            <button class="nav-btn" onclick="switchTab('intelligence')" data-tab="intelligence">
+                <div class="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 12l2 2 4-4"></path>
+                        <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                        <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+                        <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"></path>
+                        <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3"></path>
+                    </svg>
+                </div>
+                <div class="nav-label">AI</div>
+            </button>
             <button class="nav-btn" onclick="switchTab('settings')" data-tab="settings">
                 <div class="nav-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                     </svg>
@@ -420,6 +491,7 @@
     <!-- Scripts -->
     <script src="supabase-config.js"></script>
     <script src="supabase-service.js"></script>
+    <script src="intelligent-training.js"></script>
     <script src="tyler-data-integration.js"></script>
     <script src="app.js"></script>
     <script>

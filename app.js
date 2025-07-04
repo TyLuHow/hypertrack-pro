@@ -3017,13 +3017,17 @@ async function initializeUserData() {
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('🎯 Initializing HyperTrack Pro...');
+    console.log('Initializing HyperTrack Pro...');
+    
+    // Initialize Intelligence System
+    HyperTrack.intelligence = new IntelligentTraining();
+    console.log('AI Training Intelligence initialized');
     
     // Initialize Supabase
     if (window.supabaseService) {
         const supabaseReady = await window.supabaseService.initialize();
         if (supabaseReady) {
-            console.log('✅ Supabase initialized');
+            console.log('Supabase initialized');
             
             // Check if user is already authenticated
             if (window.supabaseService.isAuthenticated()) {
@@ -3041,6 +3045,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Initialize UI
     updateUI();
     updateExerciseList();
+    updateIntelligenceDisplay();
     
     // Start research facts rotation
     updateResearchBanner();
@@ -3056,10 +3061,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
     
-    console.log('✅ HyperTrack Pro ready!');
-    console.log(`📊 Exercise database: ${HyperTrack.exerciseDatabase.length} exercises`);
-    console.log(`📈 Historical workouts: ${HyperTrack.state.workouts.length} workouts`);
-    console.log('🔬 Evidence-based algorithms activated');
+    console.log('HyperTrack Pro ready with AI Intelligence!');
+    console.log(`Exercise database: ${HyperTrack.exerciseDatabase.length} exercises`);
+    console.log(`Historical workouts: ${HyperTrack.state.workouts.length} workouts`);
+    console.log('Evidence-based algorithms activated');
 });
 
 console.log('🚀 HyperTrack Pro loaded successfully');
@@ -3239,3 +3244,243 @@ async function testDatabaseConnection() {
 
 // Make function globally available
 window.testDatabaseConnection = testDatabaseConnection;
+
+// Intelligence Display Functions
+function updateIntelligenceDisplay() {
+    updateRecoveryStatus();
+    updatePlateauAnalysis();
+    updateProgressionOptimization();
+    updatePeriodizationStatus();
+}
+
+function updateRecoveryStatus() {
+    // Simulate recovery data (in real app, this would come from user input or sensors)
+    const recoveryData = {
+        subjectiveWellness: 75, // 0-100 scale
+        sleepQuality: 80,      // 0-100 scale  
+        muscleReadiness: 70,   // 0-100 scale
+        stressLevel: 30        // 0-100 scale (lower is better)
+    };
+    
+    const recoveryManagement = HyperTrack.intelligence.implementRecoveryBasedLoadManagement(
+        recoveryData, 
+        []
+    );
+    
+    // Update recovery score circle
+    const recoveryNumber = document.getElementById('recoveryNumber');
+    const recoveryCircle = document.getElementById('recoveryCircle');
+    const readinessLevel = document.getElementById('readinessLevel');
+    const recoveryRecommendations = document.getElementById('recoveryRecommendations');
+    
+    if (recoveryNumber) {
+        recoveryNumber.textContent = Math.round(recoveryManagement.recoveryScore);
+    }
+    
+    if (recoveryCircle) {
+        const percentage = recoveryManagement.recoveryScore;
+        recoveryCircle.style.background = `conic-gradient(#94C17B 0% ${percentage}%, #3D6A71 ${percentage}% 100%)`;
+    }
+    
+    if (readinessLevel) {
+        const readiness = recoveryManagement.readinessLevel;
+        const readinessText = {
+            'excellent': 'Excellent Readiness',
+            'good': 'Good Readiness', 
+            'moderate': 'Moderate Readiness',
+            'poor': 'Poor Readiness',
+            'very_poor': 'Very Poor Readiness'
+        };
+        readinessLevel.textContent = readinessText[readiness] || 'Unknown';
+    }
+    
+    if (recoveryRecommendations) {
+        const recommendations = recoveryManagement.recoveryRecommendations;
+        if (recommendations.length > 0) {
+            recoveryRecommendations.innerHTML = recommendations
+                .slice(0, 2) // Show top 2 recommendations
+                .map(rec => `<div style="margin-bottom: 8px;">• ${rec.recommendation}</div>`)
+                .join('');
+        } else {
+            recoveryRecommendations.innerHTML = '<div>Recovery is optimal - maintain current routine</div>';
+        }
+    }
+}
+
+function updatePlateauAnalysis() {
+    const plateauContainer = document.getElementById('plateauAnalysis');
+    if (!plateauContainer) return;
+    
+    // Analyze recent exercises for plateau risk
+    const recentWorkouts = HyperTrack.state.workouts.slice(-10);
+    const exerciseAnalyses = [];
+    
+    // Get unique exercises from recent workouts
+    const uniqueExercises = [...new Set(
+        recentWorkouts.flatMap(workout => 
+            workout.exercises?.map(ex => ex.name) || []
+        )
+    )];
+    
+    uniqueExercises.slice(0, 3).forEach(exerciseName => {
+        const exerciseHistory = HyperTrack.intelligence.getExerciseHistory(exerciseName, recentWorkouts);
+        if (exerciseHistory.length >= 3) {
+            const analysis = HyperTrack.intelligence.analyzePlateauRisk(exerciseHistory);
+            exerciseAnalyses.push({
+                exercise: exerciseName,
+                analysis: analysis
+            });
+        }
+    });
+    
+    if (exerciseAnalyses.length === 0) {
+        plateauContainer.innerHTML = `
+            <div class="analysis-loading">
+                Need more workout data to analyze plateau risk. Complete 3+ workouts for insights.
+            </div>
+        `;
+        return;
+    }
+    
+    // Find highest risk exercise
+    const highestRisk = exerciseAnalyses.reduce((max, current) => 
+        current.analysis.riskScore > max.analysis.riskScore ? current : max
+    );
+    
+    plateauContainer.innerHTML = `
+        <div class="plateau-risk">
+            <div class="risk-exercise">Highest Risk: ${highestRisk.exercise}</div>
+            <div class="risk-level risk-${highestRisk.analysis.riskLevel}">
+                ${highestRisk.analysis.riskLevel.toUpperCase()} RISK
+            </div>
+        </div>
+        
+        <div class="risk-factors">
+            ${Object.entries(highestRisk.analysis.primaryFactors || {})
+                .slice(0, 3)
+                .map(([factor, value]) => `
+                    <div class="risk-factor">
+                        <div class="factor-name">${factor.replace(/([A-Z])/g, ' $1').trim()}</div>
+                        <div class="factor-value">${Math.round(value)}%</div>
+                    </div>
+                `).join('')}
+        </div>
+        
+        ${highestRisk.analysis.preventionStrategies.length > 0 ? `
+            <div class="prevention-strategies">
+                <h4 style="color: #DCAA89; margin-bottom: 12px;">Prevention Strategies</h4>
+                ${highestRisk.analysis.preventionStrategies.slice(0, 2).map(strategy => `
+                    <div class="strategy">
+                        <div class="strategy-type">${strategy.type}</div>
+                        <div class="strategy-description">${strategy.description}</div>
+                        <div class="strategy-research">${strategy.research}</div>
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+    `;
+}
+
+function updateProgressionOptimization() {
+    const progressionContainer = document.getElementById('progressionOptimization');
+    if (!progressionContainer) return;
+    
+    const recentWorkouts = HyperTrack.state.workouts.slice(-5);
+    const progressionAnalyses = [];
+    
+    // Get unique exercises from recent workouts
+    const uniqueExercises = [...new Set(
+        recentWorkouts.flatMap(workout => 
+            workout.exercises?.map(ex => ex.name) || []
+        )
+    )];
+    
+    uniqueExercises.slice(0, 3).forEach(exerciseName => {
+        const exerciseHistory = HyperTrack.intelligence.getExerciseHistory(exerciseName, recentWorkouts);
+        if (exerciseHistory.length >= 2) {
+            const exercise = HyperTrack.exerciseDatabase.find(ex => ex.name === exerciseName);
+            if (exercise) {
+                const progression = HyperTrack.intelligence.calculateOptimalProgression(
+                    exercise, 
+                    exerciseHistory, 
+                    HyperTrack.intelligence.userProfile
+                );
+                progressionAnalyses.push({
+                    exercise: exerciseName,
+                    progression: progression
+                });
+            }
+        }
+    });
+    
+    if (progressionAnalyses.length === 0) {
+        progressionContainer.innerHTML = `
+            <div class="optimization-loading">
+                Need more workout data to optimize progressions. Complete 2+ workouts for personalized recommendations.
+            </div>
+        `;
+        return;
+    }
+    
+    progressionContainer.innerHTML = progressionAnalyses.map(analysis => `
+        <div class="progression-exercise">
+            <div class="exercise-name">${analysis.exercise}</div>
+            
+            <div class="progression-details">
+                <div class="progression-metric">
+                    <div class="metric-value">+${(analysis.progression.weightIncrease * 100).toFixed(1)}%</div>
+                    <div class="metric-label">Weight</div>
+                </div>
+                <div class="progression-metric">
+                    <div class="metric-value">+${analysis.progression.repIncrease.toFixed(1)}</div>
+                    <div class="metric-label">Reps</div>
+                </div>
+                <div class="progression-metric">
+                    <div class="metric-value">+${(analysis.progression.volumeIncrease * 100).toFixed(1)}%</div>
+                    <div class="metric-label">Volume</div>
+                </div>
+            </div>
+            
+            <div class="progression-confidence">
+                <span style="color: #708090; font-size: 12px;">Confidence:</span>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="width: ${analysis.progression.confidence}%"></div>
+                </div>
+                <span style="color: #708090; font-size: 12px;">${Math.round(analysis.progression.confidence)}%</span>
+            </div>
+            
+            <div class="progression-reasoning">${analysis.progression.reasoning}</div>
+        </div>
+    `).join('');
+}
+
+function updatePeriodizationStatus() {
+    const periodization = HyperTrack.intelligence.implementAutoPeriodization(
+        { primary: 'hypertrophy' },
+        HyperTrack.state.workouts,
+        HyperTrack.intelligence.periodizationState.currentPhase
+    );
+    
+    const phaseNameEl = document.getElementById('currentPhaseName');
+    const phaseWeekEl = document.getElementById('currentPhaseWeek');
+    const progressFillEl = document.getElementById('progressFill');
+    const nextPhaseEl = document.getElementById('nextPhase');
+    
+    if (phaseNameEl) {
+        phaseNameEl.textContent = `${periodization.currentPhase.phase.charAt(0).toUpperCase() + periodization.currentPhase.phase.slice(1)} Phase`;
+    }
+    
+    if (phaseWeekEl) {
+        phaseWeekEl.textContent = `Week ${HyperTrack.intelligence.periodizationState.phaseWeek} of ${HyperTrack.intelligence.periodizationState.totalCycleWeeks}`;
+    }
+    
+    if (progressFillEl) {
+        const progress = (HyperTrack.intelligence.periodizationState.phaseWeek / HyperTrack.intelligence.periodizationState.totalCycleWeeks) * 100;
+        progressFillEl.style.width = `${progress}%`;
+    }
+    
+    if (nextPhaseEl && periodization.nextPhase) {
+        const weeksRemaining = HyperTrack.intelligence.periodizationState.totalCycleWeeks - HyperTrack.intelligence.periodizationState.phaseWeek;
+        nextPhaseEl.textContent = `Next: ${periodization.nextPhase.phase} Phase in ${weeksRemaining} week${weeksRemaining !== 1 ? 's' : ''}`;
+    }
+}

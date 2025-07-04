@@ -1176,3 +1176,311 @@ body {
 #authSection strong {
     color: var(--text-primary);
 }
+
+/* Intelligence Tab Styles */
+.intelligence-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.recovery-status {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: #30525C;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.recovery-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.score-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(#94C17B 0% 75%, #3D6A71 75% 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.score-circle::before {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: #30525C;
+    border-radius: 50%;
+}
+
+.score-circle span {
+    position: relative;
+    z-index: 1;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+}
+
+.recovery-label {
+    font-size: 12px;
+    color: #708090;
+    text-align: center;
+}
+
+.recovery-details {
+    flex: 1;
+}
+
+.readiness-level {
+    font-size: 18px;
+    font-weight: 600;
+    color: #DCAA89;
+    margin-bottom: 8px;
+}
+
+.recovery-recommendations {
+    color: #708090;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.plateau-analysis {
+    background: #30525C;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.analysis-loading {
+    color: #708090;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+.plateau-risk {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.risk-level {
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.risk-low { background: rgba(148, 193, 123, 0.2); color: #94C17B; }
+.risk-medium { background: rgba(220, 170, 137, 0.2); color: #DCAA89; }
+.risk-high { background: rgba(139, 69, 19, 0.2); color: #8B4513; }
+
+.risk-factors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.risk-factor {
+    background: #3D6A71;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.factor-name {
+    font-size: 12px;
+    color: #708090;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.factor-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+}
+
+.prevention-strategies {
+    margin-top: 16px;
+}
+
+.strategy {
+    background: #3D6A71;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border-left: 4px solid #DCAA89;
+}
+
+.strategy-type {
+    font-weight: 600;
+    color: #DCAA89;
+    margin-bottom: 8px;
+}
+
+.strategy-description {
+    color: white;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.strategy-research {
+    font-size: 12px;
+    color: #708090;
+    font-style: italic;
+}
+
+.progression-optimization {
+    background: #30525C;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.optimization-loading {
+    color: #708090;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+.progression-exercise {
+    background: #3D6A71;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.exercise-name {
+    font-weight: 600;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.progression-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.progression-metric {
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #94C17B;
+}
+
+.metric-label {
+    font-size: 12px;
+    color: #708090;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.progression-confidence {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.confidence-bar {
+    flex: 1;
+    height: 6px;
+    background: #17282B;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.confidence-fill {
+    height: 100%;
+    background: #94C17B;
+    transition: width 0.3s ease;
+}
+
+.progression-reasoning {
+    font-size: 14px;
+    color: #708090;
+    line-height: 1.4;
+}
+
+.periodization-status {
+    background: #30525C;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.current-phase {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.phase-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #DCAA89;
+}
+
+.phase-week {
+    font-size: 14px;
+    color: #708090;
+}
+
+.phase-progress {
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #17282B;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4C848D, #94C17B);
+    transition: width 0.3s ease;
+}
+
+.next-phase {
+    font-size: 14px;
+    color: #708090;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .recovery-status {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .progression-details {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .current-phase {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+}
