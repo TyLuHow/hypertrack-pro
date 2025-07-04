@@ -75,39 +75,625 @@ const HyperTrack = {
         "Training 2x per week per muscle optimal - 3x only beneficial for very high volume distribution"
     ],
     
+    // Gym Type Classifications (based on equipment availability)
+    gymTypes: {
+        commercial: "Commercial Gym",
+        barbell: "Barbell/Strength Gym", 
+        crossfit: "CrossFit Box",
+        minimalist: "Minimalist/Home Gym",
+        planet_fitness: "Planet Fitness"
+    },
+    
+    // Equipment Categories for exercise selection
+    equipmentTypes: {
+        barbell: "Barbell",
+        dumbbell: "Dumbbell",
+        cable: "Cable Machine",
+        smith: "Smith Machine",
+        bodyweight: "Bodyweight",
+        machine: "Machine",
+        kettlebell: "Kettlebell",
+        resistance_band: "Resistance Band"
+    },
+    
+    // Workout Type Classifications
+    workoutTypes: {
+        push: "Push (Chest/Shoulders/Triceps)",
+        pull: "Pull (Back/Biceps)",
+        legs: "Legs (Quads/Hams/Glutes/Calves)",
+        upper: "Upper Body",
+        lower: "Lower Body",
+        full_body: "Full Body",
+        arms: "Arms Specialization",
+        back_width: "Back Width Focus",
+        back_thickness: "Back Thickness Focus"
+    },
+
     exerciseDatabase: [
-        // Vertical Pull (Back - Lat dominant)
-        { id: 1, name: "Lat Pulldowns", muscle_group: "Vertical Pull", category: "Compound", tier: 1, mvc_percentage: 90 },
+        // VERTICAL PULL (Back - Lat dominant, Width focus)
+        { 
+            id: 1, 
+            name: "Lat Pulldowns", 
+            muscle_group: "Vertical Pull", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 90,
+            equipment: "cable",
+            gym_types: ["commercial", "barbell", "crossfit"],
+            biomechanical_function: "Shoulder Adduction",
+            target_rep_range: "8-12",
+            rest_period: 180
+        },
+        { 
+            id: 18, 
+            name: "Wide-Grip Pull-ups", 
+            muscle_group: "Vertical Pull", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 95,
+            equipment: "bodyweight",
+            gym_types: ["commercial", "barbell", "crossfit", "minimalist"],
+            biomechanical_function: "Shoulder Adduction",
+            target_rep_range: "5-10",
+            rest_period: 180
+        },
+        { 
+            id: 19, 
+            name: "Assisted Pull-ups", 
+            muscle_group: "Vertical Pull", 
+            category: "Compound", 
+            tier: 2, 
+            mvc_percentage: 85,
+            equipment: "machine",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Shoulder Adduction",
+            target_rep_range: "8-12",
+            rest_period: 180
+        },
         
-        // Horizontal Pull (Back - Mid-trap/rhomboid dominant)  
-        { id: 2, name: "Smith Machine Rows", muscle_group: "Horizontal Pull", category: "Compound", tier: 1, mvc_percentage: 95 },
-        { id: 3, name: "Face Pulls", muscle_group: "Rear Delts", category: "Isolation", tier: 2, mvc_percentage: 75 },
+        // HORIZONTAL PULL (Back - Mid-trap/rhomboid dominant, Thickness focus)  
+        { 
+            id: 2, 
+            name: "Smith Machine Rows", 
+            muscle_group: "Horizontal Pull", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 95,
+            equipment: "smith",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Shoulder Extension",
+            target_rep_range: "8-12",
+            rest_period: 180
+        },
+        { 
+            id: 20, 
+            name: "Barbell Bent-Over Rows", 
+            muscle_group: "Horizontal Pull", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 100,
+            equipment: "barbell",
+            gym_types: ["barbell", "crossfit", "minimalist"],
+            biomechanical_function: "Shoulder Extension",
+            target_rep_range: "6-10",
+            rest_period: 180
+        },
+        { 
+            id: 21, 
+            name: "Seated Cable Rows", 
+            muscle_group: "Horizontal Pull", 
+            category: "Compound", 
+            tier: 2, 
+            mvc_percentage: 88,
+            equipment: "cable",
+            gym_types: ["commercial", "crossfit"],
+            biomechanical_function: "Shoulder Extension",
+            target_rep_range: "10-15",
+            rest_period: 150
+        },
+        { 
+            id: 22, 
+            name: "Dumbbell Single-Arm Rows", 
+            muscle_group: "Horizontal Pull", 
+            category: "Compound", 
+            tier: 2, 
+            mvc_percentage: 85,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Shoulder Extension",
+            target_rep_range: "10-15",
+            rest_period: 150
+        },
         
-        // Biceps (Elbow flexion)
-        { id: 4, name: "Dumbbell Bicep Curls", muscle_group: "Biceps", category: "Isolation", tier: 1, mvc_percentage: 90 },
-        { id: 5, name: "Cable Hammer Curls", muscle_group: "Biceps", category: "Isolation", tier: 2, mvc_percentage: 85 },
+        // HORIZONTAL PUSH (Chest dominant)
+        { 
+            id: 11, 
+            name: "Smith Machine Bench Press", 
+            muscle_group: "Horizontal Push", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 95,
+            equipment: "smith",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Shoulder Horizontal Adduction",
+            target_rep_range: "6-10",
+            rest_period: 180
+        },
+        { 
+            id: 23, 
+            name: "Barbell Bench Press", 
+            muscle_group: "Horizontal Push", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 100,
+            equipment: "barbell",
+            gym_types: ["barbell", "crossfit"],
+            biomechanical_function: "Shoulder Horizontal Adduction",
+            target_rep_range: "6-10",
+            rest_period: 180
+        },
+        { 
+            id: 10, 
+            name: "Incline Dumbbell Press", 
+            muscle_group: "Horizontal Push", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 90,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Shoulder Horizontal Adduction",
+            target_rep_range: "8-12",
+            rest_period: 180
+        },
+        { 
+            id: 9, 
+            name: "Bodyweight Dips", 
+            muscle_group: "Horizontal Push", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 95,
+            equipment: "bodyweight",
+            gym_types: ["commercial", "crossfit", "minimalist"],
+            biomechanical_function: "Shoulder Horizontal Adduction",
+            target_rep_range: "8-15",
+            rest_period: 180
+        },
+        { 
+            id: 8, 
+            name: "Dumbbell Flyes", 
+            muscle_group: "Horizontal Push", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 80,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Shoulder Horizontal Adduction",
+            target_rep_range: "12-15",
+            rest_period: 120
+        },
         
-        // Triceps (Elbow extension)
-        { id: 6, name: "Tricep Cable Rope Pulldowns", muscle_group: "Triceps", category: "Isolation", tier: 1, mvc_percentage: 80 },
-        { id: 7, name: "Close-Grip Smith Machine Press", muscle_group: "Triceps", category: "Compound", tier: 1, mvc_percentage: 85 },
+        // VERTICAL PUSH (Shoulders - Anterior/Medial Delts)
+        { 
+            id: 24, 
+            name: "Standing Overhead Press", 
+            muscle_group: "Vertical Push", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 90,
+            equipment: "barbell",
+            gym_types: ["barbell", "crossfit", "minimalist"],
+            biomechanical_function: "Shoulder Flexion",
+            target_rep_range: "6-10",
+            rest_period: 180
+        },
+        { 
+            id: 25, 
+            name: "Seated Dumbbell Press", 
+            muscle_group: "Vertical Push", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 85,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Shoulder Flexion",
+            target_rep_range: "8-12",
+            rest_period: 180
+        },
+        { 
+            id: 26, 
+            name: "Smith Machine Shoulder Press", 
+            muscle_group: "Vertical Push", 
+            category: "Compound", 
+            tier: 2, 
+            mvc_percentage: 80,
+            equipment: "smith",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Shoulder Flexion",
+            target_rep_range: "8-12",
+            rest_period: 180
+        },
         
-        // Horizontal Push (Chest dominant)
-        { id: 8, name: "Dumbbell Flyes", muscle_group: "Chest", category: "Isolation", tier: 2, mvc_percentage: 80 },
-        { id: 9, name: "Bodyweight Dips", muscle_group: "Chest", category: "Compound", tier: 1, mvc_percentage: 95 },
-        { id: 10, name: "Incline Dumbbell Press", muscle_group: "Chest", category: "Compound", tier: 1, mvc_percentage: 90 },
-        { id: 11, name: "Smith Machine Bench Press", muscle_group: "Chest", category: "Compound", tier: 1, mvc_percentage: 95 },
+        // SIDE DELTS (Shoulder abduction - Width)
+        { 
+            id: 12, 
+            name: "Dumbbell Lateral Raises", 
+            muscle_group: "Side Delts", 
+            category: "Isolation", 
+            tier: 1, 
+            mvc_percentage: 75,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Shoulder Abduction",
+            target_rep_range: "12-20",
+            rest_period: 90
+        },
+        { 
+            id: 14, 
+            name: "Cable Lateral Raises", 
+            muscle_group: "Side Delts", 
+            category: "Isolation", 
+            tier: 1, 
+            mvc_percentage: 70,
+            equipment: "cable",
+            gym_types: ["commercial", "crossfit"],
+            biomechanical_function: "Shoulder Abduction",
+            target_rep_range: "12-20",
+            rest_period: 90
+        },
+        { 
+            id: 27, 
+            name: "Machine Lateral Raises", 
+            muscle_group: "Side Delts", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 68,
+            equipment: "machine",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Shoulder Abduction",
+            target_rep_range: "12-20",
+            rest_period: 90
+        },
         
-        // Side Delts (Shoulder abduction)
-        { id: 12, name: "Dumbbell Lateral Raises", muscle_group: "Side Delts", category: "Isolation", tier: 1, mvc_percentage: 75 },
-        { id: 14, name: "Cable Lateral Raises", muscle_group: "Side Delts", category: "Isolation", tier: 2, mvc_percentage: 70 },
+        // REAR DELTS (Shoulder horizontal abduction)
+        { 
+            id: 3, 
+            name: "Face Pulls", 
+            muscle_group: "Rear Delts", 
+            category: "Isolation", 
+            tier: 1, 
+            mvc_percentage: 75,
+            equipment: "cable",
+            gym_types: ["commercial", "crossfit"],
+            biomechanical_function: "Shoulder Horizontal Abduction",
+            target_rep_range: "15-25",
+            rest_period: 90
+        },
+        { 
+            id: 15, 
+            name: "Dumbbell Reverse Flyes", 
+            muscle_group: "Rear Delts", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 70,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Shoulder Horizontal Abduction",
+            target_rep_range: "15-25",
+            rest_period: 90
+        },
+        { 
+            id: 16, 
+            name: "Kettlebell Prone Y Raises", 
+            muscle_group: "Rear Delts", 
+            category: "Isolation", 
+            tier: 3, 
+            mvc_percentage: 65,
+            equipment: "kettlebell",
+            gym_types: ["crossfit", "minimalist"],
+            biomechanical_function: "Shoulder Horizontal Abduction",
+            target_rep_range: "15-25",
+            rest_period: 90
+        },
+        { 
+            id: 17, 
+            name: "Cable External Rotations", 
+            muscle_group: "Rear Delts", 
+            category: "Isolation", 
+            tier: 3, 
+            mvc_percentage: 60,
+            equipment: "cable",
+            gym_types: ["commercial", "crossfit"],
+            biomechanical_function: "External Rotation",
+            target_rep_range: "15-25",
+            rest_period: 90
+        },
         
-        // Traps (Shoulder elevation)
-        { id: 13, name: "Smith Machine Barbell Shrugs", muscle_group: "Traps", category: "Isolation", tier: 2, mvc_percentage: 85 },
+        // TRAPS (Shoulder elevation)
+        { 
+            id: 13, 
+            name: "Smith Machine Barbell Shrugs", 
+            muscle_group: "Traps", 
+            category: "Isolation", 
+            tier: 1, 
+            mvc_percentage: 85,
+            equipment: "smith",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Shoulder Elevation",
+            target_rep_range: "10-15",
+            rest_period: 120
+        },
+        { 
+            id: 28, 
+            name: "Barbell Shrugs", 
+            muscle_group: "Traps", 
+            category: "Isolation", 
+            tier: 1, 
+            mvc_percentage: 90,
+            equipment: "barbell",
+            gym_types: ["barbell", "crossfit", "minimalist"],
+            biomechanical_function: "Shoulder Elevation",
+            target_rep_range: "10-15",
+            rest_period: 120
+        },
+        { 
+            id: 29, 
+            name: "Dumbbell Shrugs", 
+            muscle_group: "Traps", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 80,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Shoulder Elevation",
+            target_rep_range: "12-20",
+            rest_period: 120
+        },
         
-        // Rear Delts (Shoulder horizontal abduction)
-        { id: 15, name: "Dumbbell Reverse Flyes", muscle_group: "Rear Delts", category: "Isolation", tier: 2, mvc_percentage: 70 },
-        { id: 16, name: "Kettlebell Prone Y Raises", muscle_group: "Rear Delts", category: "Isolation", tier: 3, mvc_percentage: 65 },
-        { id: 17, name: "Cable External Rotations", muscle_group: "Rear Delts", category: "Isolation", tier: 3, mvc_percentage: 60 }
+        // BICEPS (Elbow flexion)
+        { 
+            id: 4, 
+            name: "Dumbbell Bicep Curls", 
+            muscle_group: "Biceps", 
+            category: "Isolation", 
+            tier: 1, 
+            mvc_percentage: 90,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Elbow Flexion",
+            target_rep_range: "10-15",
+            rest_period: 90
+        },
+        { 
+            id: 30, 
+            name: "Barbell Bicep Curls", 
+            muscle_group: "Biceps", 
+            category: "Isolation", 
+            tier: 1, 
+            mvc_percentage: 95,
+            equipment: "barbell",
+            gym_types: ["barbell", "crossfit", "minimalist"],
+            biomechanical_function: "Elbow Flexion",
+            target_rep_range: "8-12",
+            rest_period: 90
+        },
+        { 
+            id: 5, 
+            name: "Cable Hammer Curls", 
+            muscle_group: "Biceps", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 85,
+            equipment: "cable",
+            gym_types: ["commercial", "crossfit"],
+            biomechanical_function: "Elbow Flexion",
+            target_rep_range: "10-15",
+            rest_period: 90
+        },
+        { 
+            id: 31, 
+            name: "Dumbbell Hammer Curls", 
+            muscle_group: "Biceps", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 82,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Elbow Flexion",
+            target_rep_range: "10-15",
+            rest_period: 90
+        },
+        
+        // TRICEPS (Elbow extension)
+        { 
+            id: 6, 
+            name: "Tricep Cable Rope Pulldowns", 
+            muscle_group: "Triceps", 
+            category: "Isolation", 
+            tier: 1, 
+            mvc_percentage: 80,
+            equipment: "cable",
+            gym_types: ["commercial", "crossfit"],
+            biomechanical_function: "Elbow Extension",
+            target_rep_range: "12-20",
+            rest_period: 90
+        },
+        { 
+            id: 7, 
+            name: "Close-Grip Smith Machine Press", 
+            muscle_group: "Triceps", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 85,
+            equipment: "smith",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Elbow Extension",
+            target_rep_range: "8-12",
+            rest_period: 120
+        },
+        { 
+            id: 32, 
+            name: "Close-Grip Bench Press", 
+            muscle_group: "Triceps", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 90,
+            equipment: "barbell",
+            gym_types: ["barbell", "crossfit"],
+            biomechanical_function: "Elbow Extension",
+            target_rep_range: "8-12",
+            rest_period: 120
+        },
+        { 
+            id: 33, 
+            name: "Overhead Tricep Extension", 
+            muscle_group: "Triceps", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 75,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Elbow Extension",
+            target_rep_range: "12-20",
+            rest_period: 90
+        },
+        
+        // LEGS - QUAD DOMINANT
+        { 
+            id: 34, 
+            name: "Smith Machine Squats", 
+            muscle_group: "Quads", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 90,
+            equipment: "smith",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Knee Extension",
+            target_rep_range: "8-15",
+            rest_period: 180
+        },
+        { 
+            id: 35, 
+            name: "Barbell Back Squats", 
+            muscle_group: "Quads", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 95,
+            equipment: "barbell",
+            gym_types: ["barbell", "crossfit"],
+            biomechanical_function: "Knee Extension",
+            target_rep_range: "6-12",
+            rest_period: 180
+        },
+        { 
+            id: 36, 
+            name: "Leg Press", 
+            muscle_group: "Quads", 
+            category: "Compound", 
+            tier: 2, 
+            mvc_percentage: 85,
+            equipment: "machine",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Knee Extension",
+            target_rep_range: "12-20",
+            rest_period: 150
+        },
+        
+        // LEGS - HAMSTRING DOMINANT
+        { 
+            id: 37, 
+            name: "Romanian Deadlifts", 
+            muscle_group: "Hamstrings", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 95,
+            equipment: "barbell",
+            gym_types: ["barbell", "crossfit", "minimalist"],
+            biomechanical_function: "Hip Hinge",
+            target_rep_range: "8-12",
+            rest_period: 180
+        },
+        { 
+            id: 38, 
+            name: "Dumbbell Romanian Deadlifts", 
+            muscle_group: "Hamstrings", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 88,
+            equipment: "dumbbell",
+            gym_types: ["commercial", "minimalist", "planet_fitness"],
+            biomechanical_function: "Hip Hinge",
+            target_rep_range: "10-15",
+            rest_period: 180
+        },
+        { 
+            id: 39, 
+            name: "Lying Leg Curls", 
+            muscle_group: "Hamstrings", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 80,
+            equipment: "machine",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Knee Flexion",
+            target_rep_range: "12-20",
+            rest_period: 120
+        },
+        
+        // GLUTES
+        { 
+            id: 40, 
+            name: "Hip Thrusts", 
+            muscle_group: "Glutes", 
+            category: "Compound", 
+            tier: 1, 
+            mvc_percentage: 95,
+            equipment: "barbell",
+            gym_types: ["commercial", "barbell", "crossfit"],
+            biomechanical_function: "Hip Extension",
+            target_rep_range: "8-15",
+            rest_period: 150
+        },
+        { 
+            id: 41, 
+            name: "Dumbbell Hip Thrusts", 
+            muscle_group: "Glutes", 
+            category: "Compound", 
+            tier: 2, 
+            mvc_percentage: 85,
+            equipment: "dumbbell",
+            gym_types: ["minimalist", "planet_fitness"],
+            biomechanical_function: "Hip Extension",
+            target_rep_range: "12-20",
+            rest_period: 150
+        },
+        
+        // CALVES
+        { 
+            id: 42, 
+            name: "Standing Calf Raises", 
+            muscle_group: "Calves", 
+            category: "Isolation", 
+            tier: 1, 
+            mvc_percentage: 85,
+            equipment: "machine",
+            gym_types: ["commercial", "planet_fitness"],
+            biomechanical_function: "Plantar Flexion",
+            target_rep_range: "15-25",
+            rest_period: 90
+        },
+        { 
+            id: 43, 
+            name: "Dumbbell Calf Raises", 
+            muscle_group: "Calves", 
+            category: "Isolation", 
+            tier: 2, 
+            mvc_percentage: 75,
+            equipment: "dumbbell",
+            gym_types: ["minimalist", "commercial"],
+            biomechanical_function: "Plantar Flexion",
+            target_rep_range: "15-25",
+            rest_period: 90
+        }
     ],
     
     loadHistoricalData() {
@@ -1426,12 +2012,8 @@ function getRecommendationsForMuscles(targetMuscles) {
 }
 
 function getBalancedRecommendations() {
-    // Return a balanced selection of exercises
-    return [
-        { exercise: HyperTrack.exerciseDatabase.find(e => e.name === "Smith Machine Rows"), priority: "Maintain back development" },
-        { exercise: HyperTrack.exerciseDatabase.find(e => e.name === "Incline Dumbbell Press"), priority: "Upper chest focus" },
-        { exercise: HyperTrack.exerciseDatabase.find(e => e.name === "Dumbbell Bicep Curls"), priority: "Arm specialization" }
-    ];
+    // Use enhanced tier-based system with workout type classification
+    return getEnhancedBalancedRecommendations('commercial');
 }
 
 function getWeightRecommendation(exerciseName) {
@@ -1525,6 +2107,467 @@ function calculateProgressiveSuggestion(exercise, previousSets) {
         reps: Math.min(lastSet.reps + 1, 12),
         note: "Reps increased - double progression method"
     };
+}
+
+// ENHANCED TIER-BASED RECOMMENDATION SYSTEM
+
+// Get exercises by tier ranking for specific muscle group
+function getExercisesByTier(muscleGroup, tier = 1, gymType = 'commercial') {
+    return HyperTrack.exerciseDatabase.filter(exercise => 
+        exercise.muscle_group === muscleGroup && 
+        exercise.tier === tier &&
+        exercise.gym_types.includes(gymType)
+    ).sort((a, b) => b.mvc_percentage - a.mvc_percentage); // Sort by effectiveness
+}
+
+// Get tier 1 exercises for all muscle groups (most effective)
+function getTier1ExercisesByMuscle(gymType = 'commercial') {
+    const muscleGroups = [...new Set(HyperTrack.exerciseDatabase.map(e => e.muscle_group))];
+    const tier1Exercises = {};
+    
+    muscleGroups.forEach(muscle => {
+        const exercises = getExercisesByTier(muscle, 1, gymType);
+        if (exercises.length > 0) {
+            tier1Exercises[muscle] = exercises[0]; // Most effective tier 1 exercise
+        }
+    });
+    
+    return tier1Exercises;
+}
+
+// Enhanced gym-specific exercise recommendations
+function getGymSpecificRecommendations(gymType = 'commercial', targetMuscles = []) {
+    const recommendations = [];
+    
+    if (targetMuscles.length === 0) {
+        // If no specific targets, recommend tier 1 compound movements
+        const compoundPriority = ['Vertical Pull', 'Horizontal Pull', 'Horizontal Push', 'Vertical Push'];
+        
+        compoundPriority.forEach(muscle => {
+            const tier1Exercises = getExercisesByTier(muscle, 1, gymType);
+            if (tier1Exercises.length > 0) {
+                const exercise = tier1Exercises[0];
+                recommendations.push({
+                    exercise: exercise,
+                    priority: `High - Tier ${exercise.tier} compound movement`,
+                    reasoning: `${exercise.mvc_percentage}% MVC activation, ${exercise.biomechanical_function}`
+                });
+            }
+        });
+    } else {
+        // Target specific muscle groups with tier-based priorities
+        targetMuscles.forEach(muscle => {
+            // Try tier 1 first
+            let exercises = getExercisesByTier(muscle, 1, gymType);
+            
+            // Fallback to tier 2 if no tier 1 available for this gym
+            if (exercises.length === 0) {
+                exercises = getExercisesByTier(muscle, 2, gymType);
+            }
+            
+            if (exercises.length > 0) {
+                const exercise = exercises[0];
+                recommendations.push({
+                    exercise: exercise,
+                    priority: `${exercise.tier === 1 ? 'High' : 'Medium'} - Tier ${exercise.tier} ${exercise.category.toLowerCase()}`,
+                    reasoning: `${exercise.mvc_percentage}% MVC, ${exercise.equipment} available at ${gymType} gyms`
+                });
+            }
+        });
+    }
+    
+    return recommendations.slice(0, 3); // Limit to top 3 recommendations
+}
+
+// Equipment-based exercise filtering
+function getExercisesByEquipment(equipment, muscleGroup = null) {
+    let exercises = HyperTrack.exerciseDatabase.filter(e => e.equipment === equipment);
+    
+    if (muscleGroup) {
+        exercises = exercises.filter(e => e.muscle_group === muscleGroup);
+    }
+    
+    // Sort by tier first, then by MVC percentage
+    return exercises.sort((a, b) => {
+        if (a.tier !== b.tier) return a.tier - b.tier; // Tier 1 first
+        return b.mvc_percentage - a.mvc_percentage; // Then by effectiveness
+    });
+}
+
+// Plateau-busting exercise recommendations (tier rotation)
+function getPlateauBustingRecommendations(stagnantMuscles) {
+    const recommendations = [];
+    
+    stagnantMuscles.forEach(muscle => {
+        const currentExercises = getCurrentWorkoutExercises(muscle);
+        const availableExercises = HyperTrack.exerciseDatabase.filter(e => 
+            e.muscle_group === muscle && 
+            !currentExercises.includes(e.name)
+        );
+        
+        // Prioritize tier 1 alternatives, then tier 2
+        const tier1Alternatives = availableExercises.filter(e => e.tier === 1);
+        const tier2Alternatives = availableExercises.filter(e => e.tier === 2);
+        
+        const bestAlternative = tier1Alternatives[0] || tier2Alternatives[0];
+        
+        if (bestAlternative) {
+            recommendations.push({
+                exercise: bestAlternative,
+                priority: 'High - Plateau buster',
+                reasoning: `Switch to ${bestAlternative.biomechanical_function} emphasis, ${bestAlternative.mvc_percentage}% MVC`
+            });
+        }
+    });
+    
+    return recommendations;
+}
+
+// Volume-based recommendations (prevent overreaching)
+function getVolumeAdjustedRecommendations(currentVolume, targetMuscles) {
+    const { settings } = HyperTrack.state;
+    const recommendations = [];
+    
+    targetMuscles.forEach(muscle => {
+        const muscleVolume = currentVolume[muscle] || 0;
+        
+        if (muscleVolume < settings.minEffectiveVolume) {
+            // Under MEV - recommend tier 1 compound
+            const tier1Exercises = getExercisesByTier(muscle, 1);
+            if (tier1Exercises.length > 0) {
+                recommendations.push({
+                    exercise: tier1Exercises[0],
+                    priority: 'High - Below MEV',
+                    reasoning: `Only ${muscleVolume} sets this week, need ${settings.minEffectiveVolume} minimum`
+                });
+            }
+        } else if (muscleVolume >= settings.optimalVolumeMax) {
+            // Near MAV - recommend deload or skip
+            recommendations.push({
+                exercise: null,
+                priority: 'Deload recommended',
+                reasoning: `${muscleVolume} sets this week, approaching maximum adaptive volume`
+            });
+        } else if (muscleVolume < settings.optimalVolumeMin) {
+            // In MEV-optimal range - recommend tier 2 isolation for volume
+            const tier2Exercises = getExercisesByTier(muscle, 2);
+            if (tier2Exercises.length > 0) {
+                recommendations.push({
+                    exercise: tier2Exercises[0],
+                    priority: 'Medium - Volume optimization',
+                    reasoning: `${muscleVolume} sets, optimal range is ${settings.optimalVolumeMin}-${settings.optimalVolumeMax}`
+                });
+            }
+        }
+    });
+    
+    return recommendations;
+}
+
+// Helper function to get current workout exercises for a muscle group
+function getCurrentWorkoutExercises(muscleGroup) {
+    if (!HyperTrack.state.currentWorkout) return [];
+    
+    return HyperTrack.state.currentWorkout.exercises
+        .filter(ex => ex.muscle_group === muscleGroup)
+        .map(ex => ex.name);
+}
+
+// WORKOUT TYPE CLASSIFICATION SYSTEM
+
+// Classify current workout based on muscle groups trained
+function classifyCurrentWorkout() {
+    if (!HyperTrack.state.currentWorkout || !HyperTrack.state.currentWorkout.exercises.length) {
+        return { type: 'unknown', confidence: 0, description: 'No exercises selected' };
+    }
+    
+    const exercises = HyperTrack.state.currentWorkout.exercises;
+    const muscleGroups = [...new Set(exercises.map(ex => ex.muscle_group))];
+    
+    // Define muscle group categories for classification
+    const pushMuscles = ['Horizontal Push', 'Vertical Push', 'Triceps', 'Side Delts'];
+    const pullMuscles = ['Vertical Pull', 'Horizontal Pull', 'Biceps', 'Rear Delts', 'Traps'];
+    const legMuscles = ['Quads', 'Hamstrings', 'Glutes', 'Calves'];
+    const upperMuscles = [...pushMuscles, ...pullMuscles];
+    const lowerMuscles = [...legMuscles];
+    
+    const pushCount = muscleGroups.filter(m => pushMuscles.includes(m)).length;
+    const pullCount = muscleGroups.filter(m => pullMuscles.includes(m)).length;
+    const legCount = muscleGroups.filter(m => legMuscles.includes(m)).length;
+    const upperCount = muscleGroups.filter(m => upperMuscles.includes(m)).length;
+    const lowerCount = muscleGroups.filter(m => lowerMuscles.includes(m)).length;
+    
+    const totalMuscles = muscleGroups.length;
+    
+    // Classification logic with confidence scoring
+    if (pushCount >= 2 && pullCount === 0 && legCount === 0) {
+        return {
+            type: 'push',
+            confidence: 0.9,
+            description: `Push Day (${pushCount} push muscle groups)`,
+            muscleGroups: muscleGroups.filter(m => pushMuscles.includes(m))
+        };
+    }
+    
+    if (pullCount >= 2 && pushCount === 0 && legCount === 0) {
+        return {
+            type: 'pull',
+            confidence: 0.9,
+            description: `Pull Day (${pullCount} pull muscle groups)`,
+            muscleGroups: muscleGroups.filter(m => pullMuscles.includes(m))
+        };
+    }
+    
+    if (legCount >= 2 && upperCount === 0) {
+        return {
+            type: 'legs',
+            confidence: 0.9,
+            description: `Leg Day (${legCount} leg muscle groups)`,
+            muscleGroups: muscleGroups.filter(m => legMuscles.includes(m))
+        };
+    }
+    
+    if (upperCount >= 3 && lowerCount === 0) {
+        return {
+            type: 'upper',
+            confidence: 0.8,
+            description: `Upper Body (${upperCount} upper muscle groups)`,
+            muscleGroups: muscleGroups.filter(m => upperMuscles.includes(m))
+        };
+    }
+    
+    if (lowerCount >= 2 && upperCount === 0) {
+        return {
+            type: 'lower',
+            confidence: 0.8,
+            description: `Lower Body (${lowerCount} lower muscle groups)`,
+            muscleGroups: muscleGroups.filter(m => lowerMuscles.includes(m))
+        };
+    }
+    
+    if (totalMuscles >= 4 && upperCount >= 2 && lowerCount >= 1) {
+        return {
+            type: 'full_body',
+            confidence: 0.7,
+            description: `Full Body (${totalMuscles} muscle groups)`,
+            muscleGroups: muscleGroups
+        };
+    }
+    
+    // Specialization workouts
+    if (muscleGroups.includes('Biceps') && muscleGroups.includes('Triceps') && totalMuscles <= 3) {
+        return {
+            type: 'arms',
+            confidence: 0.8,
+            description: 'Arms Specialization',
+            muscleGroups: muscleGroups
+        };
+    }
+    
+    if ((muscleGroups.includes('Vertical Pull') || muscleGroups.includes('Horizontal Pull')) && totalMuscles <= 2) {
+        const backType = muscleGroups.includes('Vertical Pull') ? 'width' : 'thickness';
+        return {
+            type: `back_${backType}`,
+            confidence: 0.8,
+            description: `Back ${backType.charAt(0).toUpperCase() + backType.slice(1)} Focus`,
+            muscleGroups: muscleGroups
+        };
+    }
+    
+    // Mixed/unclear workout
+    return {
+        type: 'mixed',
+        confidence: 0.4,
+        description: `Mixed Workout (${totalMuscles} muscle groups)`,
+        muscleGroups: muscleGroups
+    };
+}
+
+// Suggest optimal workout splits based on training frequency
+function suggestWorkoutSplit(weeklyFrequency = 3) {
+    const splits = {
+        2: {
+            name: 'Upper/Lower Split',
+            description: '2-day optimal frequency per muscle group',
+            schedule: [
+                { day: 1, type: 'upper', focus: 'Upper Body - All upper muscle groups' },
+                { day: 2, type: 'lower', focus: 'Lower Body - All lower muscle groups' }
+            ],
+            benefits: ['Optimal frequency (2x/week)', 'Simple scheduling', 'Good for intermediates']
+        },
+        3: {
+            name: 'Push/Pull/Legs',
+            description: 'Classic 3-day split with optimal frequency',
+            schedule: [
+                { day: 1, type: 'push', focus: 'Chest, Shoulders, Triceps' },
+                { day: 2, type: 'pull', focus: 'Back, Biceps, Rear Delts' },
+                { day: 3, type: 'legs', focus: 'Quads, Hamstrings, Glutes, Calves' }
+            ],
+            benefits: ['Balanced muscle development', '2x frequency when repeated', 'Evidence-based']
+        },
+        4: {
+            name: 'Upper/Lower (2x)',
+            description: 'Upper/Lower repeated for higher frequency',
+            schedule: [
+                { day: 1, type: 'upper', focus: 'Upper Body - Strength focus' },
+                { day: 2, type: 'lower', focus: 'Lower Body - Strength focus' },
+                { day: 3, type: 'upper', focus: 'Upper Body - Volume focus' },
+                { day: 4, type: 'lower', focus: 'Lower Body - Volume focus' }
+            ],
+            benefits: ['High frequency (2x/week)', 'Strength + Volume phases', 'Advanced trainees']
+        },
+        5: {
+            name: 'Push/Pull/Legs + Upper/Lower',
+            description: 'Hybrid approach for high volume',
+            schedule: [
+                { day: 1, type: 'push', focus: 'Push muscles - Heavy' },
+                { day: 2, type: 'pull', focus: 'Pull muscles - Heavy' },
+                { day: 3, type: 'legs', focus: 'Legs - Heavy' },
+                { day: 4, type: 'upper', focus: 'Upper - Volume/Accessories' },
+                { day: 5, type: 'lower', focus: 'Lower - Volume/Accessories' }
+            ],
+            benefits: ['Very high frequency', 'Volume distribution', 'Advanced only']
+        },
+        6: {
+            name: 'Push/Pull/Legs (2x)',
+            description: 'PPL repeated for maximum frequency',
+            schedule: [
+                { day: 1, type: 'push', focus: 'Push - Strength' },
+                { day: 2, type: 'pull', focus: 'Pull - Strength' },
+                { day: 3, type: 'legs', focus: 'Legs - Strength' },
+                { day: 4, type: 'push', focus: 'Push - Volume' },
+                { day: 5, type: 'pull', focus: 'Pull - Volume' },
+                { day: 6, type: 'legs', focus: 'Legs - Volume' }
+            ],
+            benefits: ['Maximum frequency (2x/week)', 'High volume capacity', 'Advanced trainees only']
+        }
+    };
+    
+    return splits[weeklyFrequency] || splits[3]; // Default to PPL
+}
+
+// Check if current workout fits recommended split
+function validateWorkoutSplit(currentClassification, targetSplit) {
+    if (!currentClassification || !targetSplit) return { valid: false, reason: 'Missing data' };
+    
+    if (currentClassification.type === targetSplit.type) {
+        return {
+            valid: true,
+            confidence: currentClassification.confidence,
+            message: `✅ Perfect! This is a ${targetSplit.focus} workout as planned.`
+        };
+    }
+    
+    if (currentClassification.confidence < 0.6) {
+        return {
+            valid: false,
+            confidence: currentClassification.confidence,
+            message: `⚠️ Unclear workout type. Consider focusing on specific muscle groups.`,
+            suggestion: `Target: ${targetSplit.focus}`
+        };
+    }
+    
+    return {
+        valid: false,
+        confidence: currentClassification.confidence,
+        message: `❌ This appears to be a ${currentClassification.description} but you planned ${targetSplit.focus}.`,
+        suggestion: `Consider adjusting exercises to match your planned ${targetSplit.type} workout.`
+    };
+}
+
+// Generate workout recommendations based on recent training history
+function getWorkoutTypeRecommendations() {
+    const recentWorkouts = HyperTrack.state.workouts.slice(-7); // Last 7 workouts
+    if (recentWorkouts.length === 0) {
+        return suggestWorkoutSplit(3); // Default to PPL for beginners
+    }
+    
+    // Analyze recent workout types
+    const workoutTypes = recentWorkouts.map(workout => {
+        const tempWorkout = { exercises: workout.exercises || [] };
+        HyperTrack.state.currentWorkout = tempWorkout;
+        const classification = classifyCurrentWorkout();
+        HyperTrack.state.currentWorkout = null; // Reset
+        return classification.type;
+    });
+    
+    const typeCount = workoutTypes.reduce((acc, type) => {
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+    }, {});
+    
+    // Determine what's missing from optimal split
+    const weeklyFreq = Math.min(recentWorkouts.length, 6);
+    const optimalSplit = suggestWorkoutSplit(weeklyFreq);
+    
+    const missingTypes = optimalSplit.schedule
+        .map(day => day.type)
+        .filter(type => !typeCount[type] || typeCount[type] < 2); // Less than 2x frequency
+    
+    if (missingTypes.length > 0) {
+        const nextType = missingTypes[0];
+        const splitDay = optimalSplit.schedule.find(day => day.type === nextType);
+        
+        return {
+            recommendation: nextType,
+            reason: `You haven't trained ${splitDay.focus} recently`,
+            split: optimalSplit,
+            missing: missingTypes
+        };
+    }
+    
+    return {
+        recommendation: 'balanced',
+        reason: 'Your training is well balanced',
+        split: optimalSplit,
+        missing: []
+    };
+}
+
+// Enhanced balanced recommendations using tier system
+function getEnhancedBalancedRecommendations(gymType = 'commercial') {
+    const tier1ByMuscle = getTier1ExercisesByMuscle(gymType);
+    
+    // Get workout type recommendation to inform exercise selection
+    const workoutTypeRec = getWorkoutTypeRecommendations();
+    const currentClassification = classifyCurrentWorkout();
+    
+    let movementPriority;
+    
+    // Adjust recommendations based on workout type
+    if (currentClassification.type === 'push' || workoutTypeRec.recommendation === 'push') {
+        movementPriority = ['Horizontal Push', 'Vertical Push', 'Triceps', 'Side Delts'];
+    } else if (currentClassification.type === 'pull' || workoutTypeRec.recommendation === 'pull') {
+        movementPriority = ['Vertical Pull', 'Horizontal Pull', 'Biceps', 'Rear Delts', 'Traps'];
+    } else if (currentClassification.type === 'legs' || workoutTypeRec.recommendation === 'legs') {
+        movementPriority = ['Quads', 'Hamstrings', 'Glutes', 'Calves'];
+    } else {
+        // Default balanced approach
+        movementPriority = [
+            'Vertical Pull',     // Back width
+            'Horizontal Push',   // Chest 
+            'Vertical Push',     // Shoulders
+            'Horizontal Pull',   // Back thickness
+            'Quads',            // Legs
+            'Hamstrings'        // Posterior chain
+        ];
+    }
+    
+    const recommendations = [];
+    
+    movementPriority.forEach(muscle => {
+        if (tier1ByMuscle[muscle]) {
+            const exercise = tier1ByMuscle[muscle];
+            recommendations.push({
+                exercise: exercise,
+                priority: `High - Tier ${exercise.tier} ${exercise.category}`,
+                reasoning: `${exercise.biomechanical_function}, ${exercise.mvc_percentage}% activation`,
+                workoutType: workoutTypeRec.recommendation
+            });
+        }
+    });
+    
+    return recommendations.slice(0, 3);
 }
 
 function detectPlateau(exerciseHistory) {
