@@ -295,6 +295,34 @@ class IntelligentTraining {
         return adjustmentFactors[readinessLevel] || adjustmentFactors.good;
     }
     
+    applyLoadAdjustments(plannedWorkout, loadAdjustments) {
+        // Apply load adjustments to planned workout
+        return plannedWorkout.map(exercise => ({
+            ...exercise,
+            adjustedSets: Math.round(exercise.sets * loadAdjustments.volume),
+            adjustedIntensity: exercise.intensity * loadAdjustments.intensity,
+            adjustedDensity: exercise.restPeriods * (1 / loadAdjustments.density)
+        }));
+    }
+    
+    generateAdjustmentReasons(recoveryScore, loadAdjustments) {
+        const reasons = [];
+        
+        if (loadAdjustments.volume < 1.0) {
+            reasons.push(`Volume reduced by ${Math.round((1 - loadAdjustments.volume) * 100)}% due to recovery status`);
+        }
+        
+        if (loadAdjustments.intensity < 1.0) {
+            reasons.push(`Intensity reduced by ${Math.round((1 - loadAdjustments.intensity) * 100)}% for better recovery`);
+        }
+        
+        if (recoveryScore < 60) {
+            reasons.push('Low recovery score indicates need for deload training');
+        }
+        
+        return reasons;
+    }
+    
     generateRecoveryRecommendations(recoveryScore) {
         const recommendations = [];
         

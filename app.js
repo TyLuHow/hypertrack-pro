@@ -782,16 +782,18 @@ const HyperTrack = {
             }
         }
         
-        // Fallback to localStorage or demo data
+        // Priority 1: Demo mode overrides everything
         if (this.state.demoMode) {
-            // Use demo data
             if (window.DemoDataGenerator) {
                 const demoGenerator = new window.DemoDataGenerator();
                 demoGenerator.initializeDemoMode();
                 const demoWorkouts = demoGenerator.getDemoWorkouts();
                 if (demoWorkouts && demoWorkouts.length > 0) {
                     this.state.workouts = demoWorkouts;
-                    console.log(`🎭 Loaded ${demoWorkouts.length} demo workouts`);
+                    console.log(`🎭 Demo mode: Loaded ${demoWorkouts.length} generated demo workouts`);
+                    
+                    // Clear any existing data to ensure clean demo experience
+                    this.state.user = demoGenerator.getDemoUser();
                     
                     // Update all displays with demo data
                     setTimeout(() => {
@@ -800,15 +802,24 @@ const HyperTrack = {
                     return;
                 }
             }
+            // If demo data generation fails, still don't load real data
+            console.log('🎭 Demo mode: Failed to generate demo data, showing empty state');
+            this.state.workouts = [];
+            return;
         }
         
+        // Priority 2: Real user data (localStorage)
         const localWorkouts = localStorage.getItem('hypertrack_workouts');
         if (localWorkouts) {
             this.state.workouts = JSON.parse(localWorkouts);
             console.log(`✅ Loaded ${this.state.workouts.length} workouts from localStorage`);
-        } else if (typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
+            return;
+        }
+        
+        // Priority 3: Fallback historical data (only for non-demo mode)
+        if (typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
             this.state.workouts = [...tylerCompleteWorkouts];
-            console.log(`✅ Loaded ${tylerCompleteWorkouts.length} demo workouts`);
+            console.log(`✅ Loaded ${tylerCompleteWorkouts.length} historical workouts`);
         }
     },
     
