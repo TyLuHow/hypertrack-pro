@@ -6,6 +6,10 @@ const HyperTrack = {
     state: {
         currentWorkout: null,
         workouts: [],
+        isAuthenticated: false,
+        user: null,
+        isOnline: navigator.onLine,
+        syncPending: false,
         settings: {
             showResearchFacts: true,
             darkMode: true,
@@ -759,11 +763,65 @@ const HyperTrack = {
         }
     ],
     
-    loadHistoricalData() {
-        if (typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
-            this.state.workouts = [...tylerCompleteWorkouts];
-            console.log(`✅ Loaded ${tylerCompleteWorkouts.length} historical workouts`);
+    async loadHistoricalData() {
+        // Try to load from Supabase first if authenticated
+        if (window.supabaseService && window.supabaseService.isAuthenticated()) {
+            console.log('🔄 Loading workouts from Supabase...');
+            const result = await window.supabaseService.getUserWorkouts();
+            if (result.success) {
+                this.state.workouts = result.data;
+                console.log(`✅ Loaded ${result.data.length} workouts from Supabase`);
+                return;
+            }
         }
+        
+        // Fallback to localStorage or demo data
+        const localWorkouts = localStorage.getItem('hypertrack_workouts');
+        if (localWorkouts) {
+            this.state.workouts = JSON.parse(localWorkouts);
+            console.log(`✅ Loaded ${this.state.workouts.length} workouts from localStorage`);
+        } else if (typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
+            this.state.workouts = [...tylerCompleteWorkouts];
+            console.log(`✅ Loaded ${tylerCompleteWorkouts.length} demo workouts`);
+        }
+    },
+    
+    async saveWorkout(workoutData) {
+        // Save to Supabase if authenticated
+        if (window.supabaseService && window.supabaseService.isAuthenticated()) {
+            const result = await window.supabaseService.saveWorkout(workoutData);
+            if (result.success) {
+                console.log('✅ Workout saved to Supabase');
+                // Refresh local state
+                await this.loadHistoricalData();
+                return result;
+            }
+        }
+        
+        // Fallback to localStorage
+        this.state.workouts.push(workoutData);
+        localStorage.setItem('hypertrack_workouts', JSON.stringify(this.state.workouts));
+        console.log('✅ Workout saved to localStorage');
+        return { success: true };
+    },
+    
+    async deleteWorkout(workoutId) {
+        // Delete from Supabase if authenticated
+        if (window.supabaseService && window.supabaseService.isAuthenticated()) {
+            const result = await window.supabaseService.deleteWorkout(workoutId);
+            if (result.success) {
+                console.log('✅ Workout deleted from Supabase');
+                // Refresh local state
+                await this.loadHistoricalData();
+                return result;
+            }
+        }
+        
+        // Fallback to localStorage
+        this.state.workouts = this.state.workouts.filter(w => w.id !== workoutId);
+        localStorage.setItem('hypertrack_workouts', JSON.stringify(this.state.workouts));
+        console.log('✅ Workout deleted from localStorage');
+        return { success: true };
     }
 };
 
@@ -785,7 +843,7 @@ function startWorkout() {
     showNotification('Workout started! Select an exercise to begin.', 'success');
 }
 
-function finishWorkout() {
+async function finishWorkout() {
     if (!HyperTrack.state.currentWorkout) return;
     
     const workout = HyperTrack.state.currentWorkout;
@@ -796,14 +854,19 @@ function finishWorkout() {
     stopWorkoutTimer();
     stopRestTimer();
     
-    HyperTrack.state.workouts.push(workout);
-    HyperTrack.state.currentWorkout = null;
+    // Save workout using new method
+    const result = await HyperTrack.saveWorkout(workout);
     
-    saveAppData();
-    updateUI();
-    
-    const duration = Math.round(workout.duration / 60000);
-    showNotification(`🎉 Workout completed! ${workout.exercises.length} exercises • ${duration} minutes`, 'success');
+    if (result.success) {
+        HyperTrack.state.currentWorkout = null;
+        saveAppData();
+        updateUI();
+        
+        const duration = Math.round(workout.duration / 60000);
+        showNotification(`🎉 Workout completed! ${workout.exercises.length} exercises • ${duration} minutes`, 'success');
+    } else {
+        showNotification(`❌ Error saving workout: ${result.error}`, 'error');
+    }
 }
 
 function selectExercise(exerciseName, muscleGroup, category) {
@@ -1096,6 +1159,24 @@ function updateUI() {
     }
     updateExerciseList();
     updateResearchBanner();
+    updateAuthUI();
+}
+
+function updateAuthUI() {
+    const signedInSection = document.getElementById('signedInSection');
+    const signedOutSection = document.getElementById('signedOutSection');
+    const userEmail = document.getElementById('userEmail');
+    
+    if (!signedInSection || !signedOutSection) return;
+    
+    if (HyperTrack.state.isAuthenticated && HyperTrack.state.user) {
+        signedInSection.style.display = 'block';
+        signedOutSection.style.display = 'none';
+        if (userEmail) userEmail.textContent = HyperTrack.state.user.email;
+    } else {
+        signedInSection.style.display = 'none';
+        signedOutSection.style.display = 'block';
+    }
 }
 
 function showStartWorkout() {
@@ -2739,12 +2820,153 @@ window.testFinishExercise = function() {
     finishExercise();
 };
 
+// Authentication Functions
+function openAuthModal() {
+    document.getElementById('authModal').style.display = 'flex';
+}
+
+function closeAuthModal() {
+    document.getElementById('authModal').style.display = 'none';
+    // Clear form
+    document.getElementById('authForm').reset();
+    document.getElementById('authError').style.display = 'none';
+    document.getElementById('authSuccess').style.display = 'none';
+}
+
+function switchAuthTab(tab) {
+    const signupFields = document.getElementById('signupFields');
+    const authSubmitText = document.getElementById('authSubmitText');
+    const authTabs = document.querySelectorAll('.auth-tab');
+    
+    authTabs.forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (tab === 'signup') {
+        signupFields.style.display = 'block';
+        authSubmitText.textContent = 'Sign Up';
+        document.getElementById('authModalTitle').textContent = 'Create Account';
+    } else {
+        signupFields.style.display = 'none';
+        authSubmitText.textContent = 'Sign In';
+        document.getElementById('authModalTitle').textContent = 'Sign In to HyperTrack Pro';
+    }
+}
+
+async function handleAuth(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const email = formData.get('email');
+    const password = formData.get('password');
+    const username = formData.get('username');
+    
+    const isSignup = document.getElementById('signupFields').style.display !== 'none';
+    
+    const authError = document.getElementById('authError');
+    const authSuccess = document.getElementById('authSuccess');
+    
+    authError.style.display = 'none';
+    authSuccess.style.display = 'none';
+    
+    try {
+        let result;
+        
+        if (isSignup) {
+            result = await window.supabaseService.signUp(email, password, username);
+            if (result.success) {
+                authSuccess.textContent = 'Account created! Please check your email to verify your account.';
+                authSuccess.style.display = 'block';
+                form.reset();
+            }
+        } else {
+            result = await window.supabaseService.signIn(email, password);
+            if (result.success) {
+                closeAuthModal();
+                HyperTrack.state.isAuthenticated = true;
+                HyperTrack.state.user = result.data.user;
+                
+                // Load user data and migrate if needed
+                await initializeUserData();
+                
+                showNotification(`Welcome back, ${result.data.user.email}!`, 'success');
+                updateUI();
+            }
+        }
+        
+        if (!result.success) {
+            authError.textContent = result.error;
+            authError.style.display = 'block';
+        }
+    } catch (error) {
+        authError.textContent = 'An unexpected error occurred. Please try again.';
+        authError.style.display = 'block';
+        console.error('Auth error:', error);
+    }
+}
+
+async function signOut() {
+    const result = await window.supabaseService.signOut();
+    if (result.success) {
+        HyperTrack.state.isAuthenticated = false;
+        HyperTrack.state.user = null;
+        HyperTrack.state.workouts = [];
+        
+        showNotification('Signed out successfully', 'success');
+        updateUI();
+    }
+}
+
+async function initializeUserData() {
+    if (!window.supabaseService.isAuthenticated()) return;
+    
+    // Load user workouts
+    await HyperTrack.loadHistoricalData();
+    
+    // Check if user has any workouts, if not, offer to migrate localStorage data
+    if (HyperTrack.state.workouts.length === 0) {
+        const localWorkouts = localStorage.getItem('hypertrack_workouts');
+        if (localWorkouts) {
+            const shouldMigrate = confirm('We found local workout data. Would you like to sync it to your account?');
+            if (shouldMigrate) {
+                const result = await window.supabaseService.migrateLocalStorageData();
+                if (result.success) {
+                    showNotification('Data migrated successfully!', 'success');
+                    await HyperTrack.loadHistoricalData();
+                }
+            }
+        }
+    }
+    
+    // Load user settings
+    const settingsResult = await window.supabaseService.getUserSettings();
+    if (settingsResult.success && settingsResult.data) {
+        // Merge with current settings
+        Object.assign(HyperTrack.state.settings, settingsResult.data);
+    }
+}
+
 // Initialize Application
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('🎯 Initializing HyperTrack Pro...');
     
+    // Initialize Supabase
+    if (window.supabaseService) {
+        const supabaseReady = await window.supabaseService.initialize();
+        if (supabaseReady) {
+            console.log('✅ Supabase initialized');
+            
+            // Check if user is already authenticated
+            if (window.supabaseService.isAuthenticated()) {
+                HyperTrack.state.isAuthenticated = true;
+                HyperTrack.state.user = window.supabaseService.getCurrentUser();
+                await initializeUserData();
+            }
+        }
+    }
+    
     // Load data
-    HyperTrack.loadHistoricalData();
+    await HyperTrack.loadHistoricalData();
     loadAppData();
     
     // Initialize UI

@@ -216,6 +216,23 @@
                     </div>
 
                     <div class="settings-section">
+                        <h3>Account & Sync</h3>
+                        <div id="authSection">
+                            <div id="signedOutSection" style="display: none;">
+                                <p>Sign in to sync your workouts across devices and never lose your data.</p>
+                                <button class="btn btn-primary" onclick="openAuthModal()">Sign In / Sign Up</button>
+                            </div>
+                            <div id="signedInSection" style="display: none;">
+                                <p>Signed in as: <strong id="userEmail"></strong></p>
+                                <div class="sync-status">
+                                    <span id="syncStatus">✅ Data synced</span>
+                                </div>
+                                <button class="btn btn-secondary" onclick="signOut()">Sign Out</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
                         <h3>Data Management</h3>
                         <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
                         <button class="btn btn-secondary" onclick="importData()">Import Data</button>
@@ -251,6 +268,59 @@
         </button>
     </div>
 
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="authModalTitle">Sign In to HyperTrack Pro</h3>
+                <button class="close-btn" onclick="closeAuthModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="authTabs" class="auth-tabs">
+                    <button class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
+                    <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+                </div>
+                
+                <form id="authForm" onsubmit="handleAuth(event)">
+                    <div id="signupFields" style="display: none;">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" placeholder="Enter your username">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter your email">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-large">
+                        <span id="authSubmitText">Sign In</span>
+                    </button>
+                </form>
+                
+                <div id="authError" class="auth-error" style="display: none;"></div>
+                <div id="authSuccess" class="auth-success" style="display: none;"></div>
+                
+                <div class="auth-footer">
+                    <p><strong>Why create an account?</strong></p>
+                    <ul>
+                        <li>✅ Sync workouts across all your devices</li>
+                        <li>✅ Never lose your training data</li>
+                        <li>✅ Access advanced analytics and insights</li>
+                        <li>✅ Get personalized recommendations</li>
+                    </ul>
+                    <p class="privacy-note">Your data is secure and private. We never share your information.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modals -->
     <div id="exerciseModal" class="modal" style="display: none;">
         <div class="modal-content">
@@ -266,7 +336,12 @@
         </div>
     </div>
 
+    <!-- Supabase CDN -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
     <!-- Scripts -->
+    <script src="supabase-config.js"></script>
+    <script src="supabase-service.js"></script>
     <script src="tyler-data-integration.js"></script>
     <script src="app.js"></script>
     <script>
