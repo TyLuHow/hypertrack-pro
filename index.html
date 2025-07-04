@@ -42,6 +42,22 @@
             </div>
         </header>
 
+        <!-- Demo Mode Banner -->
+        <div class="demo-banner" id="demoBanner" style="display: none;">
+            <div class="demo-content">
+                <div class="demo-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 7h3a5 5 0 1 1 0 10h-3m-6 0H6a5 5 0 1 1 0-10h3"></path>
+                        <path d="M9 12h6"></path>
+                    </svg>
+                </div>
+                <p class="demo-text">
+                    🎭 <strong>Demo Mode</strong> - Exploring with 45 research-based workouts. 
+                    <a href="?" style="color: #94C17B; text-decoration: underline;">Deploy your own</a> to save real data.
+                </p>
+            </div>
+        </div>
+
         <!-- Research Banner -->
         <div class="research-banner" id="researchBanner">
             <div class="research-content">
@@ -492,9 +508,22 @@
     <script src="supabase-config.js"></script>
     <script src="supabase-service.js"></script>
     <script src="intelligent-training.js"></script>
+    <script src="demo-data.js"></script>
     <script src="tyler-data-integration.js"></script>
     <script src="app.js"></script>
     <script>
+        // Initialize demo mode banner
+        function initializeDemoMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isDemoMode = urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
+            
+            const demoBanner = document.getElementById('demoBanner');
+            if (isDemoMode && demoBanner) {
+                demoBanner.style.display = 'block';
+                console.log('🎭 Demo mode activated');
+            }
+        }
+
         // Register service worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -503,6 +532,11 @@
                     .catch(error => console.log('SW registration failed'));
             });
         }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDemoMode();
+        });
     </script>
 </body>
 </html>

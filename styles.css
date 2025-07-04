@@ -68,6 +68,40 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
+/* Demo Banner */
+.demo-banner {
+    background: linear-gradient(135deg, #E74C3C, #C0392B);
+    border-bottom: 1px solid #A93226;
+    padding: 12px 20px;
+    animation: demo-pulse 3s ease-in-out infinite;
+}
+
+.demo-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.demo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.demo-text {
+    font-size: 14px;
+    color: white;
+    margin: 0;
+    font-weight: 500;
+}
+
+@keyframes demo-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.9; }
+}
+
 /* Research Banner */
 .research-banner {
     background: #30525C;

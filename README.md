@@ -3,7 +3,7 @@
 > **Evidence-Based Hypertrophy Optimization PWA**  
 > A research-backed fitness tracking application with intelligent training algorithms
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-hypertrack--pro.vercel.app-brightgreen)](https://hypertrack-pro.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Try%20Now-brightgreen)](https://hypertrack-pro.vercel.app/?demo=true)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTyLuHow%2Fhypertrack-pro)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
@@ -66,13 +66,17 @@
 
 ## 🌐 Live Demo
 
-Experience HyperTrack Pro live: **[hypertrack-pro.vercel.app](https://hypertrack-pro.vercel.app)**
+**[👉 Try Demo Mode](https://hypertrack-pro.vercel.app/?demo=true)** - Explore with 45 research-based workouts (no data saved)
 
-Test the full feature set:
+Or deploy your own instance in 2 minutes using the one-click deploy button above, then experience the full feature set:
 - Create workouts
-- Track exercises
+- Track exercises  
 - View progress analytics
 - Explore intelligent training features
+
+> **Demo Mode**: Shows the complete app with 45 realistic workouts following research-based progression patterns. Perfect for exploring features without affecting any real data.
+> 
+> **Your Own Instance**: Deploy to get your private version where you can save real workout data and sync across devices.
 
 ## 🔧 Installation
 

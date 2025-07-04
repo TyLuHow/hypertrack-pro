@@ -1,6 +1,12 @@
 // HyperTrack Pro - Clean, Functional Version
 console.log('🚀 HyperTrack Pro Loading...');
 
+// Demo Mode Detection
+const isDemoMode = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
+};
+
 // Global Application State
 const HyperTrack = {
     state: {
@@ -10,6 +16,7 @@ const HyperTrack = {
         user: null,
         isOnline: navigator.onLine,
         syncPending: false,
+        demoMode: isDemoMode(),
         settings: {
             showResearchFacts: true,
             darkMode: true,
@@ -776,6 +783,20 @@ const HyperTrack = {
         }
         
         // Fallback to localStorage or demo data
+        if (this.state.demoMode) {
+            // Use demo data
+            if (window.DemoDataGenerator) {
+                const demoGenerator = new window.DemoDataGenerator();
+                demoGenerator.initializeDemoMode();
+                const demoWorkouts = demoGenerator.getDemoWorkouts();
+                if (demoWorkouts && demoWorkouts.length > 0) {
+                    this.state.workouts = demoWorkouts;
+                    console.log(`🎭 Loaded ${demoWorkouts.length} demo workouts`);
+                    return;
+                }
+            }
+        }
+        
         const localWorkouts = localStorage.getItem('hypertrack_workouts');
         if (localWorkouts) {
             this.state.workouts = JSON.parse(localWorkouts);
@@ -787,6 +808,13 @@ const HyperTrack = {
     },
     
     async saveWorkout(workoutData) {
+        // In demo mode, don't save data - just add to memory
+        if (this.state.demoMode) {
+            this.state.workouts.unshift(workoutData); // Add to beginning (most recent first)
+            console.log('🎭 Demo workout added (not saved)');
+            return { success: true, demo: true };
+        }
+        
         // Save to Supabase if authenticated
         if (window.supabaseService && window.supabaseService.isAuthenticated()) {
             const result = await window.supabaseService.saveWorkout(workoutData);
@@ -806,6 +834,13 @@ const HyperTrack = {
     },
     
     async deleteWorkout(workoutId) {
+        // In demo mode, just remove from memory
+        if (this.state.demoMode) {
+            this.state.workouts = this.state.workouts.filter(w => w.id !== workoutId);
+            console.log('🎭 Demo workout deleted (from memory only)');
+            return { success: true, demo: true };
+        }
+        
         // Delete from Supabase if authenticated
         if (window.supabaseService && window.supabaseService.isAuthenticated()) {
             const result = await window.supabaseService.deleteWorkout(workoutId);
