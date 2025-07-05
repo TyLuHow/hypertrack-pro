@@ -4,8 +4,6 @@
 const tylerCompleteWorkouts = [
     {
         id: 'workout-20240624-pull',
-        date: '2024-06-24',
-        workout_date: '2024-06-24',
         startTime: '2024-06-24T09:00:00Z',
         endTime: '2024-06-24T10:15:00Z',
         duration: 75 * 60 * 1000,
@@ -73,7 +71,7 @@ const tylerCompleteWorkouts = [
     {
         id: 'workout-20240625-push',
         date: '2024-06-25',
-        workout_date: '2024-06-25',
+        date: '2024-06-25',
         startTime: '2024-06-25T18:00:00Z',
         endTime: '2024-06-25T19:30:00Z',
         duration: 90 * 60 * 1000,
@@ -162,7 +160,7 @@ const tylerCompleteWorkouts = [
     {
         id: 'workout-20240626-shoulders',
         date: '2024-06-26',
-        workout_date: '2024-06-26',
+        date: '2024-06-26',
         startTime: '2024-06-26T18:00:00Z',
         endTime: '2024-06-26T19:20:00Z',
         duration: 80 * 60 * 1000,
@@ -242,7 +240,7 @@ const tylerCompleteWorkouts = [
     {
         id: 'workout-20240629-pull',
         date: '2024-06-29',
-        workout_date: '2024-06-29',
+        date: '2024-06-29',
         startTime: '2024-06-29T18:00:00Z',
         endTime: '2024-06-29T19:15:00Z',
         duration: 75 * 60 * 1000,
@@ -310,7 +308,7 @@ const tylerCompleteWorkouts = [
     {
         id: 'workout-20240630-push',
         date: '2024-06-30',
-        workout_date: '2024-06-30',
+        date: '2024-06-30',
         startTime: '2024-06-30T18:00:00Z',
         endTime: '2024-06-30T19:20:00Z',
         duration: 80 * 60 * 1000,
@@ -390,7 +388,7 @@ const tylerCompleteWorkouts = [
     {
         id: 'workout-20240702-shoulders',
         date: '2024-07-02',
-        workout_date: '2024-07-02',
+        date: '2024-07-02',
         startTime: '2024-07-02T18:00:00Z',
         endTime: '2024-07-02T19:15:00Z',
         duration: 75 * 60 * 1000,
@@ -470,7 +468,7 @@ const tylerCompleteWorkouts = [
     {
         id: 'workout-20240703-pull',
         date: '2024-07-03',
-        workout_date: '2024-07-03',
+        date: '2024-07-03',
         startTime: '2024-07-03T18:00:00Z',
         endTime: '2024-07-03T19:20:00Z',
         duration: 80 * 60 * 1000,

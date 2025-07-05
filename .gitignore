@@ -1,76 +1,32 @@
 # Dependencies
 node_modules/
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Environment variables
+# Environment variables  
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Build outputs
-dist/
-build/
-*.tgz
-*.tar.gz
 
 # Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# Logs
-logs
 *.log
+pids/
+logs/
 
-# Dependency directories
-node_modules/
-jspm_packages/
+# IDE files
+.vscode/
+.idea/
+*.swp
 
-# TypeScript cache
-*.tsbuildinfo
+# OS generated files
+.DS_Store
+Thumbs.db
 
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
+# Performance exports
+*metrics*.json
+*test-results*.json
 
 # Vercel
 .vercel
 
-# Railway
-.railway
-
-# Backup files
-*.backup
-backup-*
-
-# Editor directories and files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Keep .env.example
+\!.env.example
+EOF < /dev/null

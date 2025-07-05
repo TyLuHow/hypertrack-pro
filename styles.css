@@ -615,6 +615,79 @@ body {
     overflow-y: auto;
 }
 
+/* Mobile-first exercise modal - fullscreen for better mobile experience */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        border-radius: 0;
+        border: none;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+    }
+    
+    .modal-header {
+        flex-shrink: 0;
+        padding: 16px;
+        background: #1f2937;
+        border-bottom: 2px solid #374151;
+    }
+    
+    /* Enhanced mobile set inputs - larger touch targets */
+    .set-row {
+        flex-direction: column;
+        gap: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .set-row input[type="number"] {
+        flex: none;
+        width: 100%;
+        padding: 16px 12px;
+        font-size: 18px;
+        min-height: 44px; /* Apple's minimum touch target */
+        border: 2px solid #374151;
+        border-radius: 8px;
+    }
+    
+    .set-number {
+        font-size: 16px;
+        font-weight: 700;
+        color: #60a5fa;
+        margin-bottom: 8px;
+    }
+    
+    /* Mobile-friendly buttons */
+    .btn {
+        min-height: 48px;
+        font-size: 16px;
+        padding: 12px 24px;
+        margin: 8px 0;
+        width: 100%;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .close-btn {
+        min-height: 44px;
+        min-width: 44px;
+        font-size: 20px;
+        padding: 8px;
+    }
+}
+
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -1516,5 +1589,68 @@ body {
         flex-direction: column;
         gap: 8px;
         text-align: center;
+    }
+}
+
+/* Workout Timer Styling */
+.workout-timer {
+    background: #1e293b;
+    border: 2px solid #60a5fa;
+    border-radius: 12px;
+    padding: 8px 16px;
+    display: inline-block;
+}
+
+#workoutTime {
+    font-family: 'Inter', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: #60a5fa;
+    letter-spacing: 1px;
+}
+
+.current-workout {
+    background: #1f2937;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid #374151;
+}
+
+.workout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #374151;
+}
+
+.workout-header h2 {
+    color: #f8fafc;
+    margin: 0;
+    font-size: 20px;
+}
+
+/* Mobile workout timer */
+@media (max-width: 768px) {
+    .workout-timer {
+        padding: 12px 20px;
+        border: 3px solid #60a5fa;
+    }
+    
+    #workoutTime {
+        font-size: 22px;
+        font-weight: 800;
+    }
+    
+    .workout-header {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+    
+    .workout-header h2 {
+        font-size: 18px;
     }
 }

@@ -1,99 +1,209 @@
-// Supabase Configuration and Client Setup
-// HyperTrack Pro - Database Integration
+// Supabase Configuration for HyperTrack Pro
+import { createClient } from '@supabase/supabase-js'
 
-// Supabase configuration for HyperTrack Pro
-const SUPABASE_URL = 'https://zrmkzgwrmohhbmjfdxdf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWt6Z3dybW9oaGJtamZkeGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNjYwODgsImV4cCI6MjA2Njc0MjA4OH0.DJC-PLTnxG8IG-iV7_irb2pnEZJFacDOd9O7RDWwTVU';
+// Supabase configuration - Load from environment or use fallback
+const supabaseUrl = window.SUPABASE_URL || 'https://zrmkzgwrmohhbmjfdxdf.supabase.co'
+const supabaseAnonKey = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWt6Z3dybW9oaGJtamZkeGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNjYwODgsImV4cCI6MjA2Njc0MjA4OH0.DJC-PLTnxG8IG-iV7_irb2pnEZJFacDOd9O7RDWwTVU'
 
-// Project Details:
-// Dashboard: https://supabase.com/dashboard/project/zrmkzgwrmohhbmjfdxdf
-// Database Connection: postgresql://postgres:TylerLH090102@@db.zrmkzgwrmohhbmjfdxdf.supabase.co:5432/postgres
-
-// Import Supabase client (we'll load this via CDN in HTML)
+// Create Supabase client
 let supabase;
-
-// Initialize Supabase client
-function initializeSupabase() {
-    if (typeof window.supabase === 'undefined') {
-        console.error('❌ Supabase not loaded. Make sure to include the Supabase CDN in index.html');
-        return false;
-    }
-    
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('✅ Supabase initialized successfully');
-    return true;
+try {
+    // Try to load Supabase library dynamically
+    supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseAnonKey) : null;
+    console.log('🔗 Supabase client initialized');
+} catch (error) {
+    console.error('❌ Failed to initialize Supabase client:', error);
+    supabase = null;
 }
 
-// Database Configuration
-const DATABASE_CONFIG = {
-    // Enable Row Level Security for all tables
-    rls_enabled: true,
-    
-    // Database schema version for migrations
-    schema_version: '1.0.0',
-    
-    // Table configurations
-    tables: {
-        users: {
-            name: 'users',
-            primary_key: 'id',
-            columns: [
-                'id', 'email', 'username', 'created_at', 'updated_at',
-                'training_level', 'bodyweight', 'timezone', 'preferences'
-            ]
-        },
-        workouts: {
-            name: 'workouts',
-            primary_key: 'id',
-            foreign_keys: ['user_id'],
-            columns: [
-                'id', 'user_id', 'workout_date', 'start_time', 'end_time',
-                'duration', 'split_type', 'tod', 'notes', 'total_volume',
-                'total_sets', 'created_at', 'updated_at'
-            ]
-        },
-        exercises: {
-            name: 'exercises',
-            primary_key: 'id',
-            columns: [
-                'id', 'name', 'muscle_group', 'category', 'tier',
-                'mvc_percentage', 'equipment', 'gym_types',
-                'biomechanical_function', 'target_rep_range', 'rest_period',
-                'created_at', 'updated_at'
-            ]
-        },
-        workout_exercises: {
-            name: 'workout_exercises',
-            primary_key: 'id',
-            foreign_keys: ['workout_id', 'exercise_id'],
-            columns: [
-                'id', 'workout_id', 'exercise_id', 'exercise_order',
-                'notes', 'created_at'
-            ]
-        },
-        sets: {
-            name: 'sets',
-            primary_key: 'id',
-            foreign_keys: ['workout_exercise_id'],
-            columns: [
-                'id', 'workout_exercise_id', 'set_number', 'weight',
-                'reps', 'rpe', 'rest_duration', 'completed_at',
-                'created_at'
-            ]
-        },
-        user_settings: {
-            name: 'user_settings',
-            primary_key: 'id',
-            foreign_keys: ['user_id'],
-            columns: [
-                'id', 'user_id', 'show_research_facts', 'dark_mode',
-                'auto_start_rest_timer', 'compound_rest', 'isolation_rest',
-                'progression_rate', 'training_level', 'created_at', 'updated_at'
-            ]
+// Tyler's historical workout data management
+class TylerDataManager {
+    constructor() {
+        this.isDataMigrated = false;
+    }
+
+    // Migrate Tyler's historical data to Supabase
+    async migrateTylerData() {
+        try {
+            console.log('🔄 Migrating Tyler historical data to Supabase...');
+            
+            // Check if data already exists
+            const { data: existingWorkouts, error: checkError } = await supabase
+                .from('workouts')
+                .select('id')
+                .eq('user_id', 'tyler_historical')
+                .limit(1);
+
+            if (checkError) {
+                console.error('❌ Error checking existing data:', checkError);
+                return false;
+            }
+
+            if (existingWorkouts && existingWorkouts.length > 0) {
+                console.log('✅ Tyler data already exists in Supabase');
+                this.isDataMigrated = true;
+                return true;
+            }
+
+            // Import Tyler's data from local file
+            const { tylerCompleteWorkouts } = await import('./tyler-data-integration.js');
+            
+            // Format data for Supabase
+            const formattedWorkouts = tylerCompleteWorkouts.map(workout => ({
+                id: workout.id,
+                user_id: 'tyler_historical',
+                date: workout.date,
+                start_time: workout.startTime,
+                end_time: workout.endTime,
+                duration: workout.duration,
+                split: workout.split,
+                time_of_day: workout.tod,
+                notes: workout.notes,
+                exercises: workout.exercises
+            }));
+
+            // Insert into Supabase
+            const { data, error } = await supabase
+                .from('workouts')
+                .insert(formattedWorkouts);
+
+            if (error) {
+                console.error('❌ Error migrating Tyler data:', error);
+                return false;
+            }
+
+            console.log(`✅ Successfully migrated ${formattedWorkouts.length} Tyler workouts to Supabase`);
+            this.isDataMigrated = true;
+            return true;
+
+        } catch (error) {
+            console.error('❌ Tyler data migration failed:', error);
+            return false;
         }
     }
-};
 
-// Export configuration for use in other modules
-window.DATABASE_CONFIG = DATABASE_CONFIG;
-window.initializeSupabase = initializeSupabase;
+    // Load Tyler's data from Supabase
+    async loadTylerData() {
+        try {
+            const { data: workouts, error } = await supabase
+                .from('workouts')
+                .select('*')
+                .eq('user_id', 'tyler_historical')
+                .order('date', { ascending: false });
+
+            if (error) {
+                console.error('❌ Error loading Tyler data:', error);
+                return [];
+            }
+
+            console.log(`✅ Loaded ${workouts.length} Tyler workouts from Supabase`);
+            return workouts;
+
+        } catch (error) {
+            console.error('❌ Failed to load Tyler data:', error);
+            return [];
+        }
+    }
+
+    // Validate Tyler data integrity (should be 7-8 workouts from late June)
+    validateTylerData(workouts) {
+        const expectedCount = { min: 7, max: 8 };
+        const lateJuneStart = new Date('2024-06-20');
+        const earlyJulyEnd = new Date('2024-07-10');
+
+        const validWorkouts = workouts.filter(workout => {
+            const workoutDate = new Date(workout.date);
+            return workoutDate >= lateJuneStart && workoutDate <= earlyJulyEnd;
+        });
+
+        const isValid = validWorkouts.length >= expectedCount.min && 
+                       validWorkouts.length <= expectedCount.max;
+
+        if (!isValid) {
+            console.warn(`⚠️ Tyler data validation failed: Expected ${expectedCount.min}-${expectedCount.max} workouts, found ${validWorkouts.length}`);
+        } else {
+            console.log(`✅ Tyler data validated: ${validWorkouts.length} workouts from late June period`);
+        }
+
+        return { isValid, count: validWorkouts.length, workouts: validWorkouts };
+    }
+}
+
+// Global Tyler data manager instance
+export const tylerDataManager = new TylerDataManager();
+
+// Initialize Tyler data integration
+export async function initializeTylerData() {
+    try {
+        // First migrate data if needed
+        await tylerDataManager.migrateTylerData();
+        
+        // Then load and validate
+        const workouts = await tylerDataManager.loadTylerData();
+        const validation = tylerDataManager.validateTylerData(workouts);
+        
+        if (!validation.isValid) {
+            console.error('❌ Tyler data validation failed - check Supabase data integrity');
+        }
+        
+        // Integrate Tyler's historical workouts into main app state
+        if (window.HyperTrack && validation.workouts.length > 0) {
+            // Add Tyler's workouts to the main workouts array
+            const existingWorkouts = window.HyperTrack.state.workouts || [];
+            const combinedWorkouts = [...existingWorkouts, ...validation.workouts];
+            
+            // Sort by date (newest first)
+            combinedWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            window.HyperTrack.state.workouts = combinedWorkouts;
+            console.log(`✅ Integrated ${validation.workouts.length} Tyler workouts into main view`);
+        }
+        
+        return validation.workouts;
+        
+    } catch (error) {
+        console.error('❌ Tyler data initialization failed:', error);
+        return [];
+    }
+}
+
+// Sync workout to Supabase only on workout completion
+export async function syncWorkoutOnCompletion(workout) {
+    try {
+        if (!supabase) {
+            console.warn('⚠️ Supabase not available - workout saved locally only');
+            return false;
+        }
+
+        console.log('🔄 Syncing completed workout to Supabase...');
+        
+        const { data, error } = await supabase
+            .from('workouts')
+            .insert([{
+                id: workout.id,
+                user_id: 'tyler_user', // Your user ID
+                date: workout.date,
+                start_time: workout.startTime,
+                end_time: workout.endTime,
+                duration: workout.duration,
+                split: workout.split,
+                time_of_day: workout.tod,
+                notes: workout.notes,
+                exercises: workout.exercises
+            }]);
+
+        if (error) {
+            console.error('❌ Failed to sync workout to Supabase:', error);
+            return false;
+        }
+
+        console.log('✅ Workout synced to Supabase successfully');
+        return true;
+
+    } catch (error) {
+        console.error('❌ Workout sync error:', error);
+        return false;
+    }
+}
+
+console.log('📊 Supabase configuration loaded - Tyler data integration ready');

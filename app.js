@@ -6,8 +6,6 @@ const HyperTrack = {
     state: {
         currentWorkout: null,
         workouts: [],
-        isAuthenticated: false,
-        user: null,
         isOnline: navigator.onLine,
         syncPending: false,
         settings: {
@@ -62,6 +60,7 @@ const HyperTrack = {
             maxFrequency: 3             // No benefit beyond 3x when volume matched
         },
         user: { name: 'Tyler' },
+        autoSaveInterval: null,
         workoutTimer: { active: false, interval: null, startTime: null, elapsed: 0 },
         restTimer: { active: false, interval: null, remaining: 0, exerciseName: '' }
     },
@@ -101,14 +100,6 @@ const HyperTrack = {
         "Planet Fitness equipment can build elite physiques - it's programming and consistency, not gym prestige"
     ],
     
-    // Gym Type Classifications (based on equipment availability)
-    gymTypes: {
-        commercial: "Commercial Gym",
-        barbell: "Barbell/Strength Gym", 
-        crossfit: "CrossFit Box",
-        minimalist: "Minimalist/Home Gym",
-        planet_fitness: "Planet Fitness"
-    },
     
     // Equipment Categories for exercise selection
     equipmentTypes: {
@@ -135,711 +126,71 @@ const HyperTrack = {
         back_thickness: "Back Thickness Focus"
     },
 
-    exerciseDatabase: [
-        // VERTICAL PULL (Back - Lat dominant, Width focus)
-        { 
-            id: 1, 
-            name: "Lat Pulldowns", 
-            muscle_group: "Vertical Pull", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 90,
-            equipment: "cable",
-            gym_types: ["commercial", "barbell", "crossfit"],
-            biomechanical_function: "Shoulder Adduction",
-            target_rep_range: "8-12",
-            rest_period: 180
-        },
-        { 
-            id: 18, 
-            name: "Wide-Grip Pull-ups", 
-            muscle_group: "Vertical Pull", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 95,
-            equipment: "bodyweight",
-            gym_types: ["commercial", "barbell", "crossfit", "minimalist"],
-            biomechanical_function: "Shoulder Adduction",
-            target_rep_range: "5-10",
-            rest_period: 180
-        },
-        { 
-            id: 19, 
-            name: "Assisted Pull-ups", 
-            muscle_group: "Vertical Pull", 
-            category: "Compound", 
-            tier: 2, 
-            mvc_percentage: 85,
-            equipment: "machine",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Shoulder Adduction",
-            target_rep_range: "8-12",
-            rest_period: 180
-        },
-        
-        // HORIZONTAL PULL (Back - Mid-trap/rhomboid dominant, Thickness focus)  
-        { 
-            id: 2, 
-            name: "Smith Machine Rows", 
-            muscle_group: "Horizontal Pull", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 95,
-            equipment: "smith",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Shoulder Extension",
-            target_rep_range: "8-12",
-            rest_period: 180
-        },
-        { 
-            id: 20, 
-            name: "Barbell Bent-Over Rows", 
-            muscle_group: "Horizontal Pull", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 100,
-            equipment: "barbell",
-            gym_types: ["barbell", "crossfit", "minimalist"],
-            biomechanical_function: "Shoulder Extension",
-            target_rep_range: "6-10",
-            rest_period: 180
-        },
-        { 
-            id: 21, 
-            name: "Seated Cable Rows", 
-            muscle_group: "Horizontal Pull", 
-            category: "Compound", 
-            tier: 2, 
-            mvc_percentage: 88,
-            equipment: "cable",
-            gym_types: ["commercial", "crossfit"],
-            biomechanical_function: "Shoulder Extension",
-            target_rep_range: "10-15",
-            rest_period: 150
-        },
-        { 
-            id: 22, 
-            name: "Dumbbell Single-Arm Rows", 
-            muscle_group: "Horizontal Pull", 
-            category: "Compound", 
-            tier: 2, 
-            mvc_percentage: 85,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Shoulder Extension",
-            target_rep_range: "10-15",
-            rest_period: 150
-        },
-        
-        // HORIZONTAL PUSH (Chest dominant)
-        { 
-            id: 11, 
-            name: "Smith Machine Bench Press", 
-            muscle_group: "Horizontal Push", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 95,
-            equipment: "smith",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Shoulder Horizontal Adduction",
-            target_rep_range: "6-10",
-            rest_period: 180
-        },
-        { 
-            id: 23, 
-            name: "Barbell Bench Press", 
-            muscle_group: "Horizontal Push", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 100,
-            equipment: "barbell",
-            gym_types: ["barbell", "crossfit"],
-            biomechanical_function: "Shoulder Horizontal Adduction",
-            target_rep_range: "6-10",
-            rest_period: 180
-        },
-        { 
-            id: 10, 
-            name: "Incline Dumbbell Press", 
-            muscle_group: "Horizontal Push", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 90,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Shoulder Horizontal Adduction",
-            target_rep_range: "8-12",
-            rest_period: 180
-        },
-        { 
-            id: 9, 
-            name: "Bodyweight Dips", 
-            muscle_group: "Horizontal Push", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 95,
-            equipment: "bodyweight",
-            gym_types: ["commercial", "crossfit", "minimalist"],
-            biomechanical_function: "Shoulder Horizontal Adduction",
-            target_rep_range: "8-15",
-            rest_period: 180
-        },
-        { 
-            id: 8, 
-            name: "Dumbbell Flyes", 
-            muscle_group: "Horizontal Push", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 80,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Shoulder Horizontal Adduction",
-            target_rep_range: "12-15",
-            rest_period: 120
-        },
-        
-        // VERTICAL PUSH (Shoulders - Anterior/Medial Delts)
-        { 
-            id: 24, 
-            name: "Standing Overhead Press", 
-            muscle_group: "Vertical Push", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 90,
-            equipment: "barbell",
-            gym_types: ["barbell", "crossfit", "minimalist"],
-            biomechanical_function: "Shoulder Flexion",
-            target_rep_range: "6-10",
-            rest_period: 180
-        },
-        { 
-            id: 25, 
-            name: "Seated Dumbbell Press", 
-            muscle_group: "Vertical Push", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 85,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Shoulder Flexion",
-            target_rep_range: "8-12",
-            rest_period: 180
-        },
-        { 
-            id: 26, 
-            name: "Smith Machine Shoulder Press", 
-            muscle_group: "Vertical Push", 
-            category: "Compound", 
-            tier: 2, 
-            mvc_percentage: 80,
-            equipment: "smith",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Shoulder Flexion",
-            target_rep_range: "8-12",
-            rest_period: 180
-        },
-        
-        // SIDE DELTS (Shoulder abduction - Width)
-        { 
-            id: 12, 
-            name: "Dumbbell Lateral Raises", 
-            muscle_group: "Side Delts", 
-            category: "Isolation", 
-            tier: 1, 
-            mvc_percentage: 75,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Shoulder Abduction",
-            target_rep_range: "12-20",
-            rest_period: 90
-        },
-        { 
-            id: 14, 
-            name: "Cable Lateral Raises", 
-            muscle_group: "Side Delts", 
-            category: "Isolation", 
-            tier: 1, 
-            mvc_percentage: 70,
-            equipment: "cable",
-            gym_types: ["commercial", "crossfit"],
-            biomechanical_function: "Shoulder Abduction",
-            target_rep_range: "12-20",
-            rest_period: 90
-        },
-        { 
-            id: 27, 
-            name: "Machine Lateral Raises", 
-            muscle_group: "Side Delts", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 68,
-            equipment: "machine",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Shoulder Abduction",
-            target_rep_range: "12-20",
-            rest_period: 90
-        },
-        
-        // REAR DELTS (Shoulder horizontal abduction)
-        { 
-            id: 3, 
-            name: "Face Pulls", 
-            muscle_group: "Rear Delts", 
-            category: "Isolation", 
-            tier: 1, 
-            mvc_percentage: 75,
-            equipment: "cable",
-            gym_types: ["commercial", "crossfit"],
-            biomechanical_function: "Shoulder Horizontal Abduction",
-            target_rep_range: "15-25",
-            rest_period: 90
-        },
-        { 
-            id: 15, 
-            name: "Dumbbell Reverse Flyes", 
-            muscle_group: "Rear Delts", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 70,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Shoulder Horizontal Abduction",
-            target_rep_range: "15-25",
-            rest_period: 90
-        },
-        { 
-            id: 16, 
-            name: "Kettlebell Prone Y Raises", 
-            muscle_group: "Rear Delts", 
-            category: "Isolation", 
-            tier: 3, 
-            mvc_percentage: 65,
-            equipment: "kettlebell",
-            gym_types: ["crossfit", "minimalist"],
-            biomechanical_function: "Shoulder Horizontal Abduction",
-            target_rep_range: "15-25",
-            rest_period: 90
-        },
-        { 
-            id: 17, 
-            name: "Cable External Rotations", 
-            muscle_group: "Rear Delts", 
-            category: "Isolation", 
-            tier: 3, 
-            mvc_percentage: 60,
-            equipment: "cable",
-            gym_types: ["commercial", "crossfit"],
-            biomechanical_function: "External Rotation",
-            target_rep_range: "15-25",
-            rest_period: 90
-        },
-        
-        // TRAPS (Shoulder elevation)
-        { 
-            id: 13, 
-            name: "Smith Machine Barbell Shrugs", 
-            muscle_group: "Traps", 
-            category: "Isolation", 
-            tier: 1, 
-            mvc_percentage: 85,
-            equipment: "smith",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Shoulder Elevation",
-            target_rep_range: "10-15",
-            rest_period: 120
-        },
-        { 
-            id: 28, 
-            name: "Barbell Shrugs", 
-            muscle_group: "Traps", 
-            category: "Isolation", 
-            tier: 1, 
-            mvc_percentage: 90,
-            equipment: "barbell",
-            gym_types: ["barbell", "crossfit", "minimalist"],
-            biomechanical_function: "Shoulder Elevation",
-            target_rep_range: "10-15",
-            rest_period: 120
-        },
-        { 
-            id: 29, 
-            name: "Dumbbell Shrugs", 
-            muscle_group: "Traps", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 80,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Shoulder Elevation",
-            target_rep_range: "12-20",
-            rest_period: 120
-        },
-        
-        // BICEPS (Elbow flexion)
-        { 
-            id: 4, 
-            name: "Dumbbell Bicep Curls", 
-            muscle_group: "Biceps", 
-            category: "Isolation", 
-            tier: 1, 
-            mvc_percentage: 90,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Elbow Flexion",
-            target_rep_range: "10-15",
-            rest_period: 90
-        },
-        { 
-            id: 30, 
-            name: "Barbell Bicep Curls", 
-            muscle_group: "Biceps", 
-            category: "Isolation", 
-            tier: 1, 
-            mvc_percentage: 95,
-            equipment: "barbell",
-            gym_types: ["barbell", "crossfit", "minimalist"],
-            biomechanical_function: "Elbow Flexion",
-            target_rep_range: "8-12",
-            rest_period: 90
-        },
-        { 
-            id: 5, 
-            name: "Cable Hammer Curls", 
-            muscle_group: "Biceps", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 85,
-            equipment: "cable",
-            gym_types: ["commercial", "crossfit"],
-            biomechanical_function: "Elbow Flexion",
-            target_rep_range: "10-15",
-            rest_period: 90
-        },
-        { 
-            id: 31, 
-            name: "Dumbbell Hammer Curls", 
-            muscle_group: "Biceps", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 82,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Elbow Flexion",
-            target_rep_range: "10-15",
-            rest_period: 90
-        },
-        
-        // TRICEPS (Elbow extension)
-        { 
-            id: 6, 
-            name: "Tricep Cable Rope Pulldowns", 
-            muscle_group: "Triceps", 
-            category: "Isolation", 
-            tier: 1, 
-            mvc_percentage: 80,
-            equipment: "cable",
-            gym_types: ["commercial", "crossfit"],
-            biomechanical_function: "Elbow Extension",
-            target_rep_range: "12-20",
-            rest_period: 90
-        },
-        { 
-            id: 7, 
-            name: "Close-Grip Smith Machine Press", 
-            muscle_group: "Triceps", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 85,
-            equipment: "smith",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Elbow Extension",
-            target_rep_range: "8-12",
-            rest_period: 120
-        },
-        { 
-            id: 32, 
-            name: "Close-Grip Bench Press", 
-            muscle_group: "Triceps", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 90,
-            equipment: "barbell",
-            gym_types: ["barbell", "crossfit"],
-            biomechanical_function: "Elbow Extension",
-            target_rep_range: "8-12",
-            rest_period: 120
-        },
-        { 
-            id: 33, 
-            name: "Overhead Tricep Extension", 
-            muscle_group: "Triceps", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 75,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Elbow Extension",
-            target_rep_range: "12-20",
-            rest_period: 90
-        },
-        
-        // LEGS - QUAD DOMINANT
-        { 
-            id: 34, 
-            name: "Smith Machine Squats", 
-            muscle_group: "Quads", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 90,
-            equipment: "smith",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Knee Extension",
-            target_rep_range: "8-15",
-            rest_period: 180
-        },
-        { 
-            id: 35, 
-            name: "Barbell Back Squats", 
-            muscle_group: "Quads", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 95,
-            equipment: "barbell",
-            gym_types: ["barbell", "crossfit"],
-            biomechanical_function: "Knee Extension",
-            target_rep_range: "6-12",
-            rest_period: 180
-        },
-        { 
-            id: 36, 
-            name: "Leg Press", 
-            muscle_group: "Quads", 
-            category: "Compound", 
-            tier: 2, 
-            mvc_percentage: 85,
-            equipment: "machine",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Knee Extension",
-            target_rep_range: "12-20",
-            rest_period: 150
-        },
-        
-        // LEGS - HAMSTRING DOMINANT
-        { 
-            id: 37, 
-            name: "Romanian Deadlifts", 
-            muscle_group: "Hamstrings", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 95,
-            equipment: "barbell",
-            gym_types: ["barbell", "crossfit", "minimalist"],
-            biomechanical_function: "Hip Hinge",
-            target_rep_range: "8-12",
-            rest_period: 180
-        },
-        { 
-            id: 38, 
-            name: "Dumbbell Romanian Deadlifts", 
-            muscle_group: "Hamstrings", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 88,
-            equipment: "dumbbell",
-            gym_types: ["commercial", "minimalist", "planet_fitness"],
-            biomechanical_function: "Hip Hinge",
-            target_rep_range: "10-15",
-            rest_period: 180
-        },
-        { 
-            id: 39, 
-            name: "Lying Leg Curls", 
-            muscle_group: "Hamstrings", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 80,
-            equipment: "machine",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Knee Flexion",
-            target_rep_range: "12-20",
-            rest_period: 120
-        },
-        
-        // GLUTES
-        { 
-            id: 40, 
-            name: "Hip Thrusts", 
-            muscle_group: "Glutes", 
-            category: "Compound", 
-            tier: 1, 
-            mvc_percentage: 95,
-            equipment: "barbell",
-            gym_types: ["commercial", "barbell", "crossfit"],
-            biomechanical_function: "Hip Extension",
-            target_rep_range: "8-15",
-            rest_period: 150
-        },
-        { 
-            id: 41, 
-            name: "Dumbbell Hip Thrusts", 
-            muscle_group: "Glutes", 
-            category: "Compound", 
-            tier: 2, 
-            mvc_percentage: 85,
-            equipment: "dumbbell",
-            gym_types: ["minimalist", "planet_fitness"],
-            biomechanical_function: "Hip Extension",
-            target_rep_range: "12-20",
-            rest_period: 150
-        },
-        
-        // CALVES
-        { 
-            id: 42, 
-            name: "Standing Calf Raises", 
-            muscle_group: "Calves", 
-            category: "Isolation", 
-            tier: 1, 
-            mvc_percentage: 85,
-            equipment: "machine",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Plantar Flexion",
-            target_rep_range: "15-25",
-            rest_period: 90
-        },
-        { 
-            id: 43, 
-            name: "Dumbbell Calf Raises", 
-            muscle_group: "Calves", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 75,
-            equipment: "dumbbell",
-            gym_types: ["minimalist", "commercial"],
-            biomechanical_function: "Plantar Flexion",
-            target_rep_range: "15-25",
-            rest_period: 90
-        },
-        
-        // ADDITIONAL EXERCISES FROM TYLER'S DATA
-        { 
-            id: 44, 
-            name: "Cable Crunch Machine", 
-            muscle_group: "Abs", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 70,
-            equipment: "cable",
-            gym_types: ["commercial", "planet_fitness"],
-            biomechanical_function: "Spinal Flexion",
-            target_rep_range: "15-25",
-            rest_period: 60
-        },
-        { 
-            id: 45, 
-            name: "Reverse Grip EZ Bar Curl", 
-            muscle_group: "Biceps", 
-            category: "Isolation", 
-            tier: 2, 
-            mvc_percentage: 80,
-            equipment: "barbell",
-            gym_types: ["commercial", "barbell", "crossfit"],
-            biomechanical_function: "Elbow Flexion",
-            target_rep_range: "10-15",
-            rest_period: 90
-        },
-        { 
-            id: 46, 
-            name: "EZ Bar Upright Rows", 
-            muscle_group: "Side Delts", 
-            category: "Compound", 
-            tier: 3, 
-            mvc_percentage: 65,
-            equipment: "barbell",
-            gym_types: ["commercial", "barbell", "crossfit"],
-            biomechanical_function: "Shoulder Abduction",
-            target_rep_range: "12-20",
-            rest_period: 90
+    exerciseDatabase: [],  // Loaded dynamically from data/exercises.json
+
+    // Load exercise database from JSON file
+    async loadExerciseDatabase() {
+        try {
+            console.log('🏋️‍♂️ Loading exercise database...');
+            const response = await fetch('data/exercises.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            this.exerciseDatabase = await response.json();
+            console.log(`✅ Loaded ${this.exerciseDatabase.length} exercises`);
+            return this.exerciseDatabase;
+        } catch (error) {
+            console.error('❌ Failed to load exercise database:', error);
+            // Fallback: Initialize with empty array
+            this.exerciseDatabase = [];
+            return [];
         }
-    ],
+    },
     
     async loadHistoricalData() {
-        // Try to load from Supabase first if authenticated
-        if (window.supabaseService && window.supabaseService.isAuthenticated()) {
-            console.log('🔄 Loading workouts from Supabase...');
-            const result = await window.supabaseService.getUserWorkouts();
-            if (result.success) {
-                this.state.workouts = result.data;
-                console.log(`✅ Loaded ${result.data.length} workouts from Supabase`);
-                return;
-            }
-        }
-        
         console.log('🔄 Loading historical data...');
         
-        // Priority 2: Historical data (your workouts)
+        // Priority 1: Historical data (your workouts)
         if (typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
             this.state.workouts = [...tylerCompleteWorkouts];
             console.log(`✅ Loaded ${tylerCompleteWorkouts.length} historical workouts`);
             return;
         }
         
-        // Priority 3: localStorage data
+        // Priority 2: localStorage data
         const localWorkouts = localStorage.getItem('hypertrack_workouts');
         if (localWorkouts) {
             this.state.workouts = JSON.parse(localWorkouts);
             console.log(`✅ Loaded ${this.state.workouts.length} workouts from localStorage`);
             return;
         }
+        
+        console.log('📝 No existing workout data found - starting fresh');
     },
     
     async saveWorkout(workoutData) {
+        // Add to workouts array (most recent first)
+        this.state.workouts.unshift(workoutData);
         
-        // Save to Supabase if authenticated
-        if (window.supabaseService && window.supabaseService.isAuthenticated()) {
-            const result = await window.supabaseService.saveWorkout(workoutData);
-            if (result.success) {
-                console.log('✅ Workout saved to Supabase');
-                // Refresh local state
-                await this.loadHistoricalData();
-                return result;
-            }
-        }
-        
-        // Fallback to localStorage
-        this.state.workouts.push(workoutData);
+        // Save to localStorage for persistence
         localStorage.setItem('hypertrack_workouts', JSON.stringify(this.state.workouts));
-        console.log('✅ Workout saved to localStorage');
+        
+        console.log('💾 Workout saved to localStorage');
         return { success: true };
     },
     
     async deleteWorkout(workoutId) {
-        // In demo mode, just remove from memory
-        if (this.state.demoMode) {
-            this.state.workouts = this.state.workouts.filter(w => w.id !== workoutId);
-            console.log('🎭 Demo workout deleted (from memory only)');
-            return { success: true, demo: true };
-        }
-        
-        // Delete from Supabase if authenticated
-        if (window.supabaseService && window.supabaseService.isAuthenticated()) {
-            const result = await window.supabaseService.deleteWorkout(workoutId);
-            if (result.success) {
-                console.log('✅ Workout deleted from Supabase');
-                // Refresh local state
-                await this.loadHistoricalData();
-                return result;
-            }
-        }
-        
-        // Fallback to localStorage
+        // Remove from workouts array
         this.state.workouts = this.state.workouts.filter(w => w.id !== workoutId);
+        
+        // Save to localStorage
         localStorage.setItem('hypertrack_workouts', JSON.stringify(this.state.workouts));
+        
         console.log('✅ Workout deleted from localStorage');
         return { success: true };
     },
     
-    // Update all displays with current data (for demo mode)
+    // Update all displays with current data
     updateAllDisplays() {
         console.log('🔄 Updating all displays with current data...');
         
@@ -867,6 +218,29 @@ const HyperTrack = {
         }
         
         console.log('✅ All displays updated');
+    },
+    
+    // Initialize auto-save for mobile persistence
+    initializeAutoSave() {
+        // Auto-save every 30 seconds
+        this.state.autoSaveInterval = memoryManager.addInterval(() => {
+            saveAppData();
+        }, 30000, 'global_auto_save');
+        
+        // Save on page visibility change (when user switches apps/tabs)
+        memoryManager.addEventListener(document, 'visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                saveAppData();
+                console.log('💾 Auto-saved on visibility change');
+            }
+        }, undefined, 'global_visibility_save');
+        
+        // Save on page unload (when user closes browser)
+        memoryManager.addEventListener(window, 'beforeunload', () => {
+            saveAppData();
+        }, undefined, 'global_beforeunload_save');
+        
+        console.log('🔄 Auto-save initialized for mobile use');
     }
 };
 
@@ -874,18 +248,722 @@ const HyperTrack = {
 function startWorkout() {
     console.log('🏋️‍♂️ Starting new workout...');
     
+    // Show workout day selection modal
+    showWorkoutDaySelection();
+}
+
+function showWorkoutDaySelection() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.id = 'workoutDayModal';
+    
+    // Research-based workout templates
+    const workoutDays = {
+        'Push': {
+            description: 'Chest, Shoulders, Triceps',
+            icon: '🫷',
+            exercises: [
+                { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
+                { name: 'Incline Dumbbell Press', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3-4', reps: '12-20' },
+                { name: 'Bodyweight Dips', priority: 4, type: 'Compound', sets: '3', reps: '6-12' },
+                { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Tricep Cable Rope Pulldowns', priority: 6, type: 'Isolation', sets: '3', reps: '10-15' }
+            ],
+            research: 'Based on Tyler\'s historical push workouts. Compounds first for maximum strength gains (Simão et al. 2012)'
+        },
+        'Pull': {
+            description: 'Lats, Rhomboids, Rear Delts, Biceps',
+            icon: '🫸',
+            exercises: [
+                { name: 'Lat Pulldowns', priority: 1, type: 'Compound', sets: '3-4', reps: '8-12' },
+                { name: 'Smith Machine Rows', priority: 2, type: 'Compound', sets: '3', reps: '6-10' },
+                { name: 'Face Pulls', priority: 3, type: 'Isolation', sets: '3', reps: '12-16' },
+                { name: 'Dumbbell Bicep Curls', priority: 4, type: 'Isolation', sets: '3', reps: '8-12' },
+                { name: 'Cable Hammer Curls', priority: 5, type: 'Isolation', sets: '3', reps: '10-14' },
+                { name: 'Reverse Grip EZ Bar Curl', priority: 6, type: 'Isolation', sets: '3', reps: '10-15' }
+            ],
+            research: 'Pull-ups activate lats 117% more than any exercise. Face pulls prevent 89% of shoulder issues (Research facts)'
+        },
+        'Legs': {
+            description: 'Quads, Hamstrings, Glutes, Calves',
+            icon: '🦵',
+            exercises: [
+                { name: 'Back Squats', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
+                { name: 'Romanian Deadlifts', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Bulgarian Split Squats', priority: 3, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Leg Curls', priority: 4, type: 'Isolation', sets: '3', reps: '10-15' },
+                { name: 'Calf Raises', priority: 5, type: 'Isolation', sets: '4', reps: '15-20' },
+                { name: 'Leg Extensions', priority: 6, type: 'Isolation', sets: '3', reps: '12-15' }
+            ],
+            research: 'Compound movements first for maximum hormonal response and strength gains'
+        },
+        'Shoulders': {
+            description: 'All Three Deltoid Heads + Traps',
+            icon: '🤷',
+            exercises: [
+                { name: 'Dumbbell Lateral Raises', priority: 1, type: 'Isolation', sets: '4', reps: '12-20' },
+                { name: 'Smith Machine Barbell Shrugs', priority: 2, type: 'Isolation', sets: '4', reps: '10-18' },
+                { name: 'Cable Lateral Raises', priority: 3, type: 'Isolation', sets: '3', reps: '15-20' },
+                { name: 'Dumbbell Reverse Flyes', priority: 4, type: 'Isolation', sets: '3', reps: '12-16' },
+                { name: 'EZ Bar Upright Rows', priority: 5, type: 'Compound', sets: '3', reps: '12-15' },
+                { name: 'Cable External Rotations', priority: 6, type: 'Isolation', sets: '2-3', reps: '12-15' }
+            ],
+            research: 'Light weights (15+ reps) produce 40% more side delt growth than heavy 6-8 reps (Research findings)'
+        },
+        'Upper/Lower': {
+            description: 'Upper Body Focus',
+            icon: '💪',
+            exercises: [
+                { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
+                { name: 'Lat Pulldowns', priority: 2, type: 'Compound', sets: '3-4', reps: '8-12' },
+                { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3', reps: '12-20' },
+                { name: 'Smith Machine Rows', priority: 4, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Dumbbell Bicep Curls', priority: 6, type: 'Isolation', sets: '3', reps: '10-14' }
+            ],
+            research: 'Upper/lower split allows higher frequency per muscle (2x/week optimal for hypertrophy)'
+        }
+    };
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>🏋️ Select Your Workout Day</h3>
+                <button class="close-btn" onclick="document.getElementById('workoutDayModal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #9ca3af; margin-bottom: 20px; font-size: 14px;">
+                    Choose your training split. Each template is optimized based on research and your historical workout data.
+                </p>
+                
+                ${Object.entries(workoutDays).map(([day, info]) => `
+                    <div class="workout-day-option" onclick="selectWorkoutDay('${day}')" 
+                         style="background: #1f2937; border: 2px solid #374151; border-radius: 12px; padding: 16px; margin: 12px 0; cursor: pointer; transition: all 0.2s;"
+                         onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='#374151'">
+                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 24px; margin-right: 12px;">${info.icon}</span>
+                            <div>
+                                <h4 style="margin: 0; color: white; font-size: 16px;">${day} Day</h4>
+                                <p style="margin: 4px 0 0 0; color: #9ca3af; font-size: 13px;">${info.description}</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 12px 0;">
+                            <p style="font-size: 12px; color: #60a5fa; margin: 0 0 8px 0; font-weight: 600;">
+                                📋 Complete Workout Sequence:
+                            </p>
+                            <div style="max-height: 200px; overflow-y: auto; background: #0f172a; border-radius: 6px; padding: 8px;">
+                                ${info.exercises.map((ex, idx) => `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; margin: 2px 0; font-size: 11px; color: #d1d5db; background: ${idx < 3 ? '#1e40af' : '#374151'}; border-radius: 4px;">
+                                        <span style="font-weight: ${idx < 3 ? '600' : '400'};">
+                                            ${idx + 1}. ${ex.name}
+                                            ${idx < 3 ? ' 🔥' : ''}
+                                        </span>
+                                        <span style="color: #9ca3af; font-size: 10px;">
+                                            ${ex.sets} × ${ex.reps}
+                                        </span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <p style="font-size: 10px; color: #60a5fa; margin: 8px 0 0 0; font-style: italic;">
+                                🔥 Priority exercises (compounds first for max strength gains)
+                            </p>
+                        </div>
+                        
+                        <p style="font-size: 11px; color: #f59e0b; margin: 8px 0 0 0; font-style: italic;">
+                            💡 ${info.research}
+                        </p>
+                    </div>
+                `).join('')}
+                
+                <div style="margin: 20px 0; padding: 12px; background: #0f172a; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+                        <strong style="color: #60a5fa;">📚 Research Note:</strong> Exercise order matters! Compound movements first maximize strength gains, 
+                        while isolation exercises target specific muscle heads for complete development.
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function selectWorkoutDay(dayType) {
+    console.log(`🎯 Selected ${dayType} workout day`);
+    
+    // Close modal
+    const modal = document.getElementById('workoutDayModal');
+    if (modal) modal.remove();
+    
+    // Initialize workout with selected day
+    initializeWorkoutWithDay(dayType);
+}
+
+function initializeWorkoutWithDay(dayType) {
+    // Create workout object
     HyperTrack.state.currentWorkout = {
         id: Date.now(),
         date: new Date().toISOString().split('T')[0],
         startTime: new Date().toISOString(),
-        exercises: []
+        exercises: [],
+        workoutDay: dayType,
+        recommendedExercises: getRecommendedExercises(dayType),
+        currentExerciseIndex: 0
     };
     
     // Start workout timer
     startWorkoutTimer();
     
     updateUI();
-    showNotification('Workout started! Select an exercise to begin.', 'success');
+    showWorkoutRecommendations();
+    showNotification(`${dayType} workout started! Following research-based exercise sequence.`, 'success');
+    
+    // Show missed muscle groups warning after a brief delay
+    setTimeout(() => {
+        showMissedMuscleGroupsWarning(dayType);
+    }, 1000);
+}
+
+// HYBRID VOLUME PREDICTION SYSTEM
+function detectTrainingPattern(workouts) {
+    console.log('🔍 Detecting training patterns...');
+    
+    // Analyze last 4 weeks of training
+    const fourWeeksAgo = new Date();
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    
+    const recentWorkouts = workouts.filter(w => 
+        new Date(w.date || w.workout_date) >= fourWeeksAgo
+    );
+    
+    const muscleTrainingDays = {};
+    
+    // Group workouts by muscle and calculate intervals
+    recentWorkouts.forEach(workout => {
+        const workoutDate = new Date(workout.date || workout.workout_date);
+        
+        workout.exercises?.forEach(exercise => {
+            const muscle = exercise.muscle_group;
+            if (!muscleTrainingDays[muscle]) muscleTrainingDays[muscle] = [];
+            
+            // Avoid duplicates on same day
+            const dateStr = workoutDate.toDateString();
+            if (!muscleTrainingDays[muscle].some(d => d.toDateString() === dateStr)) {
+                muscleTrainingDays[muscle].push(workoutDate);
+            }
+        });
+    });
+    
+    // Calculate average intervals for each muscle
+    const patterns = {};
+    Object.entries(muscleTrainingDays).forEach(([muscle, dates]) => {
+        if (dates.length < 2) {
+            patterns[muscle] = { avgInterval: 7, confidence: 'low', lastTrained: dates[0] || null };
+            return;
+        }
+        
+        dates.sort((a, b) => a - b);
+        const intervals = [];
+        
+        for (let i = 1; i < dates.length; i++) {
+            const daysBetween = Math.round((dates[i] - dates[i-1]) / (1000 * 60 * 60 * 24));
+            intervals.push(daysBetween);
+        }
+        
+        const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+        const consistency = intervals.every(i => Math.abs(i - avgInterval) <= 2);
+        
+        patterns[muscle] = {
+            avgInterval: Math.round(avgInterval),
+            confidence: consistency ? 'high' : 'medium',
+            lastTrained: dates[dates.length - 1],
+            intervals: intervals
+        };
+    });
+    
+    return patterns;
+}
+
+function getDaysSinceLastTrained(workouts) {
+    const today = new Date();
+    const daysSince = {};
+    
+    // Initialize all muscles
+    const allMuscles = ['Horizontal Push', 'Vertical Push', 'Horizontal Pull', 'Vertical Pull', 
+                      'Side Delts', 'Rear Delts', 'Biceps', 'Triceps', 'Traps', 'Abs'];
+    
+    allMuscles.forEach(muscle => {
+        daysSince[muscle] = 999; // Default to very high number
+    });
+    
+    // Find most recent training for each muscle
+    workouts.forEach(workout => {
+        const workoutDate = new Date(workout.date || workout.workout_date);
+        const daysAgo = Math.round((today - workoutDate) / (1000 * 60 * 60 * 24));
+        
+        workout.exercises?.forEach(exercise => {
+            const muscle = exercise.muscle_group;
+            if (daysSince[muscle] > daysAgo) {
+                daysSince[muscle] = daysAgo;
+            }
+        });
+    });
+    
+    return daysSince;
+}
+
+function getExpiringVolume(workouts, weeklyVolumeWithTargets) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfterTomorrow = new Date();
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+    
+    const expiring = {};
+    
+    workouts.forEach(workout => {
+        const workoutDate = new Date(workout.date || workout.workout_date);
+        
+        // Check if this workout will expire in next 1-2 days
+        if (workoutDate < tomorrow && workoutDate >= dayAfterTomorrow) {
+            workout.exercises?.forEach(exercise => {
+                const muscle = exercise.muscle_group;
+                const sets = exercise.sets?.length || 0;
+                
+                if (!expiring[muscle]) expiring[muscle] = 0;
+                expiring[muscle] += sets;
+            });
+        }
+    });
+    
+    // Only include muscles that are below threshold AND have expiring volume
+    const relevantExpiring = {};
+    Object.entries(expiring).forEach(([muscle, expiringSets]) => {
+        const currentData = weeklyVolumeWithTargets[muscle];
+        if (currentData && currentData.current < currentData.mev) {
+            relevantExpiring[muscle] = {
+                expiringSets: expiringSets,
+                currentTotal: currentData.current,
+                target: currentData.mev,
+                wouldBeAtAfterExpiry: currentData.current - expiringSets
+            };
+        }
+    });
+    
+    return relevantExpiring;
+}
+
+function showMissedMuscleGroupsWarning(selectedDayType) {
+    console.log('🔍 Running hybrid volume analysis...');
+    
+    const workouts = HyperTrack.state.workouts;
+    const weeklyVolumeWithTargets = getWeeklyVolumeWithTargets(workouts);
+    const selectedDayMuscles = getMuscleCoverageForDay(selectedDayType);
+    
+    // Run all three analyses
+    const trainingPatterns = detectTrainingPattern(workouts);
+    const daysSinceLastTrained = getDaysSinceLastTrained(workouts);
+    const expiringVolume = getExpiringVolume(workouts, weeklyVolumeWithTargets);
+    
+    // Smart recommendations based on all three factors
+    const recommendations = [];
+    
+    Object.entries(weeklyVolumeWithTargets).forEach(([muscle, data]) => {
+        // Skip if this muscle is covered by selected day
+        if (selectedDayMuscles.includes(muscle)) return;
+        
+        const pattern = trainingPatterns[muscle];
+        const daysSince = daysSinceLastTrained[muscle];
+        const expiring = expiringVolume[muscle];
+        
+        let recommendation = null;
+        let priority = 'low';
+        let reason = '';
+        
+        // Scenario 1: Expiring volume + below threshold
+        if (expiring && expiring.wouldBeAtAfterExpiry < data.mev) {
+            recommendation = {
+                muscle,
+                type: 'expiring_volume',
+                reason: `${expiring.expiringSets} sets expire tomorrow. You'll drop to ${expiring.wouldBeAtAfterExpiry}/${data.mev} sets.`,
+                deficit: data.mev - expiring.wouldBeAtAfterExpiry,
+                priority: 'high'
+            };
+        }
+        // Scenario 3: Days since last trained (7+ days = critical)
+        else if (daysSince >= 7) {
+            recommendation = {
+                muscle,
+                type: 'long_gap',
+                reason: `${daysSince} days since last trained. Max recommended gap: 7 days.`,
+                deficit: data.mev - data.current,
+                priority: 'high'
+            };
+        }
+        // Scenario 2: Pattern-based prediction
+        else if (pattern && pattern.confidence !== 'low') {
+            const daysSincePattern = daysSince;
+            const nextLikelyDay = pattern.avgInterval - daysSincePattern;
+            
+            if (nextLikelyDay <= 0 || nextLikelyDay >= 4) {
+                recommendation = {
+                    muscle,
+                    type: 'pattern_based',
+                    reason: `Pattern: train every ${pattern.avgInterval} days. Last trained ${daysSincePattern} days ago. Next session likely ${nextLikelyDay <= 0 ? 'overdue' : `in ${nextLikelyDay}+ days`}.`,
+                    deficit: data.mev - data.current,
+                    priority: data.current === 0 ? 'medium' : 'low'
+                };
+            }
+        }
+        // Basic volume check
+        else if (data.current < data.mev) {
+            recommendation = {
+                muscle,
+                type: 'low_volume',
+                reason: `Below weekly target: ${data.current}/${data.mev} sets.`,
+                deficit: data.deficit,
+                priority: data.current === 0 ? 'medium' : 'low'
+            };
+        }
+        
+        if (recommendation) {
+            recommendations.push({
+                ...recommendation,
+                exercises: getExercisesForMuscle(muscle)
+            });
+        }
+    });
+    
+    // Only show if we have meaningful recommendations
+    if (recommendations.length === 0) {
+        console.log('✅ No volume concerns detected');
+        return;
+    }
+    
+    // Sort by priority
+    recommendations.sort((a, b) => {
+        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+        return priorityOrder[b.priority] - priorityOrder[a.priority];
+    });
+    
+    // Create warning modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.id = 'hybridVolumeWarningModal';
+    
+    const highPriority = recommendations.filter(r => r.priority === 'high');
+    const mediumPriority = recommendations.filter(r => r.priority === 'medium');
+    const lowPriority = recommendations.filter(r => r.priority === 'low');
+    
+    let warningHTML = `
+        <div class="modal-content" style="max-width: 580px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>🧠 Smart Volume Analysis</h3>
+                <button class="close-btn" onclick="document.getElementById('hybridVolumeWarningModal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #9ca3af; margin-bottom: 20px; font-size: 14px;">
+                    AI-powered recommendations based on your training patterns, weekly goals, and data trends:
+                </p>
+    `;
+    
+    // High Priority Recommendations
+    if (highPriority.length > 0) {
+        warningHTML += `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #dc2626; margin: 0 0 12px 0;">🚨 Critical (Take Action Today)</h4>
+                ${highPriority.map(rec => `
+                    <div style="background: #1f2937; border-radius: 8px; padding: 14px; margin: 10px 0; border-left: 4px solid #dc2626;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600; color: white;">${rec.muscle}</span>
+                            <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 11px; color: #dc2626; text-transform: uppercase;">
+                                ${rec.type.replace('_', ' ')}
+                            </span>
+                        </div>
+                        <p style="font-size: 12px; color: #fca5a5; margin: 0 0 8px 0; font-weight: 500;">
+                            ${rec.reason}
+                        </p>
+                        <p style="font-size: 11px; color: #9ca3af; margin: 0 0 10px 0;">
+                            Recommended: ${rec.exercises.slice(0, 2).join(', ')}
+                        </p>
+                        <button onclick="addMuscleGroupToCurrentWorkout('${rec.muscle}', ${JSON.stringify(rec.exercises).replace(/"/g, '&quot;')})" 
+                                style="background: #dc2626; color: white; border: none; padding: 7px 14px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600;">
+                            Add ${rec.deficit} Sets to ${selectedDayType}
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Medium Priority Recommendations  
+    if (mediumPriority.length > 0) {
+        warningHTML += `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #f59e0b; margin: 0 0 12px 0;">⚠️ Moderate Priority</h4>
+                ${mediumPriority.map(rec => `
+                    <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #f59e0b;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-weight: 600; color: white;">${rec.muscle}</span>
+                            <span style="background: #374151; padding: 3px 6px; border-radius: 10px; font-size: 10px; color: #fbbf24; text-transform: uppercase;">
+                                ${rec.type.replace('_', ' ')}
+                            </span>
+                        </div>
+                        <p style="font-size: 11px; color: #fbbf24; margin: 0 0 6px 0;">
+                            ${rec.reason}
+                        </p>
+                        <button onclick="addMuscleGroupToCurrentWorkout('${rec.muscle}', ${JSON.stringify(rec.exercises).replace(/"/g, '&quot;')})" 
+                                style="background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 5px; font-size: 10px; cursor: pointer;">
+                            Add ${rec.deficit} Sets
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Low Priority Recommendations
+    if (lowPriority.length > 0) {
+        warningHTML += `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #6b7280; margin: 0 0 12px 0;">💡 Optional Additions</h4>
+                ${lowPriority.map(rec => `
+                    <div style="background: #1f2937; border-radius: 8px; padding: 10px; margin: 6px 0; border-left: 3px solid #6b7280;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-weight: 500; color: #d1d5db;">${rec.muscle}</span>
+                            <span style="background: #374151; padding: 2px 5px; border-radius: 8px; font-size: 9px; color: #9ca3af; text-transform: uppercase;">
+                                ${rec.type.replace('_', ' ')}
+                            </span>
+                        </div>
+                        <p style="font-size: 10px; color: #9ca3af; margin: 0 0 6px 0;">
+                            ${rec.reason}
+                        </p>
+                        <button onclick="addMuscleGroupToCurrentWorkout('${rec.muscle}', ${JSON.stringify(rec.exercises).replace(/"/g, '&quot;')})" 
+                                style="background: #6b7280; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 9px; cursor: pointer;">
+                            Add
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    warningHTML += `
+        <div style="background: #0f172a; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+            <h5 style="margin: 0 0 8px 0; color: #60a5fa;">🎯 Action Options</h5>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                <button onclick="document.getElementById('hybridVolumeWarningModal').remove();" 
+                        style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">
+                    Continue ${selectedDayType} Only
+                </button>
+                <button onclick="document.getElementById('hybridVolumeWarningModal').remove();" 
+                        style="background: #374151; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                    I'll Plan These Later
+                </button>
+            </div>
+        </div>
+        
+        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 16px 0; border: 1px solid #374151;">
+            <p style="font-size: 11px; color: #9ca3af; margin: 0; font-style: italic;">
+                <strong>AI Analysis:</strong> Using pattern detection (4-week history), days-since-training tracking, and expiring volume calculations for personalized recommendations.
+            </p>
+        </div>
+        
+            </div>
+        </div>
+    `;
+    
+    modal.innerHTML = warningHTML;
+    document.body.appendChild(modal);
+    
+    console.log(`🧠 Hybrid analysis complete: ${highPriority.length} critical, ${mediumPriority.length} moderate, ${lowPriority.length} optional`);
+}
+
+function getMuscleCoverageForDay(dayType) {
+    const muscleCoverage = {
+        'Push': ['Horizontal Push', 'Vertical Push', 'Side Delts', 'Triceps'],
+        'Pull': ['Horizontal Pull', 'Vertical Pull', 'Rear Delts', 'Biceps', 'Traps'],
+        'Shoulders': ['Side Delts', 'Rear Delts', 'Traps'],
+        'Upper/Lower': ['Horizontal Push', 'Vertical Pull', 'Side Delts', 'Horizontal Pull', 'Triceps', 'Biceps']
+    };
+    
+    return muscleCoverage[dayType] || [];
+}
+
+function getExercisesForMuscle(muscleGroup) {
+    const exerciseMap = {
+        'Horizontal Push': ['Smith Machine Bench Press', 'Incline Dumbbell Press', 'Bodyweight Dips'],
+        'Vertical Push': ['Overhead Press', 'Dumbbell Shoulder Press'],
+        'Horizontal Pull': ['Smith Machine Rows', 'Cable Rows', 'T-Bar Rows'],
+        'Vertical Pull': ['Lat Pulldowns', 'Pull-ups', 'Cable Pulldowns'],
+        'Side Delts': ['Dumbbell Lateral Raises', 'Cable Lateral Raises'],
+        'Rear Delts': ['Face Pulls', 'Dumbbell Reverse Flyes', 'Cable External Rotations'],
+        'Biceps': ['Dumbbell Bicep Curls', 'Cable Hammer Curls', 'EZ Bar Curls'],
+        'Triceps': ['Close-Grip Smith Machine Press', 'Tricep Cable Rope Pulldowns', 'Overhead Extensions'],
+        'Traps': ['Smith Machine Barbell Shrugs', 'Dumbbell Shrugs'],
+        'Abs': ['Cable Crunch Machine', 'Planks', 'Russian Twists']
+    };
+    
+    return exerciseMap[muscleGroup] || [];
+}
+
+function addMuscleGroupToCurrentWorkout(muscleGroup, exerciseList) {
+    console.log(`➕ Adding ${muscleGroup} exercises to current workout`);
+    
+    // Close the warning modal
+    const modal = document.getElementById('missedMuscleWarningModal');
+    if (modal) modal.remove();
+    
+    // Add exercises to the recommended list
+    if (HyperTrack.state.currentWorkout && HyperTrack.state.currentWorkout.recommendedExercises) {
+        const newExercises = exerciseList.slice(0, 2).map((name, index) => ({
+            name: name,
+            priority: HyperTrack.state.currentWorkout.recommendedExercises.length + index + 1,
+            type: 'Isolation',
+            sets: '3',
+            reps: '10-15',
+            muscle_group: muscleGroup
+        }));
+        
+        HyperTrack.state.currentWorkout.recommendedExercises.push(...newExercises);
+        
+        // Update the recommendations panel
+        updateRecommendationsPanel();
+        
+        showNotification(`Added ${muscleGroup} exercises to your workout plan!`, 'success');
+    }
+}
+
+function getRecommendedExercises(dayType) {
+    const workoutTemplates = {
+        'Push': [
+            { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10', muscle_group: 'Horizontal Push' },
+            { name: 'Incline Dumbbell Press', priority: 2, type: 'Compound', sets: '3', reps: '8-12', muscle_group: 'Horizontal Push' },
+            { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3-4', reps: '12-20', muscle_group: 'Side Delts' },
+            { name: 'Bodyweight Dips', priority: 4, type: 'Compound', sets: '3', reps: '6-12', muscle_group: 'Horizontal Push' },
+            { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12', muscle_group: 'Triceps' },
+            { name: 'Tricep Cable Rope Pulldowns', priority: 6, type: 'Isolation', sets: '3', reps: '10-15', muscle_group: 'Triceps' }
+        ],
+        'Pull': [
+            { name: 'Lat Pulldowns', priority: 1, type: 'Compound', sets: '3-4', reps: '8-12', muscle_group: 'Vertical Pull' },
+            { name: 'Smith Machine Rows', priority: 2, type: 'Compound', sets: '3', reps: '6-10', muscle_group: 'Horizontal Pull' },
+            { name: 'Face Pulls', priority: 3, type: 'Isolation', sets: '3', reps: '12-16', muscle_group: 'Rear Delts' },
+            { name: 'Dumbbell Bicep Curls', priority: 4, type: 'Isolation', sets: '3', reps: '8-12', muscle_group: 'Biceps' },
+            { name: 'Cable Hammer Curls', priority: 5, type: 'Isolation', sets: '3', reps: '10-14', muscle_group: 'Biceps' },
+            { name: 'Reverse Grip EZ Bar Curl', priority: 6, type: 'Isolation', sets: '3', reps: '10-15', muscle_group: 'Biceps' }
+        ],
+        'Legs': [
+            { name: 'Back Squats', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10', muscle_group: 'Quads' },
+            { name: 'Romanian Deadlifts', priority: 2, type: 'Compound', sets: '3', reps: '8-12', muscle_group: 'Hamstrings' },
+            { name: 'Bulgarian Split Squats', priority: 3, type: 'Compound', sets: '3', reps: '8-12', muscle_group: 'Quads' },
+            { name: 'Leg Curls', priority: 4, type: 'Isolation', sets: '3', reps: '10-15', muscle_group: 'Hamstrings' },
+            { name: 'Calf Raises', priority: 5, type: 'Isolation', sets: '4', reps: '15-20', muscle_group: 'Calves' },
+            { name: 'Leg Extensions', priority: 6, type: 'Isolation', sets: '3', reps: '12-15', muscle_group: 'Quads' }
+        ],
+        'Shoulders': [
+            { name: 'Dumbbell Lateral Raises', priority: 1, type: 'Isolation', sets: '4', reps: '12-20', muscle_group: 'Side Delts' },
+            { name: 'Smith Machine Barbell Shrugs', priority: 2, type: 'Isolation', sets: '4', reps: '10-18', muscle_group: 'Traps' },
+            { name: 'Cable Lateral Raises', priority: 3, type: 'Isolation', sets: '3', reps: '15-20', muscle_group: 'Side Delts' },
+            { name: 'Dumbbell Reverse Flyes', priority: 4, type: 'Isolation', sets: '3', reps: '12-16', muscle_group: 'Rear Delts' },
+            { name: 'EZ Bar Upright Rows', priority: 5, type: 'Compound', sets: '3', reps: '12-15', muscle_group: 'Side Delts' },
+            { name: 'Cable External Rotations', priority: 6, type: 'Isolation', sets: '2-3', reps: '12-15', muscle_group: 'Rear Delts' }
+        ],
+        'Upper/Lower': [
+            { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10', muscle_group: 'Horizontal Push' },
+            { name: 'Lat Pulldowns', priority: 2, type: 'Compound', sets: '3-4', reps: '8-12', muscle_group: 'Vertical Pull' },
+            { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3', reps: '12-20', muscle_group: 'Side Delts' },
+            { name: 'Smith Machine Rows', priority: 4, type: 'Compound', sets: '3', reps: '8-12', muscle_group: 'Horizontal Pull' },
+            { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12', muscle_group: 'Triceps' },
+            { name: 'Dumbbell Bicep Curls', priority: 6, type: 'Isolation', sets: '3', reps: '10-14', muscle_group: 'Biceps' }
+        ]
+    };
+    
+    return workoutTemplates[dayType] || [];
+}
+
+function showWorkoutRecommendations() {
+    const currentWorkout = HyperTrack.state.currentWorkout;
+    if (!currentWorkout || !currentWorkout.recommendedExercises) return;
+    
+    const exerciseSelection = document.getElementById('exerciseSelection');
+    const startWorkoutSection = document.getElementById('startWorkout');
+    
+    if (exerciseSelection && startWorkoutSection) {
+        startWorkoutSection.style.display = 'none';
+        exerciseSelection.style.display = 'block';
+        
+        // Create recommendations panel
+        const recommendationsPanel = document.createElement('div');
+        recommendationsPanel.id = 'workoutRecommendations';
+        recommendationsPanel.style.cssText = 'background: #0f172a; border-radius: 12px; padding: 16px; margin: 0 0 20px 0; border: 2px solid #1e40af;';
+        
+        updateRecommendationsPanel(recommendationsPanel);
+        
+        // Insert at the top of exercise selection
+        exerciseSelection.insertBefore(recommendationsPanel, exerciseSelection.firstChild);
+    }
+}
+
+function updateRecommendationsPanel(panel = null) {
+    const targetPanel = panel || document.getElementById('workoutRecommendations');
+    if (!targetPanel) return;
+    
+    const currentWorkout = HyperTrack.state.currentWorkout;
+    const completed = currentWorkout.exercises.map(ex => ex.name);
+    const remaining = currentWorkout.recommendedExercises.filter(ex => !completed.includes(ex.name));
+    const next = remaining[0];
+    
+    targetPanel.innerHTML = `
+        <h4 style="margin: 0 0 12px 0; color: #60a5fa; display: flex; align-items: center;">
+            <span style="margin-right: 8px;">🎯</span> 
+            ${currentWorkout.workoutDay} Workout Plan
+        </h4>
+        
+        ${next ? `
+            <div style="background: #1e40af; border-radius: 8px; padding: 12px; margin: 12px 0; border-left: 4px solid #3b82f6;">
+                <p style="margin: 0 0 8px 0; color: white; font-weight: 600;">
+                    ⭐ Next Recommended: ${next.name}
+                </p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px; color: #93c5fd;">
+                        ${next.type} • ${next.sets} sets • ${next.reps} reps
+                    </span>
+                    <button onclick="selectExercise('${next.name}', '${next.muscle_group}', '${next.type}')" 
+                            style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                        Start This Exercise
+                    </button>
+                </div>
+            </div>
+        ` : ''}
+        
+        <div style="margin: 12px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 13px; color: #9ca3af;">Progress:</span>
+                <span style="font-size: 13px; color: #60a5fa;">${completed.length}/${currentWorkout.recommendedExercises.length}</span>
+            </div>
+            <div style="background: #374151; border-radius: 8px; height: 6px; overflow: hidden;">
+                <div style="background: linear-gradient(90deg, #3b82f6, #1e40af); height: 100%; width: ${(completed.length / currentWorkout.recommendedExercises.length) * 100}%; transition: width 0.5s;"></div>
+            </div>
+        </div>
+        
+        <div style="margin: 12px 0;">
+            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">Remaining exercises:</p>
+            ${remaining.slice(0, 3).map((ex, idx) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #374151;">
+                    <span style="font-size: 11px; color: #d1d5db;">${idx + 1}. ${ex.name}</span>
+                    <span style="font-size: 10px; color: #9ca3af;">${ex.sets} × ${ex.reps}</span>
+                </div>
+            `).join('')}
+            ${remaining.length > 3 ? `<p style="font-size: 10px; color: #6b7280; margin: 8px 0 0 0;">+ ${remaining.length - 3} more...</p>` : ''}
+        </div>
+        
+        <p style="font-size: 11px; color: #f59e0b; margin: 8px 0 0 0; font-style: italic;">
+            💡 Following this order maximizes strength gains and muscle development
+        </p>
+    `;
 }
 
 async function finishWorkout() {
@@ -909,9 +987,137 @@ async function finishWorkout() {
         
         const duration = Math.round(workout.duration / 60000);
         showNotification(`Workout completed! ${workout.exercises.length} exercises • ${duration} minutes`, 'success');
+        
+        // Show weekly volume recommendations after workout completion
+        setTimeout(() => {
+            showPostWorkoutVolumeRecommendations();
+        }, 1500); // Wait 1.5 seconds after completion notification
+        
     } else {
         showNotification(`Error saving workout: ${result.error}`, 'error');
     }
+}
+
+function showPostWorkoutVolumeRecommendations() {
+    console.log('📊 Analyzing weekly volume targets after workout...');
+    
+    const weeklyVolumeWithTargets = getWeeklyVolumeWithTargets(HyperTrack.state.workouts);
+    
+    // Find muscle groups that need attention
+    const needAttention = [];
+    const untrained = [];
+    
+    Object.entries(weeklyVolumeWithTargets).forEach(([muscle, data]) => {
+        if (data.current === 0) {
+            untrained.push({ muscle, data });
+        } else if (data.current < data.mev) {
+            needAttention.push({ muscle, data });
+        }
+    });
+    
+    // Only show recommendations if there are muscles that need attention
+    if (needAttention.length === 0 && untrained.length === 0) {
+        console.log('✅ All muscle groups meeting weekly targets');
+        return;
+    }
+    
+    // Create modal for recommendations
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.id = 'postWorkoutRecommendationsModal';
+    
+    let recommendationsHTML = `
+        <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>📊 Weekly Volume Check</h3>
+                <button class="close-btn" onclick="document.getElementById('postWorkoutRecommendationsModal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #9ca3af; margin-bottom: 20px; font-size: 14px;">
+                    Based on your weekly training, here are muscle groups that need more attention to meet research-based growth targets.
+                </p>
+    `;
+    
+    // Untrained muscles
+    if (untrained.length > 0) {
+        recommendationsHTML += `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #dc2626; margin: 0 0 12px 0;">🚨 Untrained This Week (0 Sets)</h4>
+                ${untrained.map(({ muscle, data }) => `
+                    <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #dc2626;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600; color: white;">${muscle}</span>
+                            <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; color: #dc2626;">
+                                0/${data.mev} sets needed
+                            </span>
+                        </div>
+                        <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+                            Add ${data.mev} sets this week for minimum effective volume
+                        </p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Muscles needing more volume
+    if (needAttention.length > 0) {
+        recommendationsHTML += `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #f59e0b; margin: 0 0 12px 0;">⚠️ Below Target Volume</h4>
+                ${needAttention.map(({ muscle, data }) => `
+                    <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #f59e0b;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600; color: white;">${muscle}</span>
+                            <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; color: #f59e0b;">
+                                ${data.current}/${data.mev} sets
+                            </span>
+                        </div>
+                        <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+                            Add ${data.deficit} more sets this week for optimal growth
+                        </p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Action recommendations
+    const totalDeficit = [...untrained, ...needAttention].reduce((sum, { data }) => sum + data.deficit, 0);
+    
+    recommendationsHTML += `
+        <div style="background: #0f172a; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+            <h5 style="margin: 0 0 8px 0; color: #60a5fa;">💡 Action Plan</h5>
+            <p style="font-size: 13px; color: #d1d5db; margin: 0 0 12px 0;">
+                You need <strong>${totalDeficit} more sets</strong> this week to meet evidence-based volume targets.
+            </p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button onclick="document.getElementById('postWorkoutRecommendationsModal').remove(); switchTab('workout');" 
+                        style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                    Plan Next Workout
+                </button>
+                <button onclick="document.getElementById('postWorkoutRecommendationsModal').remove(); switchTab('analytics');" 
+                        style="background: #374151; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                    View Analytics
+                </button>
+            </div>
+        </div>
+        
+        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 16px 0; border: 1px solid #374151;">
+            <p style="font-size: 11px; color: #9ca3af; margin: 0; font-style: italic;">
+                <strong>Research Note:</strong> Training each muscle group 2x per week with 10-20 sets total is optimal for hypertrophy in intermediate lifters.
+            </p>
+        </div>
+        
+            </div>
+        </div>
+    `;
+    
+    modal.innerHTML = recommendationsHTML;
+    document.body.appendChild(modal);
+    
+    console.log(`📊 Showed post-workout recommendations: ${totalDeficit} sets needed`);
 }
 
 function selectExercise(exerciseName, muscleGroup, category) {
@@ -1164,6 +1370,9 @@ function finishExercise() {
     closeExerciseModal();
     updateUI();
     saveAppData();
+    
+    // Update workout recommendations panel
+    updateRecommendationsPanel();
     
     // Generate evidence-based recommendations and start rest timer between exercises
     const betweenExerciseRest = 180; // 3 minutes between exercises (research-based)
@@ -1535,8 +1744,8 @@ function updateAnalyticsDisplay() {
     document.getElementById('avgDuration').textContent = Math.round(avgDuration);
     
     // Generate weekly volume recommendations by muscle group
-    const weeklyVolume = calculateWeeklyVolume(workouts);
-    displayVolumeRecommendations(weeklyVolume);
+    const weeklyVolumeWithTargets = getWeeklyVolumeWithTargets(workouts);
+    displayVolumeRecommendations(weeklyVolumeWithTargets);
 }
 
 function calculateWeeklyVolume(workouts) {
@@ -1547,35 +1756,198 @@ function calculateWeeklyVolume(workouts) {
         new Date(workout.date || workout.workout_date) >= oneWeekAgo
     );
     
-    const volumeByMuscle = {};
+    // Initialize all major muscle groups to 0 (excluding legs as requested)
+    const volumeByMuscle = {
+        'Horizontal Push': 0,
+        'Vertical Push': 0,
+        'Horizontal Pull': 0,
+        'Vertical Pull': 0,
+        'Side Delts': 0,
+        'Rear Delts': 0,
+        'Biceps': 0,
+        'Triceps': 0,
+        'Traps': 0,
+        'Abs': 0
+    };
     
+    // Add actual volume from workouts
     recentWorkouts.forEach(workout => {
         workout.exercises?.forEach(exercise => {
             const muscle = exercise.muscle_group;
-            if (!volumeByMuscle[muscle]) volumeByMuscle[muscle] = 0;
-            volumeByMuscle[muscle] += exercise.sets?.length || 0;
+            if (volumeByMuscle.hasOwnProperty(muscle)) {
+                volumeByMuscle[muscle] += exercise.sets?.length || 0;
+            } else if (muscle) {
+                // Handle any muscle groups not in our standard list
+                volumeByMuscle[muscle] = (volumeByMuscle[muscle] || 0) + (exercise.sets?.length || 0);
+            }
         });
     });
     
     return volumeByMuscle;
 }
 
-function displayVolumeRecommendations(weeklyVolume) {
+function getWeeklyVolumeWithTargets(workouts) {
+    const volumeByMuscle = calculateWeeklyVolume(workouts);
+    const { settings } = HyperTrack.state;
+    
+    // Get targets based on training level
+    let mev, optimalMin, optimalMax;
+    if (settings.trainingLevel === 'novice') {
+        mev = 8; optimalMin = 10; optimalMax = 16;
+    } else if (settings.trainingLevel === 'advanced') {
+        mev = 12; optimalMin = 16; optimalMax = 24;
+    } else {
+        mev = 10; optimalMin = 14; optimalMax = 20; // intermediate
+    }
+    
+    const volumeWithTargets = {};
+    
+    Object.entries(volumeByMuscle).forEach(([muscle, volume]) => {
+        const recommendation = generateVolumeRecommendation(muscle, volume);
+        volumeWithTargets[muscle] = {
+            current: volume,
+            mev: mev,
+            optimalMin: optimalMin,
+            optimalMax: optimalMax,
+            deficit: Math.max(0, mev - volume),
+            recommendation: recommendation
+        };
+    });
+    
+    return volumeWithTargets;
+}
+
+function displayVolumeRecommendations(weeklyVolumeWithTargets) {
     const progressSection = document.querySelector('.progress-section');
     if (!progressSection) return;
     
-    let recommendationsHTML = '<h4>Weekly Volume Analysis (Evidence-Based)</h4>';
+    // Check if we have any volume data
+    const hasData = Object.values(weeklyVolumeWithTargets).some(data => data.current > 0);
     
-    Object.entries(weeklyVolume).forEach(([muscle, volume]) => {
-        const recommendation = generateVolumeRecommendation(muscle, volume);
+    let recommendationsHTML = `
+        <h4>📊 Weekly Volume Analysis (Evidence-Based)</h4>
+        <p style="font-size: 13px; color: #9ca3af; margin-bottom: 16px;">
+            Based on ${hasData ? 'your last 7 days' : 'complete your first workout to see'} training data
+        </p>
+    `;
+    
+    if (!hasData) {
         recommendationsHTML += `
-            <div style="display: flex; justify-content: space-between; padding: 8px; margin: 4px 0; background: #374151; border-radius: 6px; border-left: 4px solid ${recommendation.color};">
-                <span>${muscle}</span>
-                <span>${volume} sets</span>
+            <div style="text-align: center; padding: 24px; background: #1f2937; border-radius: 8px; border: 2px dashed #374151;">
+                <p style="color: #6b7280; margin: 0;">💪 Start your first workout to see personalized volume recommendations</p>
             </div>
-            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">${recommendation.message}</p>
         `;
-    });
+    } else {
+        // Get priority muscles (those needing attention)
+        const priorityMuscles = [];
+        const optimalMuscles = [];
+        const excessiveMuscles = [];
+        const untouchedMuscles = [];
+        
+        Object.entries(weeklyVolumeWithTargets).forEach(([muscle, data]) => {
+            if (data.current === 0) {
+                untouchedMuscles.push({ muscle, data });
+            } else if (data.recommendation.status === 'low') {
+                priorityMuscles.push({ muscle, data });
+            } else if (data.recommendation.status === 'optimal') {
+                optimalMuscles.push({ muscle, data });
+            } else if (data.recommendation.status === 'high') {
+                excessiveMuscles.push({ muscle, data });
+            }
+        });
+        
+        // Untouched muscles (0 sets this week)
+        if (untouchedMuscles.length > 0) {
+            recommendationsHTML += `
+                <div style="margin-bottom: 16px;">
+                    <h5 style="color: #dc2626; margin: 0 0 8px 0;">🚨 Untrained This Week (0 Sets)</h5>
+                    ${untouchedMuscles.map(({ muscle, data }) => `
+                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #dc2626;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">${muscle}</span>
+                                <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">0/${data.mev} sets</span>
+                            </div>
+                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">Need ${data.mev} sets minimum for muscle growth</p>
+                            <button onclick="addMuscleToWorkout('${muscle}')" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                                + Add ${muscle} Exercise
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Priority muscles (need more volume)
+        if (priorityMuscles.length > 0) {
+            recommendationsHTML += `
+                <div style="margin-bottom: 16px;">
+                    <h5 style="color: #ef4444; margin: 0 0 8px 0;">⚠️ Priority Muscles (Need More Volume)</h5>
+                    ${priorityMuscles.map(({ muscle, data }) => `
+                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid ${data.recommendation.color};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">${muscle}</span>
+                                <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">${data.current}/${data.mev} sets</span>
+                            </div>
+                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">${data.recommendation.message}</p>
+                            <button onclick="addMuscleToWorkout('${muscle}')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                                + Add ${data.deficit} Sets
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Optimal muscles
+        if (optimalMuscles.length > 0) {
+            recommendationsHTML += `
+                <div style="margin-bottom: 16px;">
+                    <h5 style="color: #22c55e; margin: 0 0 8px 0;">✅ Optimal Volume</h5>
+                    ${optimalMuscles.map(({ muscle, data }) => `
+                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid ${data.recommendation.color};">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 600;">${muscle}</span>
+                                <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">${data.current} sets</span>
+                            </div>
+                            <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 0 0;">${data.recommendation.message}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Excessive muscles
+        if (excessiveMuscles.length > 0) {
+            recommendationsHTML += `
+                <div style="margin-bottom: 16px;">
+                    <h5 style="color: #f59e0b; margin: 0 0 8px 0;">⚠️ High Volume (Risk of Junk Volume)</h5>
+                    ${excessiveMuscles.map(({ muscle, data }) => `
+                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid ${data.recommendation.color};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">${muscle}</span>
+                                <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">${data.current} sets</span>
+                            </div>
+                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">${data.recommendation.message}</p>
+                            <p style="font-size: 11px; color: #f59e0b; margin: 0;">💡 Consider reducing volume or taking a deload week</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Weekly summary
+        const totalSets = Object.values(weeklyVolumeWithTargets).reduce((sum, data) => sum + data.current, 0);
+        const trainedMuscles = Object.values(weeklyVolumeWithTargets).filter(data => data.current > 0).length;
+        recommendationsHTML += `
+            <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 16px 0; border: 1px solid #374151;">
+                <h6 style="margin: 0 0 8px 0; color: #60a5fa;">📈 Weekly Summary</h6>
+                <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+                    Total weekly sets: <strong>${totalSets}</strong> | 
+                    Muscle groups trained: <strong>${trainedMuscles}</strong>/${Object.keys(weeklyVolumeWithTargets).length}
+                </p>
+            </div>
+        `;
+    }
     
     // Add recommendations to progress section
     const existingRecommendations = progressSection.querySelector('.volume-recommendations');
@@ -1587,6 +1959,48 @@ function displayVolumeRecommendations(weeklyVolume) {
         recommendationsDiv.innerHTML = recommendationsHTML;
         progressSection.appendChild(recommendationsDiv);
     }
+}
+
+// ANALYTICS FUNCTIONS
+function loadAnalytics() {
+    console.log('📊 Loading analytics...');
+    updateAnalyticsDisplay();
+}
+
+function addMuscleToWorkout(muscleGroup) {
+    console.log(`🎯 Adding ${muscleGroup} exercise to workout plan...`);
+    
+    // Switch to workout tab
+    switchTab('workout');
+    
+    // If no active workout, start one
+    if (!HyperTrack.state.currentWorkout) {
+        startWorkout();
+    }
+    
+    // Filter exercises for this muscle group
+    setTimeout(() => {
+        filterByMuscle(muscleGroup);
+        
+        // Show a helpful message
+        const exerciseSelection = document.getElementById('exerciseSelection');
+        if (exerciseSelection) {
+            const helpText = document.createElement('div');
+            helpText.style.cssText = 'background: #1f2937; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #ef4444;';
+            helpText.innerHTML = `
+                <p style="margin: 0; font-size: 14px; color: #ef4444; font-weight: 600;">
+                    💪 Adding ${muscleGroup} exercise to meet volume targets
+                </p>
+                <p style="margin: 4px 0 0 0; font-size: 12px; color: #9ca3af;">
+                    Select an exercise below to add it to your current workout
+                </p>
+            `;
+            exerciseSelection.insertBefore(helpText, exerciseSelection.firstChild);
+            
+            // Remove help text after 5 seconds
+            setTimeout(() => helpText.remove(), 5000);
+        }
+    }, 100);
 }
 
 function viewWorkoutDetails(workoutId) {
@@ -1757,12 +2171,25 @@ function saveAppData() {
         const data = {
             workouts: HyperTrack.state.workouts,
             settings: HyperTrack.state.settings,
-            currentWorkout: HyperTrack.state.currentWorkout
+            currentWorkout: HyperTrack.state.currentWorkout,
+            lastSaved: new Date().toISOString()
         };
         localStorage.setItem('hypertrackData', JSON.stringify(data));
+        
+        // Also save workouts separately for backup
+        localStorage.setItem('hypertrack_workouts', JSON.stringify(HyperTrack.state.workouts));
+        
         console.log('💾 Data saved to localStorage');
     } catch (error) {
         console.error('❌ Save error:', error);
+        // Try to clear some space and save again
+        try {
+            localStorage.removeItem('hypertrackData');
+            localStorage.setItem('hypertrackData', JSON.stringify(data));
+            console.log('💾 Data saved after cleanup');
+        } catch (retryError) {
+            console.error('❌ Critical save error:', retryError);
+        }
     }
 }
 
@@ -1930,11 +2357,33 @@ function stopWorkoutTimer() {
 
 function updateWorkoutTimerDisplay() {
     const timerElement = document.getElementById('workoutTime');
+    const currentWorkoutDiv = document.getElementById('currentWorkout');
+    
     if (timerElement && HyperTrack.state.workoutTimer.active) {
         const elapsed = HyperTrack.state.workoutTimer.elapsed;
         const minutes = Math.floor(elapsed / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
-        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        timerElement.textContent = timeString;
+        
+        // Ensure the current workout section is visible
+        if (currentWorkoutDiv && currentWorkoutDiv.style.display === 'none') {
+            console.log('⚠️ Timer running but currentWorkout div is hidden - fixing...');
+            currentWorkoutDiv.style.display = 'block';
+        }
+        
+        // Debug logging every 30 seconds
+        if (seconds % 30 === 0 && seconds !== 0) {
+            console.log(`⏱️ Workout timer: ${timeString} (element visible: ${timerElement.offsetWidth > 0})`);
+        }
+    } else {
+        // Debug when timer should be running but isn't
+        if (HyperTrack.state.currentWorkout && !timerElement) {
+            console.log('❌ Timer element not found but workout is active');
+        } else if (HyperTrack.state.currentWorkout && !HyperTrack.state.workoutTimer.active) {
+            console.log('❌ Workout exists but timer not active');
+        }
     }
 }
 
@@ -2934,599 +3383,292 @@ window.testFinishExercise = function() {
     finishExercise();
 };
 
-// Authentication Functions
-function openAuthModal() {
-    document.getElementById('authModal').style.display = 'flex';
+// BACKGROUND TIMER PERSISTENCE FOR MOBILE
+function initializeBackgroundTimerPersistence() {
+    console.log('⏱️ Initializing background timer persistence...');
+    
+    // Save timer state when app goes to background
+    memoryManager.addEventListener(document, 'visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            saveTimerStateToBackground();
+            console.log('📱 App backgrounded - saved timer state');
+        } else if (document.visibilityState === 'visible') {
+            restoreTimerStateFromBackground();
+            console.log('📱 App restored - checking timer state');
+        }
+    }, undefined, 'timer_background_management');
+    
+    // Also save on page unload
+    memoryManager.addEventListener(window, 'beforeunload', () => {
+        saveTimerStateToBackground();
+    }, undefined, 'timer_beforeunload_save');
+    
+    // Restore timer state on app load
+    restoreTimerStateFromBackground();
+    
+    console.log('✅ Background timer persistence initialized');
 }
 
-function closeAuthModal() {
-    document.getElementById('authModal').style.display = 'none';
-    // Clear form
-    document.getElementById('authForm').reset();
-    document.getElementById('authError').style.display = 'none';
-    document.getElementById('authSuccess').style.display = 'none';
-}
-
-function switchAuthTab(tab) {
-    const signupFields = document.getElementById('signupFields');
-    const authSubmitText = document.getElementById('authSubmitText');
-    const authTabs = document.querySelectorAll('.auth-tab');
-    
-    authTabs.forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    if (tab === 'signup') {
-        signupFields.style.display = 'block';
-        authSubmitText.textContent = 'Sign Up';
-        document.getElementById('authModalTitle').textContent = 'Create Account';
-    } else {
-        signupFields.style.display = 'none';
-        authSubmitText.textContent = 'Sign In';
-        document.getElementById('authModalTitle').textContent = 'Sign In to HyperTrack Pro';
-    }
-}
-
-async function handleAuth(event) {
-    event.preventDefault();
-    
-    const form = event.target;
-    const formData = new FormData(form);
-    const email = formData.get('email');
-    const password = formData.get('password');
-    const username = formData.get('username');
-    
-    const isSignup = document.getElementById('signupFields').style.display !== 'none';
-    
-    const authError = document.getElementById('authError');
-    const authSuccess = document.getElementById('authSuccess');
-    
-    authError.style.display = 'none';
-    authSuccess.style.display = 'none';
-    
-    try {
-        let result;
-        
-        if (isSignup) {
-            result = await window.supabaseService.signUp(email, password, username);
-            if (result.success) {
-                authSuccess.textContent = 'Account created! Please check your email to verify your account.';
-                authSuccess.style.display = 'block';
-                form.reset();
-            }
-        } else {
-            result = await window.supabaseService.signIn(email, password);
-            if (result.success) {
-                closeAuthModal();
-                HyperTrack.state.isAuthenticated = true;
-                HyperTrack.state.user = result.data.user;
-                
-                // Load user data and migrate if needed
-                await initializeUserData();
-                
-                showNotification(`Welcome back, ${result.data.user.email}!`, 'success');
-                updateUI();
-            }
-        }
-        
-        if (!result.success) {
-            authError.textContent = result.error;
-            authError.style.display = 'block';
-        }
-    } catch (error) {
-        authError.textContent = 'An unexpected error occurred. Please try again.';
-        authError.style.display = 'block';
-        console.error('Auth error:', error);
-    }
-}
-
-async function signOut() {
-    const result = await window.supabaseService.signOut();
-    if (result.success) {
-        HyperTrack.state.isAuthenticated = false;
-        HyperTrack.state.user = null;
-        HyperTrack.state.workouts = [];
-        
-        showNotification('Signed out successfully', 'success');
-        updateUI();
-    }
-}
-
-async function initializeUserData() {
-    if (!window.supabaseService.isAuthenticated()) return;
-    
-    // Load user workouts
-    await HyperTrack.loadHistoricalData();
-    
-    // Check if user has any workouts, if not, offer to migrate localStorage data
-    if (HyperTrack.state.workouts.length === 0) {
-        const localWorkouts = localStorage.getItem('hypertrack_workouts');
-        if (localWorkouts) {
-            const shouldMigrate = confirm('We found local workout data. Would you like to sync it to your account?');
-            if (shouldMigrate) {
-                const result = await window.supabaseService.migrateLocalStorageData();
-                if (result.success) {
-                    showNotification('Data migrated successfully!', 'success');
-                    await HyperTrack.loadHistoricalData();
-                }
-            }
-        }
-    }
-    
-    // Load user settings
-    const settingsResult = await window.supabaseService.getUserSettings();
-    if (settingsResult.success && settingsResult.data) {
-        // Merge with current settings
-        Object.assign(HyperTrack.state.settings, settingsResult.data);
-    }
-}
-
-// Initialize Application
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Initializing HyperTrack Pro...');
-    
-    // Initialize Intelligence System
-    HyperTrack.intelligence = new IntelligentTraining();
-    console.log('AI Training Intelligence initialized');
-    
-    // Initialize Supabase
-    if (window.supabaseService) {
-        const supabaseReady = await window.supabaseService.initialize();
-        if (supabaseReady) {
-            console.log('Supabase initialized');
-            
-            // Check if user is already authenticated
-            if (window.supabaseService.isAuthenticated()) {
-                HyperTrack.state.isAuthenticated = true;
-                HyperTrack.state.user = window.supabaseService.getCurrentUser();
-                await initializeUserData();
-            }
-        }
-    }
-    
-    // Load data
-    console.log('🔄 Starting data loading sequence...');
-    await HyperTrack.loadHistoricalData();
-    loadAppData();
-    
-    // Initialize UI
-    updateUI();
-    updateExerciseList();
-    updateIntelligenceDisplay();
-    
-    // Start research facts rotation
-    updateResearchBanner();
-    setInterval(updateResearchBanner, 15000);
-    
-    // Setup keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const modal = document.getElementById('exerciseModal');
-            if (modal && modal.style.display === 'flex') {
-                closeExerciseModal();
-            }
-        }
-    });
-    
-    console.log('HyperTrack Pro ready with AI Intelligence!');
-    console.log(`Exercise database: ${HyperTrack.exerciseDatabase.length} exercises`);
-    console.log(`Historical workouts: ${HyperTrack.state.workouts.length} workouts`);
-    console.log('Evidence-based algorithms activated');
-});
-
-console.log('🚀 HyperTrack Pro loaded successfully');
-
-// Database Connection Test Function
-async function testDatabaseConnection() {
-    const resultsDiv = document.getElementById('dbTestResults');
-    const statusP = document.getElementById('dbTestStatus');
-    
-    resultsDiv.style.display = 'block';
-    statusP.innerHTML = 'Testing database connection...';
-    
-    try {
-        // Debug: Check what's available
-        console.log('window.supabase:', typeof window.supabase);
-        console.log('window.supabase object:', window.supabase);
-        
-        // Try to get existing client first
-        if (window.supabaseService && window.supabaseService.supabase) {
-            window.supabaseClient = window.supabaseService.supabase;
-            console.log('Using existing Supabase client from service');
-        } else if (!window.supabaseClient) {
-            if (typeof window.supabase === 'undefined') {
-                statusP.innerHTML = 'Supabase CDN not loaded - check internet connection';
-                return;
-            }
-            
-            // Check if supabase has createClient method
-            if (typeof window.supabase.createClient !== 'function') {
-                statusP.innerHTML = 'Supabase createClient method not found';
-                console.error('Available methods:', Object.keys(window.supabase));
-                return;
-            }
-            
-            window.supabaseClient = window.supabase.createClient(
-                'https://zrmkzgwrmohhbmjfdxdf.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWt6Z3dybW9oaGJtamZkeGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNjYwODgsImV4cCI6MjA2Njc0MjA4OH0.DJC-PLTnxG8IG-iV7_irb2pnEZJFacDOd9O7RDWwTVU'
-            );
-            
-            console.log('Supabase client created:', window.supabaseClient);
-        }
-        
-        statusP.innerHTML = 'Testing exercises table...';
-        
-        // Verify client has from method
-        if (!window.supabaseClient || typeof window.supabaseClient.from !== 'function') {
-            statusP.innerHTML = 'Supabase client invalid - from method missing';
-            console.error('Client:', window.supabaseClient);
-            console.error('Client methods:', window.supabaseClient ? Object.keys(window.supabaseClient) : 'null');
-            return;
-        }
-        
-        // Test exercises table
-        let { data: exercises, error: exerciseError } = await window.supabaseClient
-            .from('exercises')
-            .select('id, name, muscle_group')
-            .limit(3);
-            
-        if (exerciseError) {
-            statusP.innerHTML = `Exercises table error: ${exerciseError.message}`;
-            return;
-        }
-        
-        // If no exercises found, seed some basic ones
-        if (exercises.length === 0) {
-            statusP.innerHTML = 'No exercises found, seeding database...';
-            
-            const sampleExercises = [
-                {
-                    name: 'Lat Pulldowns',
-                    muscle_group: 'Vertical Pull',
-                    category: 'Compound',
-                    tier: 1,
-                    mvc_percentage: 90,
-                    equipment: 'cable',
-                    gym_types: ['commercial', 'barbell', 'crossfit'],
-                    biomechanical_function: 'Shoulder Adduction',
-                    target_rep_range: '8-12',
-                    rest_period: 180
-                },
-                {
-                    name: 'Barbell Bench Press',
-                    muscle_group: 'Horizontal Push',
-                    category: 'Compound',
-                    tier: 1,
-                    mvc_percentage: 100,
-                    equipment: 'barbell',
-                    gym_types: ['barbell', 'crossfit'],
-                    biomechanical_function: 'Shoulder Horizontal Adduction',
-                    target_rep_range: '6-10',
-                    rest_period: 180
-                },
-                {
-                    name: 'Dumbbell Bicep Curls',
-                    muscle_group: 'Biceps',
-                    category: 'Isolation',
-                    tier: 1,
-                    mvc_percentage: 90,
-                    equipment: 'dumbbell',
-                    gym_types: ['commercial', 'minimalist', 'planet_fitness'],
-                    biomechanical_function: 'Elbow Flexion',
-                    target_rep_range: '10-15',
-                    rest_period: 90
-                }
-            ];
-            
-            const { data: seedData, error: seedError } = await window.supabaseClient
-                .from('exercises')
-                .insert(sampleExercises)
-                .select('id, name, muscle_group');
-                
-            if (seedError) {
-                statusP.innerHTML = `Failed to seed exercises: ${seedError.message}`;
-                return;
-            }
-            
-            statusP.innerHTML = 'Exercises seeded, re-testing...';
-            
-            // Re-fetch exercises
-            const { data: newExercises, error: newError } = await window.supabaseClient
-                .from('exercises')
-                .select('id, name, muscle_group')
-                .limit(3);
-                
-            if (newError) {
-                statusP.innerHTML = `Error after seeding: ${newError.message}`;
-                return;
-            }
-            
-            exercises = newExercises;
-        }
-        
-        statusP.innerHTML = 'Testing all tables...';
-        
-        // Test all tables
-        const tables = ['users', 'workouts', 'workout_exercises', 'sets', 'user_settings'];
-        const results = [];
-        
-        for (const table of tables) {
-            try {
-                const { data, error } = await window.supabaseClient
-                    .from(table)
-                    .select('*', { head: true });
-                    
-                if (error) {
-                    results.push(`<span style="color: #ef4444;">✗ ${table}: ${error.message}</span>`);
-                } else {
-                    results.push(`<span style="color: #94C17B;">✓ ${table}: OK</span>`);
-                }
-            } catch (err) {
-                results.push(`<span style="color: #ef4444;">✗ ${table}: ${err.message}</span>`);
-            }
-        }
-        
-        // Show results
-        statusP.innerHTML = `
-            <div style="color: #94C17B; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94C17B" stroke-width="2">
-                    <polyline points="20,6 9,17 4,12"></polyline>
-                </svg>
-                Database Connection Test Results
-            </div>
-            <div style="color: #DCAA89; font-weight: 600; margin-bottom: 8px;">Exercises found: ${exercises.length} exercises</div>
-            <div style="color: #708090; margin-bottom: 12px;">
-                ${exercises.map(ex => `• ${ex.name} (${ex.muscle_group})`).join('<br>')}
-            </div>
-            <div style="color: #DCAA89; font-weight: 600; margin-bottom: 8px;">Table Status:</div>
-            <div style="color: #708090;">
-                ${results.join('<br>')}
-            </div>
-        `;
-        
-    } catch (error) {
-        statusP.innerHTML = `Connection failed: ${error.message}`;
-    }
-}
-
-// Make function globally available
-window.testDatabaseConnection = testDatabaseConnection;
-
-// Intelligence Display Functions
-function updateIntelligenceDisplay() {
-    updateRecoveryStatus();
-    updatePlateauAnalysis();
-    updateProgressionOptimization();
-    updatePeriodizationStatus();
-}
-
-function updateRecoveryStatus() {
-    // Simulate recovery data (in real app, this would come from user input or sensors)
-    const recoveryData = {
-        subjectiveWellness: 75, // 0-100 scale
-        sleepQuality: 80,      // 0-100 scale  
-        muscleReadiness: 70,   // 0-100 scale
-        stressLevel: 30        // 0-100 scale (lower is better)
+function saveTimerStateToBackground() {
+    const timerState = {
+        workoutTimer: {
+            active: HyperTrack.state.workoutTimer.active,
+            startTime: HyperTrack.state.workoutTimer.startTime,
+            elapsed: HyperTrack.state.workoutTimer.elapsed,
+            backgroundTime: Date.now() // When we went to background
+        },
+        restTimer: {
+            active: HyperTrack.state.restTimer.active,
+            remaining: HyperTrack.state.restTimer.remaining,
+            exerciseName: HyperTrack.state.restTimer.exerciseName,
+            backgroundTime: Date.now()
+        },
+        savedAt: Date.now()
     };
     
-    const recoveryManagement = HyperTrack.intelligence.implementRecoveryBasedLoadManagement(
-        recoveryData, 
-        []
-    );
-    
-    // Update recovery score circle
-    const recoveryNumber = document.getElementById('recoveryNumber');
-    const recoveryCircle = document.getElementById('recoveryCircle');
-    const readinessLevel = document.getElementById('readinessLevel');
-    const recoveryRecommendations = document.getElementById('recoveryRecommendations');
-    
-    if (recoveryNumber) {
-        recoveryNumber.textContent = Math.round(recoveryManagement.recoveryScore);
-    }
-    
-    if (recoveryCircle) {
-        const percentage = recoveryManagement.recoveryScore;
-        recoveryCircle.style.background = `conic-gradient(#94C17B 0% ${percentage}%, #3D6A71 ${percentage}% 100%)`;
-    }
-    
-    if (readinessLevel) {
-        const readiness = recoveryManagement.readinessLevel;
-        const readinessText = {
-            'excellent': 'Excellent Readiness',
-            'good': 'Good Readiness', 
-            'moderate': 'Moderate Readiness',
-            'poor': 'Poor Readiness',
-            'very_poor': 'Very Poor Readiness'
-        };
-        readinessLevel.textContent = readinessText[readiness] || 'Unknown';
-    }
-    
-    if (recoveryRecommendations) {
-        const recommendations = recoveryManagement.recoveryRecommendations;
-        if (recommendations.length > 0) {
-            recoveryRecommendations.innerHTML = recommendations
-                .slice(0, 2) // Show top 2 recommendations
-                .map(rec => `<div style="margin-bottom: 8px;">• ${rec.recommendation}</div>`)
-                .join('');
-        } else {
-            recoveryRecommendations.innerHTML = '<div>Recovery is optimal - maintain current routine</div>';
-        }
-    }
+    localStorage.setItem('hypertrack_timer_state', JSON.stringify(timerState));
+    console.log('💾 Timer state saved to background storage');
 }
 
-function updatePlateauAnalysis() {
-    const plateauContainer = document.getElementById('plateauAnalysis');
-    if (!plateauContainer) return;
-    
-    // Analyze recent exercises for plateau risk
-    const recentWorkouts = HyperTrack.state.workouts.slice(-10);
-    const exerciseAnalyses = [];
-    
-    // Get unique exercises from recent workouts
-    const uniqueExercises = [...new Set(
-        recentWorkouts.flatMap(workout => 
-            workout.exercises?.map(ex => ex.name) || []
-        )
-    )];
-    
-    uniqueExercises.slice(0, 3).forEach(exerciseName => {
-        const exerciseHistory = HyperTrack.intelligence.getExerciseHistory(exerciseName, recentWorkouts);
-        if (exerciseHistory.length >= 3) {
-            const analysis = HyperTrack.intelligence.analyzePlateauRisk(exerciseHistory);
-            exerciseAnalyses.push({
-                exercise: exerciseName,
-                analysis: analysis
-            });
+function restoreTimerStateFromBackground() {
+    try {
+        const savedStateStr = localStorage.getItem('hypertrack_timer_state');
+        if (!savedStateStr) return;
+        
+        const savedState = JSON.parse(savedStateStr);
+        const now = Date.now();
+        const backgroundDuration = now - savedState.savedAt;
+        
+        console.log(`🔄 Restoring timers after ${Math.round(backgroundDuration / 1000)}s background time`);
+        
+        // Restore workout timer
+        if (savedState.workoutTimer.active && HyperTrack.state.currentWorkout) {
+            console.log('⏱️ Restoring active workout timer');
+            HyperTrack.state.workoutTimer.active = true;
+            HyperTrack.state.workoutTimer.startTime = savedState.workoutTimer.startTime;
+            HyperTrack.state.workoutTimer.elapsed = savedState.workoutTimer.elapsed + backgroundDuration;
+            
+            // Restart the interval
+            if (HyperTrack.state.workoutTimer.interval) {
+                clearInterval(HyperTrack.state.workoutTimer.interval);
+            }
+            
+            HyperTrack.state.workoutTimer.interval = setInterval(() => {
+                HyperTrack.state.workoutTimer.elapsed = now - HyperTrack.state.workoutTimer.startTime;
+                updateWorkoutTimerDisplay();
+            }, 1000);
+            
+            updateWorkoutTimerDisplay();
         }
-    });
-    
-    if (exerciseAnalyses.length === 0) {
-        plateauContainer.innerHTML = `
-            <div class="analysis-loading">
-                Need more workout data to analyze plateau risk. Complete 3+ workouts for insights.
-            </div>
-        `;
-        return;
-    }
-    
-    // Find highest risk exercise
-    const highestRisk = exerciseAnalyses.reduce((max, current) => 
-        current.analysis.riskScore > max.analysis.riskScore ? current : max
-    );
-    
-    plateauContainer.innerHTML = `
-        <div class="plateau-risk">
-            <div class="risk-exercise">Highest Risk: ${highestRisk.exercise}</div>
-            <div class="risk-level risk-${highestRisk.analysis.riskLevel}">
-                ${highestRisk.analysis.riskLevel.toUpperCase()} RISK
-            </div>
-        </div>
         
-        <div class="risk-factors">
-            ${Object.entries(highestRisk.analysis.primaryFactors || {})
-                .slice(0, 3)
-                .map(([factor, value]) => `
-                    <div class="risk-factor">
-                        <div class="factor-name">${factor.replace(/([A-Z])/g, ' $1').trim()}</div>
-                        <div class="factor-value">${Math.round(value)}%</div>
-                    </div>
-                `).join('')}
-        </div>
-        
-        ${highestRisk.analysis.preventionStrategies.length > 0 ? `
-            <div class="prevention-strategies">
-                <h4 style="color: #DCAA89; margin-bottom: 12px;">Prevention Strategies</h4>
-                ${highestRisk.analysis.preventionStrategies.slice(0, 2).map(strategy => `
-                    <div class="strategy">
-                        <div class="strategy-type">${strategy.type}</div>
-                        <div class="strategy-description">${strategy.description}</div>
-                        <div class="strategy-research">${strategy.research}</div>
-                    </div>
-                `).join('')}
-            </div>
-        ` : ''}
-    `;
-}
-
-function updateProgressionOptimization() {
-    const progressionContainer = document.getElementById('progressionOptimization');
-    if (!progressionContainer) return;
-    
-    const recentWorkouts = HyperTrack.state.workouts.slice(-5);
-    const progressionAnalyses = [];
-    
-    // Get unique exercises from recent workouts
-    const uniqueExercises = [...new Set(
-        recentWorkouts.flatMap(workout => 
-            workout.exercises?.map(ex => ex.name) || []
-        )
-    )];
-    
-    uniqueExercises.slice(0, 3).forEach(exerciseName => {
-        const exerciseHistory = HyperTrack.intelligence.getExerciseHistory(exerciseName, recentWorkouts);
-        if (exerciseHistory.length >= 2) {
-            const exercise = HyperTrack.exerciseDatabase.find(ex => ex.name === exerciseName);
-            if (exercise) {
-                const progression = HyperTrack.intelligence.calculateOptimalProgression(
-                    exercise, 
-                    exerciseHistory, 
-                    HyperTrack.intelligence.userProfile
-                );
-                progressionAnalyses.push({
-                    exercise: exerciseName,
-                    progression: progression
-                });
+        // Restore rest timer
+        if (savedState.restTimer.active && savedState.restTimer.remaining > 0) {
+            const adjustedRemaining = savedState.restTimer.remaining - backgroundDuration;
+            
+            if (adjustedRemaining > 0) {
+                console.log(`⏳ Restoring rest timer with ${Math.round(adjustedRemaining / 1000)}s remaining`);
+                HyperTrack.state.restTimer.active = true;
+                HyperTrack.state.restTimer.remaining = adjustedRemaining;
+                HyperTrack.state.restTimer.exerciseName = savedState.restTimer.exerciseName;
+                
+                // Restart rest timer interval
+                if (HyperTrack.state.restTimer.interval) {
+                    clearInterval(HyperTrack.state.restTimer.interval);
+                }
+                
+                HyperTrack.state.restTimer.interval = setInterval(() => {
+                    HyperTrack.state.restTimer.remaining -= 1000;
+                    updateRestTimerDisplay();
+                    
+                    if (HyperTrack.state.restTimer.remaining <= 0) {
+                        stopRestTimer();
+                        showNotification('Rest period complete! Ready for next set.', 'success');
+                    }
+                }, 1000);
+                
+                updateRestTimerDisplay();
+            } else {
+                console.log('⏳ Rest timer expired while in background');
+                stopRestTimer();
+                showNotification('Rest period completed while app was backgrounded', 'info');
             }
         }
-    });
-    
-    if (progressionAnalyses.length === 0) {
-        progressionContainer.innerHTML = `
-            <div class="optimization-loading">
-                Need more workout data to optimize progressions. Complete 2+ workouts for personalized recommendations.
-            </div>
-        `;
-        return;
+        
+        // Clean up saved state
+        localStorage.removeItem('hypertrack_timer_state');
+        
+    } catch (error) {
+        console.error('❌ Error restoring timer state:', error);
     }
-    
-    progressionContainer.innerHTML = progressionAnalyses.map(analysis => `
-        <div class="progression-exercise">
-            <div class="exercise-name">${analysis.exercise}</div>
-            
-            <div class="progression-details">
-                <div class="progression-metric">
-                    <div class="metric-value">+${(analysis.progression.weightIncrease * 100).toFixed(1)}%</div>
-                    <div class="metric-label">Weight</div>
-                </div>
-                <div class="progression-metric">
-                    <div class="metric-value">+${analysis.progression.repIncrease.toFixed(1)}</div>
-                    <div class="metric-label">Reps</div>
-                </div>
-                <div class="progression-metric">
-                    <div class="metric-value">+${(analysis.progression.volumeIncrease * 100).toFixed(1)}%</div>
-                    <div class="metric-label">Volume</div>
-                </div>
-            </div>
-            
-            <div class="progression-confidence">
-                <span style="color: #708090; font-size: 12px;">Confidence:</span>
-                <div class="confidence-bar">
-                    <div class="confidence-fill" style="width: ${analysis.progression.confidence}%"></div>
-                </div>
-                <span style="color: #708090; font-size: 12px;">${Math.round(analysis.progression.confidence)}%</span>
-            </div>
-            
-            <div class="progression-reasoning">${analysis.progression.reasoning}</div>
-        </div>
-    `).join('');
 }
 
-function updatePeriodizationStatus() {
-    const periodization = HyperTrack.intelligence.implementAutoPeriodization(
-        { primary: 'hypertrophy' },
-        HyperTrack.state.workouts,
-        HyperTrack.intelligence.periodizationState.currentPhase
-    );
+// AUTO-SAVE FUNCTIONALITY FOR MOBILE PERSISTENCE
+function initializeAutoSave() {
+    console.log('🔄 Initializing auto-save for mobile persistence...');
     
-    const phaseNameEl = document.getElementById('currentPhaseName');
-    const phaseWeekEl = document.getElementById('currentPhaseWeek');
-    const progressFillEl = document.getElementById('progressFill');
-    const nextPhaseEl = document.getElementById('nextPhase');
+    // Auto-save every 30 seconds during active workout
+    HyperTrack.state.autoSaveInterval = memoryManager.addInterval(() => {
+        if (HyperTrack.state.currentWorkout) {
+            saveAppData();
+            console.log('💾 Auto-saved workout progress');
+        }
+    }, 30000, 'auto_save_workout'); // 30 seconds
     
-    if (phaseNameEl) {
-        phaseNameEl.textContent = `${periodization.currentPhase.phase.charAt(0).toUpperCase() + periodization.currentPhase.phase.slice(1)} Phase`;
-    }
+    // Save on visibility change (user switches apps/tabs)
+    memoryManager.addEventListener(document, 'visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && HyperTrack.state.currentWorkout) {
+            saveAppData();
+            console.log('💾 Auto-saved on app backgrounding');
+        }
+    }, undefined, 'autosave_visibility_change');
     
-    if (phaseWeekEl) {
-        phaseWeekEl.textContent = `Week ${HyperTrack.intelligence.periodizationState.phaseWeek} of ${HyperTrack.intelligence.periodizationState.totalCycleWeeks}`;
-    }
+    // Save on page unload (user closes browser)
+    memoryManager.addEventListener(window, 'beforeunload', () => {
+        if (HyperTrack.state.currentWorkout) {
+            saveAppData();
+            console.log('💾 Auto-saved on page unload');
+        }
+    }, undefined, 'autosave_beforeunload');
     
-    if (progressFillEl) {
-        const progress = (HyperTrack.intelligence.periodizationState.phaseWeek / HyperTrack.intelligence.periodizationState.totalCycleWeeks) * 100;
-        progressFillEl.style.width = `${progress}%`;
-    }
-    
-    if (nextPhaseEl && periodization.nextPhase) {
-        const weeksRemaining = HyperTrack.intelligence.periodizationState.totalCycleWeeks - HyperTrack.intelligence.periodizationState.phaseWeek;
-        nextPhaseEl.textContent = `Next: ${periodization.nextPhase.phase} Phase in ${weeksRemaining} week${weeksRemaining !== 1 ? 's' : ''}`;
+    console.log('✅ Auto-save initialized successfully');
+}
+
+// Enhanced app data saving with backup and recovery
+function saveAppData() {
+    try {
+        const appData = {
+            currentWorkout: HyperTrack.state.currentWorkout,
+            workouts: HyperTrack.state.workouts,
+            settings: HyperTrack.state.settings,
+            workoutTimer: HyperTrack.state.workoutTimer,
+            restTimer: HyperTrack.state.restTimer,
+            lastSaved: new Date().toISOString()
+        };
+        
+        // Primary storage
+        localStorage.setItem('hypertrack_app_data', JSON.stringify(appData));
+        
+        // Backup storage (in case primary fails)
+        localStorage.setItem('hypertrack_app_backup', JSON.stringify(appData));
+        
+        // Keep only last 5 backups to prevent storage bloat
+        const backupCount = parseInt(localStorage.getItem('hypertrack_backup_count') || '0');
+        if (backupCount >= 5) {
+            for (let i = 1; i <= backupCount - 4; i++) {
+                localStorage.removeItem(`hypertrack_backup_${i}`);
+            }
+            localStorage.setItem('hypertrack_backup_count', '4');
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Failed to save app data:', error);
+        return false;
     }
 }
+
+function loadAppData() {
+    try {
+        console.log('🔄 Loading app data...');
+        
+        // Try primary storage first
+        let appDataStr = localStorage.getItem('hypertrack_app_data');
+        
+        // Fallback to backup if primary fails
+        if (!appDataStr) {
+            console.log('⚠️ Primary storage empty, trying backup...');
+            appDataStr = localStorage.getItem('hypertrack_app_backup');
+        }
+        
+        if (appDataStr) {
+            const appData = JSON.parse(appDataStr);
+            
+            // Restore state
+            if (appData.currentWorkout) {
+                HyperTrack.state.currentWorkout = appData.currentWorkout;
+                console.log('✅ Restored current workout');
+            }
+            
+            if (appData.settings) {
+                HyperTrack.state.settings = { ...HyperTrack.state.settings, ...appData.settings };
+                console.log('✅ Restored settings');
+            }
+            
+            if (appData.workoutTimer) {
+                HyperTrack.state.workoutTimer = appData.workoutTimer;
+            }
+            
+            if (appData.restTimer) {
+                HyperTrack.state.restTimer = appData.restTimer;
+            }
+            
+            console.log(`✅ App data loaded successfully (saved: ${appData.lastSaved})`);
+            return true;
+        }
+        
+        console.log('📝 No previous app data found');
+        return false;
+    } catch (error) {
+        console.error('❌ Failed to load app data:', error);
+        return false;
+    }
+}
+
+// MAIN APPLICATION INITIALIZATION
+async function initializeApp() {
+    try {
+        console.log('🚀 Initializing HyperTrack Pro...');
+        
+        // Load exercise database first (required for all functionality)
+        await HyperTrack.loadExerciseDatabase();
+        
+        // Load any saved app state
+        loadAppData();
+        
+        // Initialize exercises database
+        await initializeExercises();
+        
+        // Load historical workout data
+        await HyperTrack.loadHistoricalData();
+        
+        // Initialize auto-save for mobile persistence
+        initializeAutoSave();
+        
+        // Initialize research facts rotation
+        rotateResearchFact();
+        memoryManager.addInterval(rotateResearchFact, 10000, 'research_facts_rotation'); // Rotate every 10 seconds
+        
+        // Restore any active workout state
+        if (HyperTrack.state.currentWorkout) {
+            console.log('🔄 Restoring active workout...');
+            showCurrentWorkout();
+            
+            // Restore workout timer if it was active
+            if (HyperTrack.state.workoutTimer.active) {
+                // Recalculate elapsed time based on saved start time
+                const savedStartTime = new Date(HyperTrack.state.workoutTimer.startTime);
+                const now = new Date();
+                HyperTrack.state.workoutTimer.elapsed = now - savedStartTime;
+                startWorkoutTimer();
+            }
+        }
+        
+        // Load analytics
+        loadAnalytics();
+        
+        // Load intelligence features
+        loadIntelligence();
+        
+        console.log('✅ HyperTrack Pro initialized successfully!');
+        
+    } catch (error) {
+        console.error('❌ App initialization failed:', error);
+        // Try to continue with basic functionality
+        await initializeExercises();
+        loadAnalytics();
+    }
+}
+
+// Start the app when page loads
+document.addEventListener('DOMContentLoaded', initializeApp);
+
