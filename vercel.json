@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "name": "hypertrack-pro",
+  "name": "hypertrack-pro", 
   "buildCommand": "echo 'No build step required'",
   "outputDirectory": ".",
   "rewrites": [
     {
-      "source": "/(?!.*\\.(?:js|css|json|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$).*",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
