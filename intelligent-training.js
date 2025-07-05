@@ -310,6 +310,28 @@ class IntelligentTraining {
             recommendation: `Modify current ${currentPhase} phase based on effectiveness`
         };
     }
+    
+    planPhaseTransition(currentPhase, nextPhaseRecommendation) {
+        return {
+            timeline: nextPhaseRecommendation.duration || 4,
+            preparations: [`Complete current ${currentPhase} phase objectives`, `Prepare for ${nextPhaseRecommendation.phase} training`],
+            adjustments: {
+                volume: nextPhaseRecommendation.volumeAdjustment || 1.0,
+                intensity: nextPhaseRecommendation.intensityAdjustment || 1.0
+            }
+        };
+    }
+    
+    generatePhaseAdaptations(nextPhaseRecommendation) {
+        const adaptations = {
+            accumulation: ['Increased training volume', 'Higher frequency', 'Moderate intensity'],
+            intensification: ['Reduced volume', 'Higher intensity', 'Longer rest periods'],
+            realization: ['Peak performance', 'Competition preparation', 'Minimal volume'],
+            deload: ['Active recovery', 'Reduced stress', 'Restoration focus']
+        };
+        
+        return adaptations[nextPhaseRecommendation.phase] || ['Phase-specific adaptations'];
+    }
 
     // 4. RECOVERY-BASED LOAD MANAGEMENT
     implementRecoveryBasedLoadManagement(recoveryData, plannedWorkout) {

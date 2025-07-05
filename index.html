@@ -514,7 +514,20 @@
         // Simple Demo Mode Override System
         function isDemoMode() {
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
+            const isDemo = urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
+            
+            // Set the demo mode state in HyperTrack if available
+            if (window.HyperTrack && window.HyperTrack.state) {
+                window.HyperTrack.state.demoMode = isDemo;
+            }
+            
+            if (isDemo) {
+                console.log('🎭 DEMO MODE CONFIRMED - Override system active');
+            } else {
+                console.log('📱 REAL MODE - Normal operation');
+            }
+            
+            return isDemo;
         }
 
         // Load and inject demo data after page loads

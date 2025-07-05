@@ -1,36 +1,7 @@
 // HyperTrack Pro - Clean, Functional Version (v2.0)
 console.log('🚀 HyperTrack Pro Loading v2.0 - Demo Mode Fixed...');
 
-// Demo Mode Detection
-const isDemoMode = () => {
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const demoParam = urlParams.get('demo');
-        const hashDemo = window.location.hash.includes('demo');
-        const isDemo = demoParam === 'true' || hashDemo;
-        
-        console.log('🔍 Demo mode detection:', {
-            url: window.location.href,
-            searchParams: window.location.search,
-            hash: window.location.hash,
-            demoParam: demoParam,
-            hashDemo: hashDemo,
-            isDemo: isDemo
-        });
-        
-        // Additional validation
-        if (isDemo) {
-            console.log('🎭 DEMO MODE CONFIRMED - This session will use demo data only');
-        } else {
-            console.log('📱 REAL MODE - This session will use real user data');
-        }
-        
-        return isDemo;
-    } catch (error) {
-        console.error('❌ Error in demo mode detection:', error);
-        return false; // Default to real mode if error
-    }
-};
+// Demo Mode Detection - moved to index.html to avoid conflicts
 
 // Global Application State
 const HyperTrack = {
@@ -41,7 +12,7 @@ const HyperTrack = {
         user: null,
         isOnline: navigator.onLine,
         syncPending: false,
-        demoMode: isDemoMode(),
+        demoMode: false, // Will be set by index.html demo detection
         settings: {
             showResearchFacts: true,
             darkMode: true,
