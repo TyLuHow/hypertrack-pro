@@ -1,3 +1,0 @@
-FORCE DEPLOYMENT - 2025-01-05-15:30
-This file is used to trigger a fresh Vercel deployment.
-All demo mode fixes should be deployed with this version.

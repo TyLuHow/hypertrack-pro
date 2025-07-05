@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2c5f5f">
-    <title>HyperTrack Pro v2.0</title>
+    <title>HyperTrack Pro</title>
     
     <!-- PWA Support -->
     <link rel="manifest" href="manifest.json">
@@ -42,21 +42,6 @@
             </div>
         </header>
 
-        <!-- Demo Mode Banner -->
-        <div class="demo-banner" id="demoBanner" style="display: none;">
-            <div class="demo-content">
-                <div class="demo-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M15 7h3a5 5 0 1 1 0 10h-3m-6 0H6a5 5 0 1 1 0-10h3"></path>
-                        <path d="M9 12h6"></path>
-                    </svg>
-                </div>
-                <p class="demo-text">
-                    🎭 <strong>Demo Mode</strong> - Exploring with 45 research-based workouts. 
-                    <a href="?" style="color: #94C17B; text-decoration: underline;">Deploy your own</a> to save real data.
-                </p>
-            </div>
-        </div>
 
         <!-- Research Banner -->
         <div class="research-banner" id="researchBanner">
@@ -511,67 +496,6 @@
     <script src="tyler-data-integration.js"></script>
     <script src="app.js"></script>
     <script>
-        // Simple Demo Mode Override System
-        function isDemoMode() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const isDemo = urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
-            
-            // Set the demo mode state in HyperTrack if available
-            if (window.HyperTrack && window.HyperTrack.state) {
-                window.HyperTrack.state.demoMode = isDemo;
-            }
-            
-            if (isDemo) {
-                console.log('🎭 DEMO MODE CONFIRMED - Override system active');
-            } else {
-                console.log('📱 REAL MODE - Normal operation');
-            }
-            
-            return isDemo;
-        }
-
-        // Load and inject demo data after page loads
-        async function loadDemoData() {
-            if (!isDemoMode()) return;
-            
-            console.log('🎭 DEMO MODE: Loading 41 demo workouts...');
-            
-            try {
-                const response = await fetch('./demo-workouts.json');
-                const demoWorkouts = await response.json();
-                
-                // Override the app's workout data
-                if (window.HyperTrack && window.HyperTrack.state) {
-                    window.HyperTrack.state.workouts = demoWorkouts;
-                    window.HyperTrack.state.user = { name: 'Demo User' };
-                    
-                    console.log(`🎭 DEMO: Successfully loaded ${demoWorkouts.length} workouts`);
-                    
-                    // Force update all displays
-                    setTimeout(() => {
-                        if (typeof updateHistoryDisplay === 'function') updateHistoryDisplay();
-                        if (typeof updateAnalyticsDisplay === 'function') updateAnalyticsDisplay();
-                        if (typeof updateIntelligenceDisplay === 'function') updateIntelligenceDisplay();
-                        console.log('🎭 DEMO: All displays updated');
-                    }, 500);
-                } else {
-                    console.error('🎭 DEMO: HyperTrack not found, retrying...');
-                    setTimeout(loadDemoData, 1000);
-                }
-            } catch (error) {
-                console.error('🎭 DEMO: Failed to load demo data:', error);
-            }
-        }
-
-        // Initialize demo mode banner
-        function initializeDemoMode() {
-            const demoBanner = document.getElementById('demoBanner');
-            if (isDemoMode() && demoBanner) {
-                demoBanner.style.display = 'block';
-                console.log('🎭 Demo mode banner activated');
-            }
-        }
-
         // Register service worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -580,16 +504,6 @@
                     .catch(error => console.log('SW registration failed'));
             });
         }
-
-        // Initialize app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeDemoMode();
-            
-            // Load demo data after a delay to ensure app is ready
-            if (isDemoMode()) {
-                setTimeout(loadDemoData, 2000);
-            }
-        });
     </script>
 </body>
 </html>
