@@ -3,20 +3,33 @@ console.log('🚀 HyperTrack Pro Loading...');
 
 // Demo Mode Detection
 const isDemoMode = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const demoParam = urlParams.get('demo');
-    const hashDemo = window.location.hash.includes('demo');
-    const isDemo = demoParam === 'true' || hashDemo;
-    
-    console.log('🔍 Demo mode detection:', {
-        url: window.location.href,
-        searchParams: window.location.search,
-        demoParam: demoParam,
-        hashDemo: hashDemo,
-        isDemo: isDemo
-    });
-    
-    return isDemo;
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const demoParam = urlParams.get('demo');
+        const hashDemo = window.location.hash.includes('demo');
+        const isDemo = demoParam === 'true' || hashDemo;
+        
+        console.log('🔍 Demo mode detection:', {
+            url: window.location.href,
+            searchParams: window.location.search,
+            hash: window.location.hash,
+            demoParam: demoParam,
+            hashDemo: hashDemo,
+            isDemo: isDemo
+        });
+        
+        // Additional validation
+        if (isDemo) {
+            console.log('🎭 DEMO MODE CONFIRMED - This session will use demo data only');
+        } else {
+            console.log('📱 REAL MODE - This session will use real user data');
+        }
+        
+        return isDemo;
+    } catch (error) {
+        console.error('❌ Error in demo mode detection:', error);
+        return false; // Default to real mode if error
+    }
 };
 
 // Global Application State
@@ -800,7 +813,7 @@ const HyperTrack = {
         console.log('🔍 Current URL:', window.location.href);
         
         if (this.state.demoMode) {
-            console.log('🎭 Demo mode detected - loading static demo data...');
+            console.log('🎭 DEMO MODE ACTIVE - Loading 41 static demo workouts...');
             try {
                 // Load static demo data from JSON file with await
                 const response = await fetch('./demo-workouts.json');
@@ -808,22 +821,31 @@ const HyperTrack = {
                 
                 if (response.ok) {
                     const demoWorkouts = await response.json();
+                    
+                    // Validate demo data
+                    if (!Array.isArray(demoWorkouts) || demoWorkouts.length === 0) {
+                        throw new Error('Demo workouts file is empty or invalid');
+                    }
+                    
                     this.state.workouts = demoWorkouts;
                     this.state.user = { name: 'Demo User' };
-                    console.log(`🎭 Demo mode: Loaded ${demoWorkouts.length} static demo workouts`);
-                    console.log('🎭 First demo workout:', demoWorkouts[0]?.id);
+                    console.log(`🎭 SUCCESS: Loaded ${demoWorkouts.length} demo workouts`);
+                    console.log('🎭 First demo workout ID:', demoWorkouts[0]?.id);
+                    console.log('🎭 Last demo workout ID:', demoWorkouts[demoWorkouts.length - 1]?.id);
                     
                     // Update all displays with demo data
                     setTimeout(() => {
                         this.updateAllDisplays();
+                        console.log('🎭 Demo displays updated');
                     }, 100);
                     
                     return; // Exit early for demo mode
                 } else {
-                    throw new Error(`Failed to fetch demo data: ${response.status}`);
+                    throw new Error(`Failed to fetch demo data: ${response.status} ${response.statusText}`);
                 }
             } catch (error) {
-                console.error('🎭 Failed to load demo data:', error);
+                console.error('🎭 CRITICAL: Failed to load demo data:', error);
+                console.error('🎭 Demo mode will show empty state');
                 this.state.workouts = [];
                 return;
             }
@@ -1815,6 +1837,12 @@ function formatDate(dateString) {
 }
 
 function saveAppData() {
+    // Never save data in demo mode
+    if (HyperTrack.state.demoMode) {
+        console.log('🎭 Demo mode - skipping save to localStorage');
+        return;
+    }
+    
     try {
         const data = {
             workouts: HyperTrack.state.workouts,
@@ -1822,7 +1850,7 @@ function saveAppData() {
             currentWorkout: HyperTrack.state.currentWorkout
         };
         localStorage.setItem('hypertrackData', JSON.stringify(data));
-        console.log('💾 Data saved');
+        console.log('💾 Data saved to localStorage');
     } catch (error) {
         console.error('❌ Save error:', error);
     }
@@ -3155,9 +3183,25 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
-    // Load data
+    // Load data - ensure proper order and demo mode isolation
+    console.log('🔄 Starting data loading sequence...');
+    console.log('🔍 Demo mode state at load time:', HyperTrack.state.demoMode);
+    
+    if (HyperTrack.state.demoMode) {
+        console.log('🎭 Demo mode detected - clearing any localStorage contamination');
+        // Clear any contaminating localStorage data in demo mode
+        localStorage.removeItem('hypertrackData');
+        localStorage.removeItem('hypertrack_workouts');
+    }
+    
     await HyperTrack.loadHistoricalData();
-    loadAppData();
+    
+    // Only load localStorage data if NOT in demo mode  
+    if (!HyperTrack.state.demoMode) {
+        loadAppData();
+    } else {
+        console.log('🎭 Skipping loadAppData() - demo mode active');
+    }
     
     // Initialize UI
     updateUI();
