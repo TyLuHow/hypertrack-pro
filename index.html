@@ -511,10 +511,43 @@
     <script src="tyler-data-integration.js"></script>
     <script src="app.js"></script>
     <script>
-        // Demo mode utilities
+        // Simple Demo Mode Override System
         function isDemoMode() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('demo') === 'true' || window.location.hash.includes('demo');
+        }
+
+        // Load and inject demo data after page loads
+        async function loadDemoData() {
+            if (!isDemoMode()) return;
+            
+            console.log('🎭 DEMO MODE: Loading 41 demo workouts...');
+            
+            try {
+                const response = await fetch('./demo-workouts.json');
+                const demoWorkouts = await response.json();
+                
+                // Override the app's workout data
+                if (window.HyperTrack && window.HyperTrack.state) {
+                    window.HyperTrack.state.workouts = demoWorkouts;
+                    window.HyperTrack.state.user = { name: 'Demo User' };
+                    
+                    console.log(`🎭 DEMO: Successfully loaded ${demoWorkouts.length} workouts`);
+                    
+                    // Force update all displays
+                    setTimeout(() => {
+                        if (typeof updateHistoryDisplay === 'function') updateHistoryDisplay();
+                        if (typeof updateAnalyticsDisplay === 'function') updateAnalyticsDisplay();
+                        if (typeof updateIntelligenceDisplay === 'function') updateIntelligenceDisplay();
+                        console.log('🎭 DEMO: All displays updated');
+                    }, 500);
+                } else {
+                    console.error('🎭 DEMO: HyperTrack not found, retrying...');
+                    setTimeout(loadDemoData, 1000);
+                }
+            } catch (error) {
+                console.error('🎭 DEMO: Failed to load demo data:', error);
+            }
         }
 
         // Initialize demo mode banner
@@ -522,7 +555,7 @@
             const demoBanner = document.getElementById('demoBanner');
             if (isDemoMode() && demoBanner) {
                 demoBanner.style.display = 'block';
-                console.log('🎭 Demo mode activated');
+                console.log('🎭 Demo mode banner activated');
             }
         }
 
@@ -539,6 +572,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeDemoMode();
             
+            // Load demo data after a delay to ensure app is ready
+            if (isDemoMode()) {
+                setTimeout(loadDemoData, 2000);
+            }
         });
     </script>
 </body>

@@ -807,49 +807,8 @@ const HyperTrack = {
             }
         }
         
-        // Priority 1: Demo mode overrides everything
+        // Demo mode will be handled by index.html override system
         console.log('🔍 Data loading - demoMode state:', this.state.demoMode);
-        console.log('🔍 URL search params:', window.location.search);
-        console.log('🔍 Current URL:', window.location.href);
-        
-        if (this.state.demoMode) {
-            console.log('🎭 DEMO MODE ACTIVE - Loading 41 static demo workouts...');
-            try {
-                // Load static demo data from JSON file with await
-                const response = await fetch('./demo-workouts.json');
-                console.log('🎭 Demo fetch response:', response.status, response.ok);
-                
-                if (response.ok) {
-                    const demoWorkouts = await response.json();
-                    
-                    // Validate demo data
-                    if (!Array.isArray(demoWorkouts) || demoWorkouts.length === 0) {
-                        throw new Error('Demo workouts file is empty or invalid');
-                    }
-                    
-                    this.state.workouts = demoWorkouts;
-                    this.state.user = { name: 'Demo User' };
-                    console.log(`🎭 SUCCESS: Loaded ${demoWorkouts.length} demo workouts`);
-                    console.log('🎭 First demo workout ID:', demoWorkouts[0]?.id);
-                    console.log('🎭 Last demo workout ID:', demoWorkouts[demoWorkouts.length - 1]?.id);
-                    
-                    // Update all displays with demo data
-                    setTimeout(() => {
-                        this.updateAllDisplays();
-                        console.log('🎭 Demo displays updated');
-                    }, 100);
-                    
-                    return; // Exit early for demo mode
-                } else {
-                    throw new Error(`Failed to fetch demo data: ${response.status} ${response.statusText}`);
-                }
-            } catch (error) {
-                console.error('🎭 CRITICAL: Failed to load demo data:', error);
-                console.error('🎭 Demo mode will show empty state');
-                this.state.workouts = [];
-                return;
-            }
-        }
         
         // Priority 2: Historical data (your workouts)
         if (typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
@@ -3183,25 +3142,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
-    // Load data - ensure proper order and demo mode isolation
+    // Load data - demo mode will be handled by index.html
     console.log('🔄 Starting data loading sequence...');
-    console.log('🔍 Demo mode state at load time:', HyperTrack.state.demoMode);
-    
-    if (HyperTrack.state.demoMode) {
-        console.log('🎭 Demo mode detected - clearing any localStorage contamination');
-        // Clear any contaminating localStorage data in demo mode
-        localStorage.removeItem('hypertrackData');
-        localStorage.removeItem('hypertrack_workouts');
-    }
-    
     await HyperTrack.loadHistoricalData();
-    
-    // Only load localStorage data if NOT in demo mode  
-    if (!HyperTrack.state.demoMode) {
-        loadAppData();
-    } else {
-        console.log('🎭 Skipping loadAppData() - demo mode active');
-    }
+    loadAppData();
     
     // Initialize UI
     updateUI();
