@@ -1,5 +1,5 @@
-// HyperTrack Pro - Clean, Functional Version
-console.log('🚀 HyperTrack Pro Loading...');
+// HyperTrack Pro - Clean, Functional Version (v2.0)
+console.log('🚀 HyperTrack Pro Loading v2.0 - Demo Mode Fixed...');
 
 // Demo Mode Detection
 const isDemoMode = () => {
