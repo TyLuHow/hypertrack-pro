@@ -551,5 +551,17 @@
         "biomechanical_function": "Shoulder Abduction",
         "target_rep_range": "12-20",
         "rest_period": 90
+    },
+    {
+        "id": 47,
+        "name": "Chest Press Machine",
+        "muscle_group": "Horizontal Push",
+        "category": "Compound",
+        "tier": 2,
+        "mvc_percentage": 88,
+        "equipment": "machine",
+        "biomechanical_function": "Shoulder Horizontal Adduction",
+        "target_rep_range": "8-15",
+        "rest_period": 150
     }
 ]

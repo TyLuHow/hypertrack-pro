@@ -384,6 +384,21 @@
             </div>
             <div class="modal-body">
                 <div id="setInputs" class="set-inputs"></div>
+                
+                <!-- Exercise Notes Section -->
+                <div class="exercise-notes-section">
+                    <label for="exerciseNotes" class="notes-label">Exercise Notes</label>
+                    <textarea 
+                        id="exerciseNotes" 
+                        class="exercise-notes-input" 
+                        placeholder="Add notes about form, feeling, or observations..."
+                        rows="3"
+                        maxlength="500"></textarea>
+                    <div class="notes-counter">
+                        <span id="notesCharCount">0</span>/500
+                    </div>
+                </div>
+                
                 <button class="btn btn-primary" onclick="addSet()">Add Set</button>
                 <button class="btn btn-success" onclick="finishExercise()">Finish Exercise</button>
             </div>

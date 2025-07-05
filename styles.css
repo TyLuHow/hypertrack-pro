@@ -7,6 +7,38 @@
     box-sizing: border-box;
 }
 
+/* Custom Scrollbars - Modern, themed styling */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+    background-clip: content-box;
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     background: linear-gradient(135deg, #17282B 0%, #30525C 100%);
@@ -546,7 +578,7 @@ body {
 }
 
 .nav-btn.active {
-    color: #3d7070;
+    color: #a78bfa;
 }
 
 .nav-btn:hover {
@@ -573,7 +605,7 @@ body {
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1b4e4e, #2c5f5f);
+    background: linear-gradient(135deg, #1e1b2e, #6b46c1);
     color: white;
     border: none;
     font-size: 32px;
@@ -642,22 +674,32 @@ body {
         border-bottom: 2px solid #374151;
     }
     
-    /* Enhanced mobile set inputs - larger touch targets */
+    /* Enhanced mobile set inputs - larger touch targets, no side-scroll */
     .set-row {
-        flex-direction: column;
+        flex-direction: row;
         gap: 8px;
         padding: 16px;
         margin-bottom: 16px;
+        overflow: hidden; /* Prevent any overflow */
     }
     
     .set-row input[type="number"] {
-        flex: none;
-        width: 100%;
-        padding: 16px 12px;
-        font-size: 18px;
+        width: 70px;
+        min-width: 70px;
+        max-width: 70px;
+        padding: 12px 8px;
+        font-size: 16px;
         min-height: 44px; /* Apple's minimum touch target */
         border: 2px solid #374151;
         border-radius: 8px;
+        box-sizing: border-box;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    
+    .set-number {
+        min-width: 45px;
+        width: 45px;
     }
     
     .set-number {
@@ -725,6 +767,63 @@ body {
     padding: 20px;
 }
 
+/* Exercise Notes Section */
+.exercise-notes-section {
+    margin: 20px 0;
+    padding: 16px;
+    background: #1e293b;
+    border: 1px solid #374151;
+    border-radius: 8px;
+}
+
+.notes-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+}
+
+.exercise-notes-input {
+    width: 100%;
+    padding: 12px;
+    background: #334155;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    color: #f8fafc;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.exercise-notes-input:focus {
+    outline: none;
+    border-color: #2c5f5f;
+    box-shadow: 0 0 0 1px #2c5f5f;
+}
+
+.exercise-notes-input::placeholder {
+    color: #64748b;
+}
+
+.notes-counter {
+    text-align: right;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.notes-counter.warning {
+    color: #fbbf24;
+}
+
+.notes-counter.error {
+    color: #f87171;
+}
+
 /* Set Inputs */
 .set-list {
     margin-bottom: 20px;
@@ -733,32 +832,43 @@ body {
 .set-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     margin-bottom: 12px;
     padding: 12px;
     background: #334155;
     border-radius: 8px;
+    min-width: 0; /* Prevent flex children from overflowing */
 }
 
 .set-number {
     font-weight: 600;
     color: #cbd5e1;
-    min-width: 60px;
+    min-width: 35px;
+    width: 35px;
+    flex-shrink: 0;
+    font-size: 14px;
+    text-align: center;
 }
 
 .set-row input[type="number"] {
-    flex: 1;
-    padding: 8px 12px;
+    width: 55px;
+    min-width: 55px;
+    max-width: 55px;
+    padding: 8px 6px;
     background: #475569;
     border: 1px solid #374151;
     border-radius: 6px;
     color: #f8fafc;
     font-size: 14px;
+    box-sizing: border-box;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 .set-row input[type="number"]:focus {
     outline: none;
     border-color: #2c5f5f;
+    box-shadow: 0 0 0 1px #2c5f5f;
 }
 
 /* Recommendation */
@@ -878,7 +988,7 @@ body {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: #2c5f5f;
+    background: #374151;
     color: white;
     padding: 12px 20px;
     border-radius: 12px;

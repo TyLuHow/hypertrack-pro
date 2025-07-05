@@ -468,7 +468,6 @@ const tylerCompleteWorkouts = [
     {
         id: 'workout-20240703-pull',
         date: '2024-07-03',
-        date: '2024-07-03',
         startTime: '2024-07-03T18:00:00Z',
         endTime: '2024-07-03T19:20:00Z',
         duration: 80 * 60 * 1000,
@@ -538,6 +537,85 @@ const tylerCompleteWorkouts = [
                 category: 'Isolation',
                 sets: [
                     { weight: 65, reps: 12, timestamp: '2024-07-03T18:49:00Z' }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'workout-20250705-push',
+        date: '2025-07-05',
+        startTime: '2025-07-05T15:33:48.322Z',
+        endTime: '2025-07-05T16:41:52.498Z',
+        duration: 4084176,
+        split: 'Push',
+        tod: 'PM',
+        notes: 'Push day - chest, triceps with strength progression',
+        exercises: [
+            {
+                id: 11,
+                name: 'Smith Machine Bench Press',
+                muscle_group: 'Horizontal Push',
+                category: 'Compound',
+                sets: [
+                    { weight: 165, reps: 12, timestamp: '2025-07-05T15:35:46.608Z' },
+                    { weight: 175, reps: 10, timestamp: '2025-07-05T15:40:33.885Z' },
+                    { weight: 175, reps: 9, timestamp: '2025-07-05T15:44:08.691Z' },
+                    { weight: 175, reps: 8, timestamp: '2025-07-05T15:48:42.291Z' }
+                ]
+            },
+            {
+                id: 47,
+                name: 'Chest Press Machine',
+                muscle_group: 'Horizontal Push',
+                category: 'Compound',
+                sets: [
+                    { weight: 130, reps: 18, timestamp: '2025-07-05T15:51:40.000Z' },
+                    { weight: 145, reps: 14, timestamp: '2025-07-05T15:54:40.000Z' },
+                    { weight: 152.5, reps: 12, timestamp: '2025-07-05T15:57:40.000Z' }
+                ]
+            },
+            {
+                id: 9,
+                name: 'Bodyweight Dips',
+                muscle_group: 'Triceps',
+                category: 'Compound',
+                sets: [
+                    { weight: 180, reps: 8, timestamp: '2025-07-05T15:59:40.000Z' },
+                    { weight: 180, reps: 8, timestamp: '2025-07-05T16:01:40.000Z' },
+                    { weight: 180, reps: 8, timestamp: '2025-07-05T16:03:40.000Z' }
+                ]
+            },
+            {
+                id: 8,
+                name: 'Dumbbell Flyes',
+                muscle_group: 'Horizontal Push',
+                category: 'Isolation',
+                sets: [
+                    { weight: 80, reps: 13, timestamp: '2025-07-05T16:22:13.788Z' },
+                    { weight: 90, reps: 11, timestamp: '2025-07-05T16:22:13.789Z' },
+                    { weight: 100, reps: 10, timestamp: '2025-07-05T16:22:13.789Z' }
+                ]
+            },
+            {
+                id: 6,
+                name: 'Tricep Cable Rope Pulldowns',
+                muscle_group: 'Triceps',
+                category: 'Isolation',
+                sets: [
+                    { weight: 70, reps: 8, timestamp: '2025-07-05T16:28:22.582Z' },
+                    { weight: 65, reps: 9, timestamp: '2025-07-05T16:28:22.583Z' },
+                    { weight: 65, reps: 8, timestamp: '2025-07-05T16:28:22.583Z' }
+                ]
+            },
+            {
+                id: 7,
+                name: 'Close-Grip Smith Machine Press',
+                muscle_group: 'Triceps',
+                category: 'Compound',
+                sets: [
+                    { weight: 155, reps: 6, timestamp: '2025-07-05T16:41:34.944Z' },
+                    { weight: 140, reps: 7, timestamp: '2025-07-05T16:41:34.944Z' },
+                    { weight: 135, reps: 10, timestamp: '2025-07-05T16:41:34.944Z' }
                 ]
             }
         ]

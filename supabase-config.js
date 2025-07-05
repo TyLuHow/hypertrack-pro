@@ -105,11 +105,11 @@ class TylerDataManager {
         }
     }
 
-    // Validate Tyler data integrity (should be 7-8 workouts from late June)
+    // Validate Tyler data integrity (should be 8 workouts from late June to July 5th)
     validateTylerData(workouts) {
-        const expectedCount = { min: 7, max: 8 };
+        const expectedCount = { min: 8, max: 8 };
         const lateJuneStart = new Date('2024-06-20');
-        const earlyJulyEnd = new Date('2024-07-10');
+        const earlyJulyEnd = new Date('2025-07-10'); // Updated to handle 2025 workout
 
         const validWorkouts = workouts.filter(workout => {
             const workoutDate = new Date(workout.date);

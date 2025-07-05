@@ -1181,6 +1181,9 @@ function openExerciseModal(exerciseName, muscleGroup, category) {
     // Add first set input with pre-filled recommendation
     addSet(recommendation.weight, recommendation.reps);
     
+    // Initialize exercise notes functionality
+    initializeExerciseNotes();
+    
     modal.style.display = 'flex';
 }
 
@@ -1188,6 +1191,62 @@ function closeExerciseModal() {
     const modal = document.getElementById('exerciseModal');
     modal.style.display = 'none';
     HyperTrack.state.currentExercise = null;
+    
+    // Clear exercise notes
+    const notesInput = document.getElementById('exerciseNotes');
+    if (notesInput) {
+        notesInput.value = '';
+        updateNotesCounter();
+    }
+}
+
+// Initialize exercise notes functionality
+function initializeExerciseNotes() {
+    const notesInput = document.getElementById('exerciseNotes');
+    const charCountSpan = document.getElementById('notesCharCount');
+    
+    if (!notesInput || !charCountSpan) {
+        console.warn('⚠️ Exercise notes elements not found');
+        return;
+    }
+    
+    // Clear previous notes
+    notesInput.value = '';
+    updateNotesCounter();
+    
+    // Add character counter listener
+    memoryManager.addEventListener(notesInput, 'input', updateNotesCounter, undefined, 'exercise_notes_counter');
+}
+
+// Update notes character counter
+function updateNotesCounter() {
+    const notesInput = document.getElementById('exerciseNotes');
+    const charCountSpan = document.getElementById('notesCharCount');
+    const notesCounter = document.querySelector('.notes-counter');
+    
+    if (!notesInput || !charCountSpan) return;
+    
+    const currentLength = notesInput.value.length;
+    const maxLength = 500;
+    
+    charCountSpan.textContent = currentLength;
+    
+    // Update counter styling based on length
+    if (notesCounter) {
+        notesCounter.classList.remove('warning', 'error');
+        
+        if (currentLength > maxLength * 0.9) {
+            notesCounter.classList.add('error');
+        } else if (currentLength > maxLength * 0.8) {
+            notesCounter.classList.add('warning');
+        }
+    }
+    
+    // Prevent input beyond max length
+    if (currentLength > maxLength) {
+        notesInput.value = notesInput.value.substring(0, maxLength);
+        charCountSpan.textContent = maxLength;
+    }
 }
 
 function addSet(defaultWeight = '', defaultReps = '') {
@@ -1340,13 +1399,18 @@ function finishExercise() {
         return;
     }
     
+    // Get exercise notes
+    const notesInput = document.getElementById('exerciseNotes');
+    const exerciseNotes = notesInput ? notesInput.value.trim() : '';
+    
     // Add exercise to workout
     const exercise = {
         id: Date.now(),
         name: HyperTrack.state.currentExercise.name,
         muscle_group: HyperTrack.state.currentExercise.muscle_group,
         category: HyperTrack.state.currentExercise.category,
-        sets: sets
+        sets: sets,
+        notes: exerciseNotes // Include notes for AI sentiment analysis
     };
     
     console.log('🏋️ Adding exercise to workout:', exercise);
@@ -2060,6 +2124,7 @@ function viewWorkoutDetails(workoutId) {
                             <div style="margin-top: 8px; font-size: 12px; color: #9ca3af;">
                                 ${exercise.sets?.length || 0} sets • Volume: ${Math.round((exercise.sets || []).reduce((sum, set) => sum + (set.weight * set.reps), 0))} lbs
                             </div>
+                            ${exercise.notes ? `<div style="margin-top: 8px; padding: 8px; background: #1f2937; border-radius: 6px; font-style: italic; font-size: 13px; color: #d1d5db;">💭 ${exercise.notes}</div>` : ''}
                         </div>
                     `).join('')}
                 </div>
