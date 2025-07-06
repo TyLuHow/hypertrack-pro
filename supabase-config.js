@@ -1,211 +1,114 @@
-// Supabase Configuration for HyperTrack Pro
+// Simplified Supabase Configuration for HyperTrack Pro
 console.log('🔗 Initializing Supabase configuration...');
 
-// Supabase configuration - Load from environment variables
-const supabaseUrl = window.SUPABASE_URL || process.env.SUPABASE_URL || ''
-const supabaseAnonKey = window.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+// Supabase configuration - use demo credentials if none provided
+const supabaseUrl = (typeof window !== 'undefined' && window.SUPABASE_URL) || 'https://demo.supabase.co'
+const supabaseAnonKey = (typeof window !== 'undefined' && window.SUPABASE_ANON_KEY) || 'demo-key'
 
-// User ID configuration - ensures data separation between users
-function getUserId() {
-    const envUserId = window.USER_ID || process.env.USER_ID;
-    if (envUserId) return envUserId;
-    
-    // Generate unique user ID if not configured
-    let userId = localStorage.getItem('hypertrack_user_id');
-    if (!userId) {
-        userId = 'user_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('hypertrack_user_id', userId);
-        console.log('🆔 Generated unique user ID:', userId);
-    }
-    return userId;
-}
+// Simple user ID - just use 'tyler' for now
+const currentUserId = 'tyler';
 
-const currentUserId = getUserId();
+// Global Supabase client variable
+let supabaseClient = null;
 
-// Check if Supabase is properly configured
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('⚠️ Supabase not configured. App will work with local storage only.');
-    console.warn('📝 For cloud sync: Copy .env.example to .env.local and add your Supabase credentials.');
-    console.warn('🔗 Get credentials from: https://supabase.com');
-}
-
-// Create Supabase client when the library is available
+// Simple Supabase initialization
 function initializeSupabase() {
     try {
-        // Check if Supabase library is loaded and we haven't created a client yet
-        if (window.supabase && typeof window.supabase.createClient === 'function' && !window.supabaseClient) {
-            // Create the client and store it in supabaseClient
-            window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+        // Wait for Supabase library to be available
+        if (typeof window.supabase === 'undefined') {
+            console.log('⏳ Waiting for Supabase library...');
+            setTimeout(initializeSupabase, 100);
+            return;
+        }
+        
+        // Create client only if we have valid credentials
+        if (supabaseUrl !== 'https://demo.supabase.co' && supabaseAnonKey !== 'demo-key') {
+            supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+            window.supabaseClient = supabaseClient;
             console.log('✅ Supabase client initialized successfully');
-            return;
+        } else {
+            console.warn('⚠️ Using demo credentials - Supabase features disabled');
+            supabaseClient = null;
+            window.supabaseClient = null;
         }
         
-        if (window.supabaseClient) {
-            // Client already exists
-            console.log('✅ Supabase client already initialized');
-            return;
-        }
-        
-        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-            console.warn('⚠️ Supabase library not yet available, will retry...');
-            setTimeout(initializeSupabase, 200);
-        }
     } catch (error) {
-        console.warn('⚠️ Supabase initialization failed, will retry...', error);
-        setTimeout(initializeSupabase, 200);
+        console.error('❌ Supabase initialization failed:', error);
+        supabaseClient = null;
+        window.supabaseClient = null;
     }
 }
 
-// Wait for page load then initialize
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(initializeSupabase, 100);
-});
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSupabase);
+} else {
+    initializeSupabase();
+}
 
-// Tyler's historical workout data management
-class TylerDataManager {
+// Simple local data management - no Supabase required
+class LocalDataManager {
     constructor() {
-        this.isDataMigrated = false;
+        this.tylerData = null;
     }
 
-    // Migrate Tyler's historical data to Supabase
-    async migrateTylerData() {
-        try {
-            console.log('🔄 Migrating Tyler historical data to Supabase...');
-            
-            // Check if data already exists
-            const { data: existingWorkouts, error: checkError } = await window.supabaseClient
-                .from('workouts')
-                .select('id')
-                .eq('user_id', 'tyler_historical')
-                .limit(1);
-
-            if (checkError) {
-                console.error('❌ Error checking existing data:', checkError);
-                return false;
-            }
-
-            if (existingWorkouts && existingWorkouts.length > 0) {
-                console.log('✅ Tyler data already exists in Supabase');
-                this.isDataMigrated = true;
-                return true;
-            }
-
-            // Import Tyler's data from local file
-            const { tylerCompleteWorkouts } = await import('./tyler-data-integration.js');
-            
-            // Format data for Supabase
-            const formattedWorkouts = tylerCompleteWorkouts.map(workout => ({
-                id: workout.id,
-                user_id: 'tyler_historical',
-                date: workout.date,
-                start_time: workout.startTime,
-                end_time: workout.endTime,
-                duration: workout.duration,
-                split: workout.split,
-                time_of_day: workout.tod,
-                notes: workout.notes,
-                exercises: workout.exercises
-            }));
-
-            // Insert into Supabase
-            const { data, error } = await window.supabaseClient
-                .from('workouts')
-                .insert(formattedWorkouts);
-
-            if (error) {
-                console.error('❌ Error migrating Tyler data:', error);
-                return false;
-            }
-
-            console.log(`✅ Successfully migrated ${formattedWorkouts.length} Tyler workouts to Supabase`);
-            this.isDataMigrated = true;
-            return true;
-
-        } catch (error) {
-            console.error('❌ Tyler data migration failed:', error);
-            return false;
-        }
-    }
-
-    // Load Tyler's data from Supabase
+    // Load Tyler's data from local JSON file
     async loadTylerData() {
         try {
-            const { data: workouts, error } = await window.supabaseClient
-                .from('workouts')
-                .select('*')
-                .eq('user_id', 'tyler_historical')
-                .order('date', { ascending: false });
-
-            if (error) {
-                console.error('❌ Error loading Tyler data:', error);
-                return [];
+            console.log('📁 Loading Tyler data from local JSON...');
+            
+            // Load from local file
+            const response = await fetch('./data/tyler-workouts.json');
+            if (!response.ok) {
+                throw new Error(`Failed to load Tyler data: ${response.status}`);
             }
-
-            console.log(`✅ Loaded ${workouts.length} Tyler workouts from Supabase`);
+            
+            const workouts = await response.json();
+            console.log(`✅ Loaded ${workouts.length} Tyler workouts from local file`);
+            
+            // Store in instance
+            this.tylerData = workouts;
+            
             return workouts;
-
+            
         } catch (error) {
             console.error('❌ Failed to load Tyler data:', error);
             return [];
         }
     }
-
-    // Validate Tyler data integrity (should be 8 workouts from late June to July 5th)
-    validateTylerData(workouts) {
-        const expectedCount = { min: 8, max: 8 };
-        const lateJuneStart = new Date('2024-06-20');
-        const earlyJulyEnd = new Date('2025-07-10'); // Updated to handle 2025 workout
-
-        const validWorkouts = workouts.filter(workout => {
-            const workoutDate = new Date(workout.date);
-            return workoutDate >= lateJuneStart && workoutDate <= earlyJulyEnd;
-        });
-
-        const isValid = validWorkouts.length >= expectedCount.min && 
-                       validWorkouts.length <= expectedCount.max;
-
-        if (!isValid) {
-            console.warn(`⚠️ Tyler data validation failed: Expected ${expectedCount.min}-${expectedCount.max} workouts, found ${validWorkouts.length}`);
-        } else {
-            console.log(`✅ Tyler data validated: ${validWorkouts.length} workouts from late June period`);
-        }
-
-        return { isValid, count: validWorkouts.length, workouts: validWorkouts };
-    }
 }
 
-// Global Tyler data manager instance
-const tylerDataManager = new TylerDataManager();
-window.tylerDataManager = tylerDataManager;
+// Global local data manager instance
+const localDataManager = new LocalDataManager();
+window.localDataManager = localDataManager;
 
-// Initialize Tyler data integration
+// Initialize Tyler data from local files
 async function initializeTylerData() {
     try {
-        // First migrate data if needed
-        await tylerDataManager.migrateTylerData();
+        console.log('🔄 Initializing Tyler historical data...');
         
-        // Then load and validate
-        const workouts = await tylerDataManager.loadTylerData();
-        const validation = tylerDataManager.validateTylerData(workouts);
+        // Load Tyler's workouts from local JSON
+        const workouts = await localDataManager.loadTylerData();
         
-        if (!validation.isValid) {
-            console.error('❌ Tyler data validation failed - check Supabase data integrity');
+        if (workouts.length === 0) {
+            console.warn('⚠️ No Tyler workouts loaded');
+            return [];
         }
         
         // Integrate Tyler's historical workouts into main app state
-        if (window.HyperTrack && validation.workouts.length > 0) {
+        if (window.HyperTrack) {
             // Add Tyler's workouts to the main workouts array
             const existingWorkouts = window.HyperTrack.state.workouts || [];
-            const combinedWorkouts = [...existingWorkouts, ...validation.workouts];
+            const combinedWorkouts = [...existingWorkouts, ...workouts];
             
             // Sort by date (newest first)
             combinedWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             window.HyperTrack.state.workouts = combinedWorkouts;
-            console.log(`✅ Integrated ${validation.workouts.length} Tyler workouts into main view`);
+            console.log(`✅ Integrated ${workouts.length} Tyler workouts into main view`);
         }
         
-        return validation.workouts;
+        return workouts;
         
     } catch (error) {
         console.error('❌ Tyler data initialization failed:', error);
@@ -213,49 +116,49 @@ async function initializeTylerData() {
     }
 }
 
-// Make initializeTylerData globally available
+// Make function globally available
 window.initializeTylerData = initializeTylerData;
 
-// Sync workout to Supabase only on workout completion
-async function syncWorkoutOnCompletion(workout) {
+// Simple workout saving to localStorage
+function saveWorkoutLocally(workout) {
     try {
-        if (!window.supabaseClient) {
-            console.warn('⚠️ Supabase not available - workout saved locally only');
-            return false;
-        }
-
-        console.log('🔄 Syncing completed workout to Supabase...');
+        console.log('💾 Saving workout locally...');
         
-        const { data, error } = await window.supabaseClient
-            .from('workouts')
-            .insert([{
-                id: workout.id,
-                user_id: currentUserId, // Configurable user ID
-                date: workout.date,
-                start_time: workout.startTime,
-                end_time: workout.endTime,
-                duration: workout.duration,
-                split: workout.split,
-                time_of_day: workout.tod,
-                notes: workout.notes,
-                exercises: workout.exercises
-            }]);
-
-        if (error) {
-            console.error('❌ Failed to sync workout to Supabase:', error);
-            return false;
-        }
-
-        console.log('✅ Workout synced to Supabase successfully');
+        // Get existing workouts from localStorage
+        const existingWorkouts = JSON.parse(localStorage.getItem('hypertrack_workouts') || '[]');
+        
+        // Add new workout
+        existingWorkouts.push(workout);
+        
+        // Sort by date (newest first)
+        existingWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Save back to localStorage
+        localStorage.setItem('hypertrack_workouts', JSON.stringify(existingWorkouts));
+        
+        console.log('✅ Workout saved locally');
         return true;
-
+        
     } catch (error) {
-        console.error('❌ Workout sync error:', error);
+        console.error('❌ Failed to save workout locally:', error);
         return false;
     }
 }
 
-// Make sync function globally available
-window.syncWorkoutOnCompletion = syncWorkoutOnCompletion;
+// Load workouts from localStorage
+function loadLocalWorkouts() {
+    try {
+        const workouts = JSON.parse(localStorage.getItem('hypertrack_workouts') || '[]');
+        console.log(`📁 Loaded ${workouts.length} workouts from localStorage`);
+        return workouts;
+    } catch (error) {
+        console.error('❌ Failed to load local workouts:', error);
+        return [];
+    }
+}
 
-console.log('📊 Supabase configuration loaded - Tyler data integration ready');
+// Make functions globally available
+window.saveWorkoutLocally = saveWorkoutLocally;
+window.loadLocalWorkouts = loadLocalWorkouts;
+
+console.log('💾 Local storage configuration loaded - ready for offline use');

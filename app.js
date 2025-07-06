@@ -3976,8 +3976,11 @@ async function initializeApp() {
             }
         }
         
-        // Load analytics
-        loadAnalytics();
+        // Load analytics after data is loaded
+        setTimeout(() => {
+            loadAnalytics();
+            console.log('📊 Analytics loaded with historical data');
+        }, 100);
         
         // Load intelligence features
         initializeIntelligence();
