@@ -9,10 +9,21 @@ class MemoryManager {
         this.cleanupCallbacks = new Set();
         this.initializationFailed = false;
         
+        // Auto-compact features
+        this.fileSizeLimits = {
+            js: 1000,      // 1000 lines max for JavaScript files
+            css: 500,      // 500 lines max for CSS files
+            json: 100000   // 100KB max for JSON files
+        };
+        this.autoCompactMonitoring = false;
+        this.compactCheckInterval = null;
+        
         try {
             // Start memory monitoring
             this.startMemoryMonitoring();
-            console.log('🛡️ MemoryManager initialized successfully');
+            // Start auto-compact monitoring
+            this.startAutoCompactMonitoring();
+            console.log('🛡️ MemoryManager with Auto-Compact initialized successfully');
         } catch (error) {
             this.initializationFailed = true;
             console.error('❌ CRITICAL: MemoryManager initialization failed:', error);
@@ -163,30 +174,9 @@ class MemoryManager {
         console.log(`✅ Cleanup completed. Active: ${this.intervals.size} intervals, ${this.listeners.size} listeners`);
     }
 
-    // LocalStorage management
+    // LocalStorage management (legacy method - now calls enhanced version)
     compactLocalStorage() {
-        try {
-            const storageSize = JSON.stringify(localStorage).length;
-            if (storageSize > 5 * 1024 * 1024) { // 5MB threshold
-                console.log(`🗜️ Compacting localStorage (${Math.round(storageSize / 1024)}KB)`);
-                
-                // Backup current data
-                const backup = {};
-                for (let key in localStorage) {
-                    backup[key] = localStorage[key];
-                }
-                
-                // Clear and restore essential data only
-                localStorage.clear();
-                if (backup.hypertrackWorkouts) localStorage.setItem('hypertrackWorkouts', backup.hypertrackWorkouts);
-                if (backup.hypertrackSettings) localStorage.setItem('hypertrackSettings', backup.hypertrackSettings);
-                if (backup.hypertrackCurrentWorkout) localStorage.setItem('hypertrackCurrentWorkout', backup.hypertrackCurrentWorkout);
-                
-                console.log(`✅ Storage compacted: ${JSON.stringify(localStorage).length / 1024}KB`);
-            }
-        } catch (error) {
-            console.error('Storage compaction error:', error);
-        }
+        this.compactStorage();
     }
 
     // Register cleanup callback
@@ -197,6 +187,9 @@ class MemoryManager {
     // Full cleanup - call before app shutdown
     destroy() {
         console.log('🔥 MemoryManager destroying...');
+        
+        // Stop auto-compact monitoring
+        this.stopAutoCompactMonitoring();
         
         // Clear all intervals
         this.intervals.forEach(interval => this.clearInterval(interval.id));
@@ -215,22 +208,214 @@ class MemoryManager {
         this.cleanupCallbacks.clear();
         
         this.isMonitoring = false;
+        this.autoCompactMonitoring = false;
         console.log('💀 MemoryManager destroyed');
+    }
+
+    // Enhanced memory statistics
+    getMemoryStats() {
+        if (!performance.memory) {
+            return { highUsage: false, stats: null };
+        }
+        
+        const memory = performance.memory;
+        const usedPercent = (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100;
+        const usedMB = Math.round(memory.usedJSHeapSize / 1024 / 1024);
+        
+        return {
+            highUsage: usedPercent > 70, // Trigger compaction at 70% memory usage
+            usedPercent,
+            usedMB,
+            limitMB: Math.round(memory.jsHeapSizeLimit / 1024 / 1024),
+            stats: memory
+        };
+    }
+
+    // Check storage size and compact if needed
+    checkStorageSize() {
+        try {
+            const storageSize = JSON.stringify(localStorage).length;
+            const storageMB = storageSize / 1024 / 1024;
+            
+            if (storageMB > 10) { // 10MB threshold
+                console.log(`📦 Large storage detected: ${storageMB.toFixed(1)}MB`);
+                this.compactStorage();
+            }
+            
+        } catch (error) {
+            console.error('Storage check error:', error);
+        }
+    }
+
+    // Enhanced storage compaction
+    compactStorage() {
+        try {
+            console.log('🗜️ Enhanced storage compaction...');
+            
+            // Get all workout data
+            const workouts = JSON.parse(localStorage.getItem('hypertrackWorkouts') || '[]');
+            
+            if (workouts.length > 50) {
+                // Keep only the most recent 30 workouts
+                const recentWorkouts = workouts
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 30);
+                
+                localStorage.setItem('hypertrackWorkouts', JSON.stringify(recentWorkouts));
+                console.log(`✂️ Trimmed workouts: ${workouts.length} → ${recentWorkouts.length}`);
+            }
+            
+            // Remove old temporary data
+            for (let key in localStorage) {
+                if (key.startsWith('temp_') || key.startsWith('cache_')) {
+                    const timestamp = parseInt(key.split('_').pop());
+                    if (Date.now() - timestamp > 24 * 60 * 60 * 1000) { // 24 hours old
+                        localStorage.removeItem(key);
+                        console.log(`🗑️ Removed old temp data: ${key}`);
+                    }
+                }
+            }
+            
+            const newSize = JSON.stringify(localStorage).length;
+            console.log(`✅ Storage compacted: ${(newSize / 1024 / 1024).toFixed(1)}MB`);
+            
+        } catch (error) {
+            console.error('Storage compaction error:', error);
+        }
+    }
+
+    // Clean up unused DOM elements
+    cleanupDOM() {
+        try {
+            // Remove empty containers
+            const emptyElements = document.querySelectorAll('div:empty, span:empty, p:empty');
+            let removed = 0;
+            
+            emptyElements.forEach(el => {
+                if (!el.classList.contains('keep') && !el.hasAttribute('data-keep')) {
+                    el.remove();
+                    removed++;
+                }
+            });
+            
+            if (removed > 0) {
+                console.log(`🧹 Removed ${removed} empty DOM elements`);
+            }
+            
+            // Clear cached DOM references that might be stale
+            if (window.HyperTrack && window.HyperTrack.domCache) {
+                window.HyperTrack.domCache = {};
+                console.log('🗑️ Cleared DOM cache');
+            }
+            
+        } catch (error) {
+            console.error('DOM cleanup error:', error);
+        }
+    }
+
+    // Check file sizes and trigger compaction if needed
+    checkFileSizes() {
+        if (!this.autoCompactMonitoring) return;
+        
+        try {
+            // Monitor memory usage patterns
+            const memoryStats = this.getMemoryStats();
+            
+            if (memoryStats.highUsage) {
+                console.log('⚠️ High memory usage detected, triggering compaction');
+                this.performFullCompaction();
+            }
+            
+            // Check localStorage size
+            this.checkStorageSize();
+            
+        } catch (error) {
+            console.error('Auto-compact check error:', error);
+        }
+    }
+
+    // Perform full system compaction
+    performFullCompaction() {
+        console.log('🧹 Performing full system compaction...');
+        
+        // Memory cleanup
+        this.triggerCleanup('auto_compact');
+        
+        // Storage cleanup
+        this.compactStorage();
+        
+        // DOM cleanup - remove unused elements
+        this.cleanupDOM();
+        
+        // Force garbage collection if available
+        if (window.gc) {
+            window.gc();
+            console.log('🗑️ Forced garbage collection');
+        }
+        
+        console.log('✅ System compaction completed');
+    }
+
+    // Start auto-compact monitoring
+    startAutoCompactMonitoring() {
+        if (this.autoCompactMonitoring) return;
+        
+        this.autoCompactMonitoring = true;
+        
+        // Check every 2 minutes
+        this.compactCheckInterval = this.addInterval(
+            () => this.checkFileSizes(), 
+            120000, 
+            'auto_compact_monitor'
+        );
+        
+        console.log('📊 Auto-compacting monitoring started');
+    }
+
+    // Stop auto-compact monitoring
+    stopAutoCompactMonitoring() {
+        this.autoCompactMonitoring = false;
+        
+        if (this.compactCheckInterval) {
+            this.clearInterval(this.compactCheckInterval);
+            this.compactCheckInterval = null;
+        }
+        
+        console.log('⏹️ Auto-compacting monitoring stopped');
+    }
+
+    // Manual trigger for user-initiated compaction
+    manualCompact() {
+        console.log('👤 User-triggered compaction');
+        this.performFullCompaction();
+        
+        // Show user feedback
+        if (document.getElementById('compaction-feedback')) {
+            const feedback = document.getElementById('compaction-feedback');
+            feedback.textContent = '✅ System optimized';
+            feedback.style.display = 'block';
+            setTimeout(() => feedback.style.display = 'none', 3000);
+        }
     }
 
     // Debug info
     getStatus() {
+        const memoryStats = this.getMemoryStats();
+        const storageSize = JSON.stringify(localStorage).length;
+        
         return {
             intervals: this.intervals.size,
             timeouts: this.timeouts.size,
             listeners: this.listeners.size,
             cleanupCallbacks: this.cleanupCallbacks.size,
             isMonitoring: this.isMonitoring,
-            memory: performance.memory ? {
-                used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) + 'MB',
-                limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024) + 'MB',
-                percent: ((performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) * 100).toFixed(1) + '%'
-            } : null
+            autoCompactMonitoring: this.autoCompactMonitoring,
+            memory: memoryStats,
+            storage: {
+                size: (storageSize / 1024 / 1024).toFixed(1) + 'MB',
+                items: Object.keys(localStorage).length
+            },
+            limits: this.fileSizeLimits
         };
     }
 }
@@ -248,4 +433,14 @@ window.memoryStatus = () => {
     console.table(window.memoryManager.getStatus());
 };
 
-console.log('🛡️ MemoryManager initialized');
+// Console helper functions for auto-compact features
+window.compactStatus = () => {
+    console.table(window.memoryManager.getStatus());
+};
+
+// Manual compaction helper  
+window.compact = () => {
+    window.memoryManager.manualCompact();
+};
+
+console.log('🛡️ MemoryManager with Auto-Compact initialized');
