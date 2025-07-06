@@ -418,7 +418,7 @@ function showWorkoutDaySelection() {
                                 case 'RECOMMENDED': return '#3b82f6';
                                 case 'GOOD OPTION': return '#8b5cf6';
                                 case 'ALTERNATIVE': return '#f59e0b';
-                                case 'SKIP FOR NOW': return '#ef4444';
+                                case 'SKIP FOR NOW': return '#be185d';
                                 default: return '#6b7280';
                             }
                         };
@@ -429,7 +429,7 @@ function showWorkoutDaySelection() {
                          onmouseover="this.style.borderColor='${getRecommendationColor(info.recommendation)}'" onmouseout="this.style.borderColor='#374151'">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <div style="display: flex; align-items: center;">
-                                <div style="margin-right: 12px; color: #60a5fa;">${info.icon}</div>
+                                <div style="margin-right: 12px; color: #64748b;">${info.icon}</div>
                                 <div>
                                     <h4 style="margin: 0; color: white; font-size: 16px;">${day} Day</h4>
                                     <p style="margin: 4px 0 0 0; color: #9ca3af; font-size: 13px;">${info.description}</p>
@@ -444,7 +444,7 @@ function showWorkoutDaySelection() {
                         </div>
                         
                         <div style="margin: 12px 0;">
-                            <p style="font-size: 12px; color: #60a5fa; margin: 0 0 8px 0; font-weight: 600;">
+                            <p style="font-size: 12px; color: #64748b; margin: 0 0 8px 0; font-weight: 600;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 4px;"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Complete Workout Sequence:
                             </p>
                             <div style="max-height: 200px; overflow-y: auto; background: #0f172a; border-radius: 6px; padding: 8px;">
@@ -460,7 +460,7 @@ function showWorkoutDaySelection() {
                                     </div>
                                 `).join('')}
                             </div>
-                            <p style="font-size: 10px; color: #60a5fa; margin: 8px 0 0 0; font-style: italic;">
+                            <p style="font-size: 10px; color: #64748b; margin: 8px 0 0 0; font-style: italic;">
                                 ${info.research}
                             </p>
                         </div>
@@ -763,12 +763,19 @@ function showMissedMuscleGroupsWarning(selectedDayType) {
     if (highPriority.length > 0) {
         warningHTML += `
             <div style="margin-bottom: 20px;">
-                <h4 style="color: #dc2626; margin: 0 0 12px 0;">🚨 Critical (Take Action Today)</h4>
+                <h4 style="color: #be185d; margin: 0 0 12px 0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                        <path d="M12 9v4"></path>
+                        <path d="m12 17 .01 0"></path>
+                    </svg>
+                    Critical (Take Action Today)
+                </h4>
                 ${highPriority.map(rec => `
-                    <div style="background: #1f2937; border-radius: 8px; padding: 14px; margin: 10px 0; border-left: 4px solid #dc2626;">
+                    <div style="background: #1f2937; border-radius: 8px; padding: 14px; margin: 10px 0; border-left: 4px solid #be185d;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-weight: 600; color: white;">${rec.muscle}</span>
-                            <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 11px; color: #dc2626; text-transform: uppercase;">
+                            <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 11px; color: #be185d; text-transform: uppercase;">
                                 ${rec.type.replace('_', ' ')}
                             </span>
                         </div>
@@ -779,7 +786,7 @@ function showMissedMuscleGroupsWarning(selectedDayType) {
                             Recommended: ${rec.exercises.slice(0, 2).join(', ')}
                         </p>
                         <button onclick="addMuscleGroupToCurrentWorkout('${rec.muscle}', ${JSON.stringify(rec.exercises).replace(/"/g, '&quot;')})" 
-                                style="background: #dc2626; color: white; border: none; padding: 7px 14px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600;">
+                                style="background: #be185d; color: white; border: none; padding: 7px 14px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600;">
                             Add ${rec.deficit} Sets to ${selectedDayType}
                         </button>
                     </div>
@@ -842,7 +849,7 @@ function showMissedMuscleGroupsWarning(selectedDayType) {
     
     warningHTML += `
         <div style="background: #0f172a; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-            <h5 style="margin: 0 0 8px 0; color: #60a5fa;">
+            <h5 style="margin: 0 0 8px 0; color: #64748b;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
                     <circle cx="12" cy="12" r="10"></circle>
                     <circle cx="12" cy="12" r="6"></circle>
@@ -1013,7 +1020,7 @@ function updateRecommendationsPanel(panel = null) {
     const next = remaining[0];
     
     targetPanel.innerHTML = `
-        <h4 style="margin: 0 0 12px 0; color: #60a5fa; display: flex; align-items: center;">
+        <h4 style="margin: 0 0 12px 0; color: #64748b; display: flex; align-items: center;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
                 <circle cx="12" cy="12" r="10"></circle>
                 <circle cx="12" cy="12" r="6"></circle>
@@ -1042,7 +1049,7 @@ function updateRecommendationsPanel(panel = null) {
         <div style="margin: 12px 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <span style="font-size: 13px; color: #9ca3af;">Progress:</span>
-                <span style="font-size: 13px; color: #60a5fa;">${completed.length}/${currentWorkout.recommendedExercises.length}</span>
+                <span style="font-size: 13px; color: #64748b;">${completed.length}/${currentWorkout.recommendedExercises.length}</span>
             </div>
             <div style="background: #374151; border-radius: 8px; height: 6px; overflow: hidden;">
                 <div style="background: linear-gradient(90deg, #3b82f6, #1e40af); height: 100%; width: ${(completed.length / currentWorkout.recommendedExercises.length) * 100}%; transition: width 0.5s;"></div>
@@ -1143,12 +1150,19 @@ function showPostWorkoutVolumeRecommendations() {
     if (untrained.length > 0) {
         recommendationsHTML += `
             <div style="margin-bottom: 20px;">
-                <h4 style="color: #dc2626; margin: 0 0 12px 0;">🚨 Untrained This Week (0 Sets)</h4>
+                <h4 style="color: #be185d; margin: 0 0 12px 0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                        <path d="M12 9v4"></path>
+                        <path d="m12 17 .01 0"></path>
+                    </svg>
+                    Untrained This Week (0 Sets)
+                </h4>
                 ${untrained.map(({ muscle, data }) => `
-                    <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #dc2626;">
+                    <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #be185d;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-weight: 600; color: white;">${muscle}</span>
-                            <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; color: #dc2626;">
+                            <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; color: #be185d;">
                                 0/${data.mev} sets needed
                             </span>
                         </div>
@@ -1188,7 +1202,7 @@ function showPostWorkoutVolumeRecommendations() {
     
     recommendationsHTML += `
         <div style="background: #0f172a; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-            <h5 style="margin: 0 0 8px 0; color: #60a5fa;">💡 Action Plan</h5>
+            <h5 style="margin: 0 0 8px 0; color: #64748b;">💡 Action Plan</h5>
             <p style="font-size: 13px; color: #d1d5db; margin: 0 0 12px 0;">
                 You need <strong>${totalDeficit} more sets</strong> this week to meet evidence-based volume targets.
             </p>
@@ -1998,7 +2012,16 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
     if (!hasData) {
         recommendationsHTML += `
             <div style="text-align: center; padding: 24px; background: #1f2937; border-radius: 8px; border: 2px dashed #374151;">
-                <p style="color: #6b7280; margin: 0;">💪 Start your first workout to see personalized volume recommendations</p>
+                <p style="color: #6b7280; margin: 0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
+                        <path d="M6.5 6.5h11v11h-11z"></path>
+                        <path d="M6.5 6.5L2 2"></path>
+                        <path d="M17.5 6.5L22 2"></path>
+                        <path d="M6.5 17.5L2 22"></path>
+                        <path d="M17.5 17.5L22 22"></path>
+                    </svg>
+                    Start your first workout to see personalized volume recommendations
+                </p>
             </div>
         `;
     } else {
@@ -2024,15 +2047,22 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
         if (untouchedMuscles.length > 0) {
             recommendationsHTML += `
                 <div style="margin-bottom: 16px;">
-                    <h5 style="color: #dc2626; margin: 0 0 8px 0;">🚨 Untrained This Week (0 Sets)</h5>
+                    <h5 style="color: #be185d; margin: 0 0 8px 0;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
+                            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                            <path d="M12 9v4"></path>
+                            <path d="m12 17 .01 0"></path>
+                        </svg>
+                        Untrained This Week (0 Sets)
+                    </h5>
                     ${untouchedMuscles.map(({ muscle, data }) => `
-                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #dc2626;">
+                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #be185d;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <span style="font-weight: 600;">${muscle}</span>
                                 <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">0/${data.mev} sets</span>
                             </div>
                             <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">Need ${data.mev} sets minimum for muscle growth</p>
-                            <button onclick="addMuscleToWorkout('${muscle}')" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                            <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">
                                 + Add ${muscle} Exercise
                             </button>
                         </div>
@@ -2045,7 +2075,14 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
         if (priorityMuscles.length > 0) {
             recommendationsHTML += `
                 <div style="margin-bottom: 16px;">
-                    <h5 style="color: #ef4444; margin: 0 0 8px 0;">⚠️ Priority Muscles (Need More Volume)</h5>
+                    <h5 style="color: #be185d; margin: 0 0 8px 0;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
+                            <path d="M12 9v3"></path>
+                            <path d="m12 16 .01 0"></path>
+                            <circle cx="12" cy="12" r="10"></circle>
+                        </svg>
+                        Priority Muscles (Need More Volume)
+                    </h5>
                     ${priorityMuscles.map(({ muscle, data }) => `
                         <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid ${data.recommendation.color};">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -2053,7 +2090,7 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
                                 <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">${data.current}/${data.mev} sets</span>
                             </div>
                             <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">${data.recommendation.message}</p>
-                            <button onclick="addMuscleToWorkout('${muscle}')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+                            <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">
                                 + Add ${data.deficit} Sets
                             </button>
                         </div>
@@ -2150,10 +2187,14 @@ function addMuscleToWorkout(muscleGroup) {
         const exerciseSelection = document.getElementById('exerciseSelection');
         if (exerciseSelection) {
             const helpText = document.createElement('div');
-            helpText.style.cssText = 'background: #1f2937; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #ef4444;';
+            helpText.style.cssText = 'background: #1f2937; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #be185d;';
             helpText.innerHTML = `
-                <p style="margin: 0; font-size: 14px; color: #ef4444; font-weight: 600;">
-                    💪 Adding ${muscleGroup} exercise to meet volume targets
+                <p style="margin: 0; font-size: 14px; color: #be185d; font-weight: 600;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M8 12l2 2 4-4"></path>
+                    </svg>
+                    Adding ${muscleGroup} exercise to meet volume targets
                 </p>
                 <p style="margin: 4px 0 0 0; font-size: 12px; color: #9ca3af;">
                     Select an exercise below to add it to your current workout
@@ -3560,7 +3601,7 @@ function generateVolumeRecommendation(muscleGroup, currentVolume) {
         return {
             status: 'low',
             message: `Add ${mev - currentVolume} more sets for ${muscleGroup} (${settings.trainingLevel} MEV)`,
-            color: '#ef4444'
+            color: '#be185d'
         };
     } else if (currentVolume >= optimalMin && currentVolume <= optimalMax) {
         return {
