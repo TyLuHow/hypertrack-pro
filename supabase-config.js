@@ -45,12 +45,13 @@ function initializeSupabase() {
         // Create the client
         if (window.supabase && typeof window.supabase.createClient === 'function') {
             window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-            console.log('✅ Supabase client created');
+            console.log('✅ Supabase client created successfully');
             console.log('🔍 Client type:', typeof window.supabaseClient);
             console.log('🔍 Has .from method:', typeof window.supabaseClient?.from === 'function');
+            console.log('🔗 URL configured:', supabaseUrl);
             
             // Test the connection immediately
-            setTimeout(testSupabaseConnection, 500);
+            setTimeout(testSupabaseConnection, 1000);
         } else {
             throw new Error('Supabase createClient function not available');
         }

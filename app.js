@@ -1275,6 +1275,54 @@ function openExerciseModal(exerciseName, muscleGroup, category) {
     
     setInputs.appendChild(recommendationBanner);
     
+    // Add research-based guidelines section
+    const guidelinesSection = document.createElement('div');
+    guidelinesSection.className = 'exercise-guidelines';
+    guidelinesSection.style.cssText = `
+        background: linear-gradient(135deg, #2a4a5a 0%, #1e3a4a 100%);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 16px 0;
+        border-left: 4px solid #4a9eff;
+    `;
+    
+    const exercise = HyperTrack.exerciseDatabase.find(e => e.name === exerciseName);
+    const guidelines = getExerciseGuidelines(exercise, HyperTrack.state.settings.trainingLevel);
+    
+    guidelinesSection.innerHTML = `
+        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+            <svg width="20" height="20" style="margin-right: 8px; color: #4a9eff;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4"></path>
+                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+            </svg>
+            <span style="color: #4a9eff; font-weight: 600; font-size: 16px;">Research Guidelines</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; color: #e2e8f0; font-size: 14px;">
+            <div>
+                <span style="color: #94a3b8; font-weight: 500;">Ideal Sets:</span>
+                <span style="margin-left: 8px; font-weight: 600;">${guidelines.sets}</span>
+            </div>
+            <div>
+                <span style="color: #94a3b8; font-weight: 500;">Target Reps:</span>
+                <span style="margin-left: 8px; font-weight: 600;">${guidelines.repRange}</span>
+            </div>
+            <div>
+                <span style="color: #94a3b8; font-weight: 500;">Rest Time:</span>
+                <span style="margin-left: 8px; font-weight: 600;">${guidelines.restTime}</span>
+            </div>
+            <div>
+                <span style="color: #94a3b8; font-weight: 500;">Tempo:</span>
+                <span style="margin-left: 8px; font-weight: 600;">${guidelines.tempo}</span>
+            </div>
+        </div>
+        <div style="margin-top: 12px; padding: 8px; background: rgba(74, 158, 255, 0.1); border-radius: 6px; font-size: 13px; color: #cbd5e1;">
+            <strong style="color: #4a9eff;">Training Focus:</strong> ${guidelines.focus}
+        </div>
+    `;
+    
+    setInputs.appendChild(guidelinesSection);
+    
     // Add first set input with pre-filled recommendation
     addSet(recommendation.weight, recommendation.reps);
     
@@ -3009,53 +3057,181 @@ function getBalancedRecommendations() {
 }
 
 function getWeightRecommendation(exerciseName) {
-    const workouts = HyperTrack.state.workouts;
-    const exerciseHistory = [];
+    const exercise = HyperTrack.exerciseDatabase.find(e => e.name === exerciseName);
+    console.log(`💡 Getting research-based recommendation for: ${exerciseName}`);
     
-    console.log(`💡 Getting recommendation for: ${exerciseName}`);
-    console.log(`📊 Total workouts available: ${workouts.length}`);
-    
-    // Collect all instances of this exercise
-    workouts.forEach(workout => {
-        workout.exercises?.forEach(exercise => {
-            if (exercise.name === exerciseName) {
-                exerciseHistory.push(exercise);
-            }
-        });
-    });
-    
-    console.log(`📈 Found ${exerciseHistory.length} previous instances of ${exerciseName}`);
-    
-    if (exerciseHistory.length === 0) {
+    if (!exercise) {
+        console.log(`⚠️ Exercise not found in database: ${exerciseName}`);
         return getBeginnerWeightRecommendation(exerciseName);
     }
     
-    // Get most recent performance
-    const lastExercise = exerciseHistory[exerciseHistory.length - 1];
-    const lastSets = lastExercise.sets || [];
+    // Get user's bodyweight for bodyweight exercises
+    const bodyWeight = HyperTrack.state.user.bodyWeight || 180;
+    const { trainingLevel } = HyperTrack.state.settings;
     
-    if (lastSets.length === 0) {
-        return getBeginnerWeightRecommendation(exerciseName);
+    console.log(`📊 User stats: ${bodyWeight}lbs, ${trainingLevel} level`);
+    
+    if (exercise.equipment === 'Bodyweight') {
+        return getBodyweightRecommendation(exerciseName, bodyWeight, trainingLevel);
     }
     
-    // Use the evidence-based progression algorithm
-    return calculateProgressiveSuggestion(lastExercise, lastSets);
+    return getResearchBasedWeightRecommendation(exercise, trainingLevel, bodyWeight);
+}
+
+// Research-based weight recommendations using exercise science principles
+function getResearchBasedWeightRecommendation(exercise, trainingLevel, bodyWeight) {
+    const { target_rep_range, category, muscle_group } = exercise;
+    
+    // Parse target rep range (e.g., "8-12" -> [8, 12])
+    const repRange = target_rep_range ? target_rep_range.split('-').map(Number) : [8, 12];
+    const targetReps = repRange[0]; // Use lower end for strength-focused approach
+    
+    // Research-based percentages of bodyweight for different exercise types
+    const strengthStandards = {
+        // Horizontal Push movements
+        'Smith Machine Bench Press': { novice: 0.75, intermediate: 1.0, advanced: 1.25 },
+        'Incline Dumbbell Press': { novice: 0.3, intermediate: 0.4, advanced: 0.5 }, // per dumbbell
+        'Chest Press Machine': { novice: 0.6, intermediate: 0.8, advanced: 1.0 },
+        'Bodyweight Dips': { novice: 1.0, intermediate: 1.0, advanced: 1.0 }, // bodyweight
+        
+        // Horizontal Pull movements  
+        'Smith Machine Rows': { novice: 0.6, intermediate: 0.8, advanced: 1.0 },
+        'Lat Pulldowns': { novice: 0.6, intermediate: 0.8, advanced: 1.0 },
+        
+        // Isolation movements (generally lower percentages)
+        'Dumbbell Bicep Curls': { novice: 0.1, intermediate: 0.15, advanced: 0.2 }, // per dumbbell
+        'Dumbbell Lateral Raises': { novice: 0.05, intermediate: 0.08, advanced: 0.12 }, // per dumbbell
+        'Tricep Cable Rope Pulldowns': { novice: 0.25, intermediate: 0.35, advanced: 0.45 },
+        'Face Pulls': { novice: 0.2, intermediate: 0.3, advanced: 0.4 }
+    };
+    
+    // Get percentage based on training level
+    const standards = strengthStandards[exercise.name];
+    const percentage = standards ? standards[trainingLevel] || standards.novice : 0.3;
+    
+    // Calculate recommended weight
+    let recommendedWeight = Math.round(bodyWeight * percentage);
+    
+    // Adjust for machine/cable exercises (round to nearest 5)
+    if (exercise.equipment.includes('Machine') || exercise.equipment.includes('Cable')) {
+        recommendedWeight = Math.round(recommendedWeight / 5) * 5;
+    }
+    
+    // Minimum weights for safety
+    if (recommendedWeight < 10) recommendedWeight = 10;
+    
+    return {
+        weight: recommendedWeight,
+        reps: targetReps,
+        sets: getSetsRecommendation(exercise, trainingLevel),
+        note: getResearchNote(exercise, trainingLevel)
+    };
+}
+
+function getBodyweightRecommendation(exerciseName, bodyWeight, trainingLevel) {
+    const repStandards = {
+        'Bodyweight Dips': { novice: 5, intermediate: 8, advanced: 12 }
+    };
+    
+    const targetReps = repStandards[exerciseName]?.[trainingLevel] || 8;
+    
+    return {
+        weight: bodyWeight,
+        reps: targetReps,
+        sets: 3,
+        note: `Bodyweight exercise - aim for ${targetReps} quality reps`
+    };
+}
+
+function getSetsRecommendation(exercise, trainingLevel) {
+    // Research shows 3-4 sets optimal for hypertrophy
+    if (exercise.category === 'Compound') {
+        return trainingLevel === 'advanced' ? 4 : 3;
+    } else {
+        return 3; // Isolation exercises
+    }
+}
+
+function getResearchNote(exercise, trainingLevel) {
+    const notes = {
+        compound: {
+            novice: "Focus on form and full range of motion",
+            intermediate: "Progressive overload - increase when you can do all reps with 2 RIR",
+            advanced: "Consider tempo manipulation and intensity techniques"
+        },
+        isolation: {
+            novice: "Control the weight, feel the muscle working",
+            intermediate: "Mind-muscle connection and controlled tempo",
+            advanced: "Peak contraction and metabolic stress techniques"
+        }
+    };
+    
+    const category = exercise.category.toLowerCase();
+    return notes[category]?.[trainingLevel] || "Focus on proper form";
 }
 
 function getBeginnerWeightRecommendation(exerciseName) {
+    // Fallback for exercises not in research database
     const exercise = HyperTrack.exerciseDatabase.find(e => e.name === exerciseName);
+    const bodyWeight = HyperTrack.state.user.bodyWeight || 180;
     
-    // Conservative starting weights based on exercise type
-    const startingWeights = {
-        'Smith Machine Bench Press': { weight: 95, reps: 8, note: "Start with bar + light plates" },
-        'Smith Machine Rows': { weight: 85, reps: 10, note: "Focus on form first" },
-        'Lat Pulldowns': { weight: 70, reps: 10, note: "Start light, focus on lat engagement" },
-        'Incline Dumbbell Press': { weight: 25, reps: 8, note: "25lb dumbbells each hand" },
-        'Dumbbell Bicep Curls': { weight: 20, reps: 10, note: "20lb dumbbells each hand" },
-        'Dumbbell Lateral Raises': { weight: 10, reps: 12, note: "Start very light for shoulders" }
+    if (exercise) {
+        return getResearchBasedWeightRecommendation(exercise, 'novice', bodyWeight);
+    }
+    
+    return { weight: 30, reps: 10, sets: 3, note: "Conservative starting weight - adjust as needed" };
+}
+
+// Get research-based exercise guidelines for display in modal
+function getExerciseGuidelines(exercise, trainingLevel) {
+    if (!exercise) {
+        return {
+            sets: "3",
+            repRange: "8-12",
+            restTime: "2-3 min",
+            tempo: "2-1-2",
+            focus: "Form and control"
+        };
+    }
+    
+    const { category, target_rep_range, rest_period } = exercise;
+    
+    // Evidence-based set recommendations
+    const setsRecommendation = category === 'Compound' ? 
+        (trainingLevel === 'advanced' ? "3-4" : "3") : "3";
+    
+    // Rest periods based on research (Schoenfeld et al.)
+    const restMinutes = rest_period ? Math.round(rest_period / 60) : 
+        (category === 'Compound' ? 3 : 2);
+    const restTime = restMinutes > 1 ? `${restMinutes} min` : `${rest_period}s`;
+    
+    // Tempo recommendations based on training level and exercise type
+    const tempoRecommendations = {
+        novice: category === 'Compound' ? "3-1-2" : "2-1-2", // Slower eccentric for learning
+        intermediate: "2-1-2", // Standard tempo
+        advanced: category === 'Compound' ? "2-0-X" : "2-1-1" // Explosive or controlled
     };
     
-    return startingWeights[exerciseName] || { weight: 30, reps: 10, note: "Conservative starting weight" };
+    // Training focus based on level and exercise
+    const focusRecommendations = {
+        novice: category === 'Compound' ? 
+            "Master movement pattern and form" : 
+            "Feel target muscle and control weight",
+        intermediate: category === 'Compound' ? 
+            "Progressive overload with 2-3 RIR" : 
+            "Mind-muscle connection and intensity",
+        advanced: category === 'Compound' ? 
+            "Intensity techniques and periodization" : 
+            "Peak contraction and metabolic stress"
+    };
+    
+    return {
+        sets: setsRecommendation,
+        repRange: target_rep_range || "8-12",
+        restTime: restTime,
+        tempo: tempoRecommendations[trainingLevel],
+        focus: focusRecommendations[trainingLevel]
+    };
 }
 
 // Evidence-Based Algorithm Functions
@@ -3688,6 +3864,31 @@ function initializeBackgroundTimerPersistence() {
         }
     }, undefined, 'timer_background_management');
     
+    // Additional mobile PWA events for better background handling
+    memoryManager.addEventListener(window, 'blur', () => {
+        saveTimerStateToBackground();
+        console.log('📱 Window blur - saved timer state');
+    }, undefined, 'timer_blur_save');
+    
+    memoryManager.addEventListener(window, 'focus', () => {
+        restoreTimerStateFromBackground();
+        console.log('📱 Window focus - checking timer state');
+    }, undefined, 'timer_focus_restore');
+    
+    // PWA-specific events
+    memoryManager.addEventListener(window, 'pagehide', () => {
+        saveTimerStateToBackground();
+        console.log('📱 Page hide - saved timer state');
+    }, undefined, 'timer_pagehide_save');
+    
+    memoryManager.addEventListener(window, 'pageshow', (event) => {
+        // Only restore if this is from cache (persisted page)
+        if (event.persisted) {
+            restoreTimerStateFromBackground();
+            console.log('📱 Page show (from cache) - checking timer state');
+        }
+    }, undefined, 'timer_pageshow_restore');
+    
     // Also save on page unload
     memoryManager.addEventListener(window, 'beforeunload', () => {
         saveTimerStateToBackground();
@@ -3956,6 +4157,9 @@ async function initializeApp() {
         
         // Initialize auto-save for mobile persistence
         initializeAutoSave();
+        
+        // Initialize background timer persistence for mobile PWA
+        initializeBackgroundTimerPersistence();
         
         // Initialize research facts rotation
         rotateResearchFact();
