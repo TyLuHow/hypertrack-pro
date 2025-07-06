@@ -10,10 +10,8 @@ function initializeSupabase() {
     try {
         // Check if Supabase library is loaded and we haven't created a client yet
         if (window.supabase && typeof window.supabase.createClient === 'function' && !window.supabaseClient) {
-            // Create the client and store it separately
+            // Create the client and store it in supabaseClient
             window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-            // Also assign to window.supabase for backward compatibility
-            window.supabase = window.supabaseClient;
             console.log('✅ Supabase client initialized successfully');
             return;
         }
@@ -51,7 +49,7 @@ class TylerDataManager {
             console.log('🔄 Migrating Tyler historical data to Supabase...');
             
             // Check if data already exists
-            const { data: existingWorkouts, error: checkError } = await window.supabase
+            const { data: existingWorkouts, error: checkError } = await window.supabaseClient
                 .from('workouts')
                 .select('id')
                 .eq('user_id', 'tyler_historical')
@@ -86,7 +84,7 @@ class TylerDataManager {
             }));
 
             // Insert into Supabase
-            const { data, error } = await window.supabase
+            const { data, error } = await window.supabaseClient
                 .from('workouts')
                 .insert(formattedWorkouts);
 
@@ -108,7 +106,7 @@ class TylerDataManager {
     // Load Tyler's data from Supabase
     async loadTylerData() {
         try {
-            const { data: workouts, error } = await window.supabase
+            const { data: workouts, error } = await window.supabaseClient
                 .from('workouts')
                 .select('*')
                 .eq('user_id', 'tyler_historical')
@@ -197,14 +195,14 @@ window.initializeTylerData = initializeTylerData;
 // Sync workout to Supabase only on workout completion
 async function syncWorkoutOnCompletion(workout) {
     try {
-        if (!window.supabase) {
+        if (!window.supabaseClient) {
             console.warn('⚠️ Supabase not available - workout saved locally only');
             return false;
         }
 
         console.log('🔄 Syncing completed workout to Supabase...');
         
-        const { data, error } = await window.supabase
+        const { data, error } = await window.supabaseClient
             .from('workouts')
             .insert([{
                 id: workout.id,

@@ -65,66 +65,12 @@ const HyperTrack = {
         restTimer: { active: false, interval: null, remaining: 0, exerciseName: '' }
     },
     
-    researchFacts: [
-        "Schoenfeld 2016: 3-minute rest periods produce significantly more hypertrophy than 1-minute",
-        "Intermediate lifters need 14-20 sets per muscle per week for optimal growth (vs 10-12 for novices)",
-        "2-5% weekly progression optimal for intermediates - slower than novice gains but sustainable",
-        "RPE 7-9 range optimal for hypertrophy - avoid constant failure training (causes excess fatigue)",
-        "Exercise rotation every 6-8 weeks prevents plateaus and ensures complete muscle development",
-        "Compound + isolation combo beats either alone - compounds for efficiency, isolation for completeness",
-        "20% velocity loss per set gives similar hypertrophy to failure with less fatigue accumulation",
-        "Undulating periodization and linear periodization show equal hypertrophy when volume matched",
-        "Plateau detection: 2-3 workouts without progress indicates need for program adjustment",
-        "Training 2x per week per muscle optimal - 3x only beneficial for very high volume distribution",
-        
-        // DISTINCT RESEARCH FINDINGS FROM 2025 STUDIES
-        "SHOCKING: Light weights (30% 1RM) build the same muscle as heavy weights when taken to failure",
-        "Training to failure is NOT required for muscle growth - stopping 2-3 reps short works equally well",
-        "Training frequency doesn't matter - 1x per week = 3x per week when total volume is matched",
-        "Partial reps in the stretched position beat full ROM for hypertrophy - length tension wins",
-        "Blood flow restriction makes 20% 1RM feel like 80% 1RM for muscle building",
-        "Hip thrusts provide ZERO advantage over squats for glute growth despite higher EMG activation",
-        "Mind-muscle connection DOUBLES bicep growth: +12.4% vs +6.9% when focusing on the muscle",
-        "Muscle soreness (DOMS) is NOT required for growth - pain does not equal gain",
-        "Post-workout stretching reduces soreness by only 0.5 points on a 100-point scale - nearly useless",
-        "Ice baths REDUCE muscle gains and strength by blocking anabolic signaling pathways",
-        "One night of sleep loss cuts muscle protein synthesis by 18% - recovery happens during sleep",
-        "The 30-minute anabolic window is a myth - protein timing barely matters vs total daily intake",
-        "Placebo 'steroids' boosted bench press by 13kg in 4 weeks - your mind is the ultimate PED",
-        "Pull-ups activate lats 117% more than any other exercise - the ultimate back width builder",
-        "Barbell rows hit 100% MVC for mid-traps - unmatched for back thickness development",
-        "Face pulls prevent 89% of shoulder impingement when done 2x weekly - the injury prevention king",
-        "Smith Machine provides 95% muscle activation of free weights with 60% less injury risk",
-        "Cable exercises maintain constant tension throughout ROM - 25% better hypertrophy than free weights",
-        "Dumbbell lateral raises at 15+ reps produce 40% more side delt growth than heavy 6-8 reps",
-        "Planet Fitness equipment can build elite physiques - it's programming and consistency, not gym prestige"
-    ],
+    researchFacts: [], // Loaded dynamically from data/research-facts.json
     
     
-    // Equipment Categories for exercise selection
-    equipmentTypes: {
-        barbell: "Barbell",
-        dumbbell: "Dumbbell",
-        cable: "Cable Machine",
-        smith: "Smith Machine",
-        bodyweight: "Bodyweight",
-        machine: "Machine",
-        kettlebell: "Kettlebell",
-        resistance_band: "Resistance Band"
-    },
-    
-    // Workout Type Classifications
-    workoutTypes: {
-        push: "Push (Chest/Shoulders/Triceps)",
-        pull: "Pull (Back/Biceps)",
-        legs: "Legs (Quads/Hams/Glutes/Calves)",
-        upper: "Upper Body",
-        lower: "Lower Body",
-        full_body: "Full Body",
-        arms: "Arms Specialization",
-        back_width: "Back Width Focus",
-        back_thickness: "Back Thickness Focus"
-    },
+    // Static configuration data - loaded dynamically from data/static-config.json
+    equipmentTypes: {},
+    workoutTypes: {},
 
     exerciseDatabase: [],  // Loaded dynamically from data/exercises.json
 
@@ -144,6 +90,44 @@ const HyperTrack = {
             // Fallback: Initialize with empty array
             this.exerciseDatabase = [];
             return [];
+        }
+    },
+
+    // Load research facts from JSON file
+    async loadResearchFacts() {
+        try {
+            console.log('🔬 Loading research facts...');
+            const response = await fetch('data/research-facts.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            this.researchFacts = await response.json();
+            console.log(`✅ Loaded ${this.researchFacts.length} research facts`);
+            return this.researchFacts;
+        } catch (error) {
+            console.error('❌ Failed to load research facts:', error);
+            this.researchFacts = ["Research data loading..."];
+            return this.researchFacts;
+        }
+    },
+
+    // Load static configuration from JSON file
+    async loadStaticConfig() {
+        try {
+            console.log('⚙️ Loading static configuration...');
+            const response = await fetch('data/static-config.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const config = await response.json();
+            this.equipmentTypes = config.equipmentTypes;
+            this.workoutTypes = config.workoutTypes;
+            console.log('✅ Loaded static configuration');
+            return config;
+        } catch (error) {
+            console.error('❌ Failed to load static configuration:', error);
+            // Keep empty objects as fallback
+            return {};
         }
     },
     
@@ -195,10 +179,18 @@ const HyperTrack = {
             console.warn('⚠️ Could not load user workouts from Supabase:', error);
         }
         
-        // Priority 3: Load local Tyler data as fallback
-        if (allWorkouts.length === 0 && typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
-            allWorkouts = [...tylerCompleteWorkouts];
-            console.log(`✅ Loaded ${tylerCompleteWorkouts.length} historical workouts from local data`);
+        // Priority 3: Load Tyler data from JSON as fallback
+        if (allWorkouts.length === 0) {
+            try {
+                const response = await fetch('data/tyler-workouts.json');
+                if (response.ok) {
+                    const tylerWorkouts = await response.json();
+                    allWorkouts = [...tylerWorkouts];
+                    console.log(`✅ Loaded ${tylerWorkouts.length} historical workouts from JSON data`);
+                }
+            } catch (error) {
+                console.warn('⚠️ Could not load Tyler workouts from JSON:', error);
+            }
         }
         
         // Priority 4: localStorage data as final fallback
@@ -3963,8 +3955,10 @@ async function initializeApp() {
     try {
         console.log('🚀 Initializing HyperTrack Pro...');
         
-        // Load exercise database first (required for all functionality)
+        // Load all data files (required for full functionality)
         await HyperTrack.loadExerciseDatabase();
+        await HyperTrack.loadResearchFacts();
+        await HyperTrack.loadStaticConfig();
         
         // Load any saved app state
         loadAppData();

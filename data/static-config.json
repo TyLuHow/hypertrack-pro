@@ -1,0 +1,23 @@
+{
+  "equipmentTypes": {
+    "barbell": "Barbell",
+    "dumbbell": "Dumbbell",
+    "cable": "Cable Machine",
+    "smith": "Smith Machine",
+    "bodyweight": "Bodyweight",
+    "machine": "Machine",
+    "kettlebell": "Kettlebell",
+    "resistance_band": "Resistance Band"
+  },
+  "workoutTypes": {
+    "push": "Push (Chest/Shoulders/Triceps)",
+    "pull": "Pull (Back/Biceps)",
+    "legs": "Legs (Quads/Hams/Glutes/Calves)",
+    "upper": "Upper Body",
+    "lower": "Lower Body",
+    "full_body": "Full Body",
+    "arms": "Arms Specialization",
+    "back_width": "Back Width Focus",
+    "back_thickness": "Back Thickness Focus"
+  }
+}
