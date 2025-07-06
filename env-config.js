@@ -18,6 +18,14 @@
         // Priority 2: Check for Vercel/Netlify environment variables
         // These would be injected at build time
         
+        // Priority 2.5: Set production defaults if not already set
+        if (!window.SUPABASE_URL) {
+            window.SUPABASE_URL = 'https://zrmkzgwrmohhbmjfdxdf.supabase.co';
+        }
+        if (!window.SUPABASE_ANON_KEY) {
+            window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWt6Z3dybW9oaGJtamZkeGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNjYwODgsImV4cCI6MjA2Njc0MjA4OH0.DJC-PLTnxG8IG-iV7_irb2pnEZJFacDOd9O7RDWwTVU';
+        }
+        
         // Priority 3: Check localStorage for development
         const storedConfig = localStorage.getItem('hypertrack_config');
         if (storedConfig) {
