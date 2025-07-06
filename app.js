@@ -926,20 +926,20 @@ function addMuscleGroupToCurrentWorkout(muscleGroup, exerciseList) {
 function getRecommendedExercises(dayType) {
     const workoutTemplates = {
         'Push': [
-            { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10', muscle_group: 'Horizontal Push' },
-            { name: 'Incline Dumbbell Press', priority: 2, type: 'Compound', sets: '3', reps: '8-12', muscle_group: 'Horizontal Push' },
-            { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3-4', reps: '12-20', muscle_group: 'Side Delts' },
-            { name: 'Bodyweight Dips', priority: 4, type: 'Compound', sets: '3', reps: '6-12', muscle_group: 'Horizontal Push' },
-            { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12', muscle_group: 'Triceps' },
-            { name: 'Tricep Cable Rope Pulldowns', priority: 6, type: 'Isolation', sets: '3', reps: '10-15', muscle_group: 'Triceps' }
+            { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10', muscle_group: 'Horizontal Push', category: 'Compound', tier: 1 },
+            { name: 'Incline Dumbbell Press', priority: 2, type: 'Compound', sets: '3', reps: '6-10', muscle_group: 'Horizontal Push', category: 'Compound', tier: 1 },
+            { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3-4', reps: '12-20', muscle_group: 'Side Delts', category: 'Isolation', tier: 1 },
+            { name: 'Bodyweight Dips', priority: 4, type: 'Compound', sets: '3', reps: '6-10', muscle_group: 'Horizontal Push', category: 'Compound', tier: 1 },
+            { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '6-10', muscle_group: 'Triceps', category: 'Compound', tier: 1 },
+            { name: 'Tricep Cable Rope Pulldowns', priority: 6, type: 'Isolation', sets: '3', reps: '10-15', muscle_group: 'Triceps', category: 'Isolation', tier: 2 }
         ],
         'Pull': [
-            { name: 'Lat Pulldowns', priority: 1, type: 'Compound', sets: '3-4', reps: '8-12', muscle_group: 'Vertical Pull' },
-            { name: 'Smith Machine Rows', priority: 2, type: 'Compound', sets: '3', reps: '6-10', muscle_group: 'Horizontal Pull' },
-            { name: 'Face Pulls', priority: 3, type: 'Isolation', sets: '3', reps: '12-16', muscle_group: 'Rear Delts' },
-            { name: 'Dumbbell Bicep Curls', priority: 4, type: 'Isolation', sets: '3', reps: '8-12', muscle_group: 'Biceps' },
-            { name: 'Cable Hammer Curls', priority: 5, type: 'Isolation', sets: '3', reps: '10-14', muscle_group: 'Biceps' },
-            { name: 'Reverse Grip EZ Bar Curl', priority: 6, type: 'Isolation', sets: '3', reps: '10-15', muscle_group: 'Biceps' }
+            { name: 'Lat Pulldowns', priority: 1, type: 'Compound', sets: '3-4', reps: '8-12', muscle_group: 'Vertical Pull', category: 'Compound', tier: 1 },
+            { name: 'Smith Machine Rows', priority: 2, type: 'Compound', sets: '3', reps: '8-12', muscle_group: 'Horizontal Pull', category: 'Compound', tier: 1 },
+            { name: 'Face Pulls', priority: 3, type: 'Isolation', sets: '3', reps: '12-20', muscle_group: 'Rear Delts', category: 'Isolation', tier: 2 },
+            { name: 'Dumbbell Bicep Curls', priority: 4, type: 'Isolation', sets: '3', reps: '10-15', muscle_group: 'Biceps', category: 'Isolation', tier: 1 },
+            { name: 'Cable Hammer Curls', priority: 5, type: 'Isolation', sets: '3', reps: '10-15', muscle_group: 'Biceps', category: 'Isolation', tier: 2 },
+            { name: 'Reverse Grip EZ Bar Curl', priority: 6, type: 'Isolation', sets: '3', reps: '10-15', muscle_group: 'Biceps', category: 'Isolation', tier: 2 }
         ],
         'Legs': [
             { name: 'Back Squats', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10', muscle_group: 'Quads' },
@@ -1067,6 +1067,20 @@ async function finishWorkout() {
     stopWorkoutTimer();
     stopRestTimer();
     
+    // Record progress for each exercise
+    if (window.progressTracker && workout.exercises) {
+        for (const exercise of workout.exercises) {
+            if (exercise.sets && exercise.sets.length > 0) {
+                window.progressTracker.recordExercisePerformance(
+                    exercise.name, 
+                    exercise.sets, 
+                    new Date(workout.endTime)
+                );
+            }
+        }
+        console.log('📊 Progress recorded for workout exercises');
+    }
+    
     // Save workout using new method
     const result = await HyperTrack.saveWorkout(workout);
     
@@ -1077,6 +1091,11 @@ async function finishWorkout() {
         
         const duration = Math.round(workout.duration / 60000);
         showNotification(`Workout completed! ${workout.exercises.length} exercises • ${duration} minutes`, 'success');
+        
+        // Check for progress recommendations after workout
+        setTimeout(() => {
+            checkAndShowProgressRecommendations();
+        }, 2000);
         
         // Show weekly volume recommendations after workout completion
         setTimeout(() => {
@@ -4343,6 +4362,61 @@ async function initializeApp() {
         await initializeExercises();
         loadAnalytics();
     }
+}
+
+// Progress-based exercise rotation system
+function checkAndShowProgressRecommendations() {
+    if (!window.progressTracker) return;
+    
+    const recommendations = window.progressTracker.getProgressRecommendations();
+    
+    if (recommendations.length === 0) return;
+    
+    console.log('📈 Found progress recommendations:', recommendations);
+    
+    // Create recommendations modal
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px; background: #0f172a; border: 2px solid #1e40af;">
+            <div class="modal-header">
+                <h3 style="color: #3b82f6; margin: 0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: text-top;">
+                        <path d="M3 3v18h18"></path>
+                        <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+                    </svg>
+                    Progress Analysis
+                </h3>
+                <button class="close-btn" onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; color: #64748b; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #e2e8f0; margin-bottom: 16px;">Based on your recent workouts, here are some recommendations:</p>
+                ${recommendations.map(rec => `
+                    <div style="background: ${rec.priority === 'critical' ? '#7f1d1d' : '#1e40af'}; border-radius: 8px; padding: 12px; margin: 12px 0; border-left: 4px solid ${rec.priority === 'critical' ? '#ef4444' : '#3b82f6'};">
+                        <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 6px;">
+                            ${rec.type === 'exercise_stall' ? '🔄 Exercise Rotation Suggested' : '⚠️ Muscle Group Review Needed'}
+                        </div>
+                        <p style="color: #cbd5e1; margin: 6px 0; font-size: 14px;">${rec.message}</p>
+                        ${rec.variations ? `
+                            <div style="margin-top: 8px;">
+                                <span style="font-size: 12px; color: #94a3b8;">Suggested alternatives:</span>
+                                <div style="margin-top: 4px;">
+                                    ${rec.variations.slice(0, 3).map(variation => `
+                                        <span style="background: #374151; padding: 3px 6px; border-radius: 4px; font-size: 11px; margin: 2px 4px 2px 0; display: inline-block; color: #e2e8f0;">${variation}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+                <div style="margin-top: 16px; text-align: center;">
+                    <button onclick="this.closest('.modal-overlay').remove()" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Got it!</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }
 
 // Update body weight setting

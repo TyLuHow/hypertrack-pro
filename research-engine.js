@@ -116,22 +116,36 @@ class ResearchEngine {
         };
     }
 
-    // Get optimal rep range based on research
+    // Get optimal rep range based on research (hypertrophy-focused)
     getOptimalRepRange(exercise, trainingLevel) {
         const isCompound = exercise.category === 'Compound';
         const tier = exercise.tier || 2;
+        const muscleGroup = exercise.muscle_group;
         
+        // Hypertrophy-optimized rep ranges based on Schoenfeld et al. research
         if (isCompound && tier === 1) {
-            // Tier 1 compounds: 6-12 reps optimal for strength-hypertrophy
-            return trainingLevel === 'beginner' ? '8-10' :
-                   trainingLevel === 'advanced' ? '6-8' : '8-12';
+            // Tier 1 compounds: Moderate reps for hypertrophy with strength benefits
+            if (muscleGroup?.includes('Push') || muscleGroup?.includes('Press')) {
+                return '6-10';  // Pressing movements - moderate reps
+            } else if (muscleGroup?.includes('Pull') || muscleGroup?.includes('Row')) {
+                return '8-12';  // Pulling movements - slightly higher reps
+            } else {
+                return '6-10';  // Other compounds (squats, deadlifts)
+            }
         } else if (isCompound) {
-            // Tier 2+ compounds: 8-15 reps
+            // Tier 2 compounds: Higher rep hypertrophy range
             return '8-12';
         } else {
-            // Isolation exercises: 10-20 reps per research
-            return tier === 1 ? '10-15' : 
-                   tier === 3 ? '15-20' : '12-16';
+            // Isolation exercises: Research shows higher reps optimal for hypertrophy
+            if (muscleGroup === 'Side Delts' || muscleGroup === 'Rear Delts') {
+                return '12-20'; // Delts respond well to higher reps
+            } else if (muscleGroup === 'Biceps' || muscleGroup === 'Triceps') {
+                return '10-15'; // Arms - moderate-high reps
+            } else if (muscleGroup === 'Calves' || muscleGroup === 'Traps') {
+                return '15-20'; // High-endurance muscles
+            } else {
+                return '12-16'; // Standard isolation range
+            }
         }
     }
 
