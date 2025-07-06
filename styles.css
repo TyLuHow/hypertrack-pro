@@ -226,43 +226,43 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #4C848D, #708090);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     color: white;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #708090, #94C17B);
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
     transform: translateY(-1px);
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
 }
 
 .btn-secondary {
-    background: #3D6A71;
+    background: #64748b;
     color: white;
-    border: 1px solid #4C848D;
+    border: 1px solid #6b7280;
 }
 
 .btn-secondary:hover {
-    background: #4C848D;
+    background: #6b7280;
 }
 
 .btn-danger {
-    background: #8B4513;
+    background: #ef4444;
     color: white;
 }
 
 .btn-danger:hover {
-    background: #654321;
+    background: #dc2626;
 }
 
 .btn-success {
-    background: #94C17B;
+    background: #10b981;
     color: white;
 }
 
 .btn-success:hover {
-    background: #4C848D;
+    background: #059669;
 }
 
 .btn-remove {
@@ -355,8 +355,8 @@ body {
 
 .search-input:focus {
     outline: none;
-    border-color: #4C848D;
-    box-shadow: 0 0 0 3px rgba(76, 132, 141, 0.1);
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
 }
 
 .search-icon {
@@ -364,7 +364,7 @@ body {
     left: 16px;
     top: 50%;
     transform: translateY(-50%);
-    color: #DCAA89;
+    color: #cbd5e1;
 }
 
 /* Muscle Groups */
@@ -427,7 +427,7 @@ body {
     display: flex;
     gap: 12px;
     font-size: 14px;
-    color: #DCAA89;
+    color: #cbd5e1;
 }
 
 /* Stats Grid */
@@ -449,7 +449,7 @@ body {
 .stat-value {
     font-size: 32px;
     font-weight: 800;
-    color: #4C848D;
+    color: #8b5cf6;
     margin-bottom: 8px;
 }
 
@@ -485,7 +485,7 @@ body {
     display: flex;
     gap: 16px;
     font-size: 14px;
-    color: #DCAA89;
+    color: #cbd5e1;
     margin-bottom: 8px;
 }
 
@@ -522,7 +522,7 @@ body {
 .setting-label input[type="checkbox"] {
     width: 20px;
     height: 20px;
-    accent-color: #4C848D;
+    accent-color: #8b5cf6;
 }
 
 /* Empty State */
@@ -578,7 +578,7 @@ body {
 }
 
 .nav-btn.active {
-    color: #a78bfa;
+    color: #8b5cf6;
 }
 
 .nav-btn:hover {
@@ -801,8 +801,8 @@ body {
 
 .exercise-notes-input:focus {
     outline: none;
-    border-color: #2c5f5f;
-    box-shadow: 0 0 0 1px #2c5f5f;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 1px #8b5cf6;
 }
 
 .exercise-notes-input::placeholder {
@@ -822,6 +822,100 @@ body {
 
 .notes-counter.error {
     color: #f87171;
+}
+
+/* Inline Rest Timer */
+.inline-rest-timer {
+    margin: 16px 0;
+    padding: 16px;
+    background: linear-gradient(135deg, #1f2937, #374151);
+    border: 1px solid #4b5563;
+    border-radius: 12px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.rest-timer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rest-timer-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #d1d5db;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.rest-timer-header svg {
+    color: #6b7280;
+}
+
+.rest-timer-display {
+    font-size: 32px;
+    font-weight: 700;
+    color: #f8fafc;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.rest-timer-progress {
+    height: 6px;
+    background: #374151;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.rest-timer-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+    border-radius: 3px;
+    transition: width 1s ease-out;
+}
+
+.rest-timer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-small svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Disabled Add Set button during rest */
+.disabled-during-rest {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(50%);
+}
+
+.disabled-during-rest:hover {
+    background: #475569 !important;
+    transform: none !important;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Set Inputs */
@@ -867,8 +961,8 @@ body {
 
 .set-row input[type="number"]:focus {
     outline: none;
-    border-color: #2c5f5f;
-    box-shadow: 0 0 0 1px #2c5f5f;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 1px #8b5cf6;
 }
 
 /* Recommendation */
@@ -881,7 +975,7 @@ body {
 }
 
 .recommendation h4 {
-    color: #3d7070;
+    color: #8b5cf6;
     margin-bottom: 8px;
     font-size: 16px;
 }

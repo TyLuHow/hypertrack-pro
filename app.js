@@ -149,23 +149,79 @@ const HyperTrack = {
     
     async loadHistoricalData() {
         console.log('🔄 Loading historical data...');
+        let allWorkouts = [];
         
-        // Priority 1: Historical data (your workouts)
-        if (typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
-            this.state.workouts = [...tylerCompleteWorkouts];
-            console.log(`✅ Loaded ${tylerCompleteWorkouts.length} historical workouts`);
-            return;
+        // Priority 1: Load Tyler's historical data from Supabase
+        try {
+            if (window.initializeTylerData) {
+                const tylerWorkouts = await window.initializeTylerData();
+                if (tylerWorkouts && tylerWorkouts.length > 0) {
+                    allWorkouts = [...allWorkouts, ...tylerWorkouts];
+                    console.log(`✅ Loaded ${tylerWorkouts.length} Tyler historical workouts from Supabase`);
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not load Tyler data from Supabase:', error);
         }
         
-        // Priority 2: localStorage data
-        const localWorkouts = localStorage.getItem('hypertrack_workouts');
-        if (localWorkouts) {
-            this.state.workouts = JSON.parse(localWorkouts);
-            console.log(`✅ Loaded ${this.state.workouts.length} workouts from localStorage`);
-            return;
+        // Priority 2: Load current user workouts from Supabase
+        try {
+            if (window.supabase) {
+                const { data: userWorkouts, error } = await window.supabase
+                    .from('workouts')
+                    .select('*')
+                    .eq('user_id', 'tyler_user')
+                    .order('date', { ascending: false });
+                    
+                if (!error && userWorkouts && userWorkouts.length > 0) {
+                    // Convert Supabase format to app format
+                    const formattedWorkouts = userWorkouts.map(workout => ({
+                        id: workout.id,
+                        date: workout.date,
+                        startTime: workout.start_time,
+                        endTime: workout.end_time,
+                        duration: workout.duration,
+                        split: workout.split,
+                        tod: workout.time_of_day,
+                        notes: workout.notes,
+                        exercises: workout.exercises
+                    }));
+                    
+                    allWorkouts = [...allWorkouts, ...formattedWorkouts];
+                    console.log(`✅ Loaded ${formattedWorkouts.length} user workouts from Supabase`);
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not load user workouts from Supabase:', error);
         }
         
-        console.log('📝 No existing workout data found - starting fresh');
+        // Priority 3: Load local Tyler data as fallback
+        if (allWorkouts.length === 0 && typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
+            allWorkouts = [...tylerCompleteWorkouts];
+            console.log(`✅ Loaded ${tylerCompleteWorkouts.length} historical workouts from local data`);
+        }
+        
+        // Priority 4: localStorage data as final fallback
+        if (allWorkouts.length === 0) {
+            const localWorkouts = localStorage.getItem('hypertrack_workouts');
+            if (localWorkouts) {
+                allWorkouts = JSON.parse(localWorkouts);
+                console.log(`✅ Loaded ${allWorkouts.length} workouts from localStorage`);
+            }
+        }
+        
+        // Sort all workouts by date (newest first) and remove duplicates
+        if (allWorkouts.length > 0) {
+            const uniqueWorkouts = allWorkouts.filter((workout, index, self) => 
+                index === self.findIndex(w => w.id === workout.id)
+            );
+            
+            uniqueWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
+            this.state.workouts = uniqueWorkouts;
+            console.log(`✅ Total workouts loaded: ${uniqueWorkouts.length}`);
+        } else {
+            console.log('📝 No existing workout data found - starting fresh');
+        }
     },
     
     async saveWorkout(workoutData) {
@@ -258,24 +314,14 @@ function showWorkoutDaySelection() {
     modal.style.display = 'flex';
     modal.id = 'workoutDayModal';
     
-    // Research-based workout templates
+    // Research-based workout templates - ordered by recommendation priority
     const workoutDays = {
-        'Push': {
-            description: 'Chest, Shoulders, Triceps',
-            icon: '🫷',
-            exercises: [
-                { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
-                { name: 'Incline Dumbbell Press', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3-4', reps: '12-20' },
-                { name: 'Bodyweight Dips', priority: 4, type: 'Compound', sets: '3', reps: '6-12' },
-                { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Tricep Cable Rope Pulldowns', priority: 6, type: 'Isolation', sets: '3', reps: '10-15' }
-            ],
-            research: 'Based on Tyler\'s historical push workouts. Compounds first for maximum strength gains (Simão et al. 2012)'
-        },
         'Pull': {
             description: 'Lats, Rhomboids, Rear Delts, Biceps',
-            icon: '🫸',
+            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12l10-10 10 10"/></svg>',
+            priority: 1,
+            recommendation: 'HIGHLY RECOMMENDED',
+            recommendationReason: 'Back development priority - builds foundation',
             exercises: [
                 { name: 'Lat Pulldowns', priority: 1, type: 'Compound', sets: '3-4', reps: '8-12' },
                 { name: 'Smith Machine Rows', priority: 2, type: 'Compound', sets: '3', reps: '6-10' },
@@ -284,24 +330,30 @@ function showWorkoutDaySelection() {
                 { name: 'Cable Hammer Curls', priority: 5, type: 'Isolation', sets: '3', reps: '10-14' },
                 { name: 'Reverse Grip EZ Bar Curl', priority: 6, type: 'Isolation', sets: '3', reps: '10-15' }
             ],
-            research: 'Pull-ups activate lats 117% more than any exercise. Face pulls prevent 89% of shoulder issues (Research facts)'
+            research: 'Pull-ups activate lats 117% more than any exercise. Back strength creates training foundation'
         },
-        'Legs': {
-            description: 'Quads, Hamstrings, Glutes, Calves',
-            icon: '🦵',
+        'Push': {
+            description: 'Chest, Shoulders, Triceps',
+            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M22 12l-10-10-10 10"/></svg>',
+            priority: 2,
+            recommendation: 'RECOMMENDED',
+            recommendationReason: 'Balanced upper body development',
             exercises: [
-                { name: 'Back Squats', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
-                { name: 'Romanian Deadlifts', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Bulgarian Split Squats', priority: 3, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Leg Curls', priority: 4, type: 'Isolation', sets: '3', reps: '10-15' },
-                { name: 'Calf Raises', priority: 5, type: 'Isolation', sets: '4', reps: '15-20' },
-                { name: 'Leg Extensions', priority: 6, type: 'Isolation', sets: '3', reps: '12-15' }
+                { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
+                { name: 'Incline Dumbbell Press', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3-4', reps: '12-20' },
+                { name: 'Bodyweight Dips', priority: 4, type: 'Compound', sets: '3', reps: '6-12' },
+                { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Tricep Cable Rope Pulldowns', priority: 6, type: 'Isolation', sets: '3', reps: '10-15' }
             ],
-            research: 'Compound movements first for maximum hormonal response and strength gains'
+            research: 'Based on Tyler\'s historical push workouts. Compounds first for maximum strength gains'
         },
         'Shoulders': {
             description: 'All Three Deltoid Heads + Traps',
-            icon: '🤷',
+            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M12 14v8"/><path d="M8 18h8"/></svg>',
+            priority: 3,
+            recommendation: 'GOOD OPTION',
+            recommendationReason: 'Specialization for weak points',
             exercises: [
                 { name: 'Dumbbell Lateral Raises', priority: 1, type: 'Isolation', sets: '4', reps: '12-20' },
                 { name: 'Smith Machine Barbell Shrugs', priority: 2, type: 'Isolation', sets: '4', reps: '10-18' },
@@ -310,11 +362,14 @@ function showWorkoutDaySelection() {
                 { name: 'EZ Bar Upright Rows', priority: 5, type: 'Compound', sets: '3', reps: '12-15' },
                 { name: 'Cable External Rotations', priority: 6, type: 'Isolation', sets: '2-3', reps: '12-15' }
             ],
-            research: 'Light weights (15+ reps) produce 40% more side delt growth than heavy 6-8 reps (Research findings)'
+            research: 'Light weights (15+ reps) produce 40% more side delt growth than heavy 6-8 reps'
         },
         'Upper/Lower': {
             description: 'Upper Body Focus',
-            icon: '💪',
+            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5L16 16"/><path d="M16 8.5L8.5 16"/></svg>',
+            priority: 4,
+            recommendation: 'ALTERNATIVE',
+            recommendationReason: 'Mixed muscle groups approach',
             exercises: [
                 { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
                 { name: 'Lat Pulldowns', priority: 2, type: 'Compound', sets: '3-4', reps: '8-12' },
@@ -324,6 +379,22 @@ function showWorkoutDaySelection() {
                 { name: 'Dumbbell Bicep Curls', priority: 6, type: 'Isolation', sets: '3', reps: '10-14' }
             ],
             research: 'Upper/lower split allows higher frequency per muscle (2x/week optimal for hypertrophy)'
+        },
+        'Legs': {
+            description: 'Quads, Hamstrings, Glutes, Calves',
+            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v20M16 2v20M12 2v6M12 16v6M6 8h12M6 16h12"/></svg>',
+            priority: 5,
+            recommendation: 'SKIP FOR NOW',
+            recommendationReason: 'Focus on upper body development first',
+            exercises: [
+                { name: 'Back Squats', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
+                { name: 'Romanian Deadlifts', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Bulgarian Split Squats', priority: 3, type: 'Compound', sets: '3', reps: '8-12' },
+                { name: 'Leg Curls', priority: 4, type: 'Isolation', sets: '3', reps: '10-15' },
+                { name: 'Calf Raises', priority: 5, type: 'Isolation', sets: '4', reps: '15-20' },
+                { name: 'Leg Extensions', priority: 6, type: 'Isolation', sets: '3', reps: '12-15' }
+            ],
+            research: 'Compound movements for maximum hormonal response - consider after upper body foundation'
         }
     };
     
@@ -338,28 +409,50 @@ function showWorkoutDaySelection() {
                     Choose your training split. Each template is optimized based on research and your historical workout data.
                 </p>
                 
-                ${Object.entries(workoutDays).map(([day, info]) => `
+                ${Object.entries(workoutDays)
+                    .sort(([,a], [,b]) => a.priority - b.priority)
+                    .map(([day, info]) => {
+                        const getRecommendationColor = (rec) => {
+                            switch(rec) {
+                                case 'HIGHLY RECOMMENDED': return '#10b981';
+                                case 'RECOMMENDED': return '#3b82f6';
+                                case 'GOOD OPTION': return '#8b5cf6';
+                                case 'ALTERNATIVE': return '#f59e0b';
+                                case 'SKIP FOR NOW': return '#ef4444';
+                                default: return '#6b7280';
+                            }
+                        };
+                        
+                        return `
                     <div class="workout-day-option" onclick="selectWorkoutDay('${day}')" 
-                         style="background: #1f2937; border: 2px solid #374151; border-radius: 12px; padding: 16px; margin: 12px 0; cursor: pointer; transition: all 0.2s;"
-                         onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='#374151'">
-                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 24px; margin-right: 12px;">${info.icon}</span>
-                            <div>
-                                <h4 style="margin: 0; color: white; font-size: 16px;">${day} Day</h4>
-                                <p style="margin: 4px 0 0 0; color: #9ca3af; font-size: 13px;">${info.description}</p>
+                         style="background: #1f2937; border: 2px solid #374151; border-radius: 12px; padding: 16px; margin: 12px 0; cursor: pointer; transition: all 0.2s; ${info.priority === 5 ? 'opacity: 0.7;' : ''}"
+                         onmouseover="this.style.borderColor='${getRecommendationColor(info.recommendation)}'" onmouseout="this.style.borderColor='#374151'">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <div style="margin-right: 12px; color: #60a5fa;">${info.icon}</div>
+                                <div>
+                                    <h4 style="margin: 0; color: white; font-size: 16px;">${day} Day</h4>
+                                    <p style="margin: 4px 0 0 0; color: #9ca3af; font-size: 13px;">${info.description}</p>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="background: ${getRecommendationColor(info.recommendation)}; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-bottom: 4px;">
+                                    ${info.recommendation}
+                                </div>
+                                <p style="font-size: 10px; color: #9ca3af; margin: 0; text-align: right;">${info.recommendationReason}</p>
                             </div>
                         </div>
                         
                         <div style="margin: 12px 0;">
                             <p style="font-size: 12px; color: #60a5fa; margin: 0 0 8px 0; font-weight: 600;">
-                                📋 Complete Workout Sequence:
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 4px;"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Complete Workout Sequence:
                             </p>
                             <div style="max-height: 200px; overflow-y: auto; background: #0f172a; border-radius: 6px; padding: 8px;">
                                 ${info.exercises.map((ex, idx) => `
                                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; margin: 2px 0; font-size: 11px; color: #d1d5db; background: ${idx < 3 ? '#1e40af' : '#374151'}; border-radius: 4px;">
                                         <span style="font-weight: ${idx < 3 ? '600' : '400'};">
                                             ${idx + 1}. ${ex.name}
-                                            ${idx < 3 ? ' 🔥' : ''}
+                                            ${idx < 3 ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="display: inline; margin-left: 4px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>' : ''}
                                         </span>
                                         <span style="color: #9ca3af; font-size: 10px;">
                                             ${ex.sets} × ${ex.reps}
@@ -368,15 +461,11 @@ function showWorkoutDaySelection() {
                                 `).join('')}
                             </div>
                             <p style="font-size: 10px; color: #60a5fa; margin: 8px 0 0 0; font-style: italic;">
-                                🔥 Priority exercises (compounds first for max strength gains)
+                                ${info.research}
                             </p>
                         </div>
-                        
-                        <p style="font-size: 11px; color: #f59e0b; margin: 8px 0 0 0; font-style: italic;">
-                            💡 ${info.research}
-                        </p>
-                    </div>
-                `).join('')}
+                    </div>`;
+                    }).join('')}
                 
                 <div style="margin: 20px 0; padding: 12px; background: #0f172a; border-radius: 8px; border-left: 4px solid #3b82f6;">
                     <p style="font-size: 12px; color: #9ca3af; margin: 0;">
@@ -2461,8 +2550,9 @@ function startRestTimer(seconds, exerciseName) {
     timer.remaining = seconds;
     timer.exerciseName = exerciseName;
     
-    // Show rest timer notification
-    showRestTimerModal(seconds, exerciseName);
+    // Show inline rest timer
+    const lastSetRow = document.querySelector('.set-input-row:last-child');
+    showInlineRestTimer(seconds, exerciseName, lastSetRow);
     
     timer.interval = setInterval(() => {
         timer.remaining--;
@@ -2486,65 +2576,112 @@ function stopRestTimer() {
     timer.active = false;
     timer.remaining = 0;
     
-    // Hide rest timer modal
+    // Remove inline rest timer
+    const inlineTimer = document.querySelector('.inline-rest-timer');
+    if (inlineTimer) inlineTimer.remove();
+    
+    // Re-enable the "Add Set" button
+    const addSetBtn = document.querySelector('button[onclick="addSet()"]');
+    if (addSetBtn) {
+        addSetBtn.disabled = false;
+        addSetBtn.classList.remove('disabled-during-rest');
+    }
+    
+    // Hide rest timer modal (fallback for any remaining modals)
     const modal = document.getElementById('restTimerModal');
     if (modal) modal.remove();
 }
 
 function updateRestTimerDisplay() {
     const timerElement = document.getElementById('restTimerDisplay');
+    const progressBar = document.getElementById('restTimerProgressBar');
+    const inlineTimer = document.querySelector('.inline-rest-timer');
+    
     if (timerElement && HyperTrack.state.restTimer.active) {
         const remaining = HyperTrack.state.restTimer.remaining;
         const minutes = Math.floor(remaining / 60);
         const seconds = remaining % 60;
         timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Update progress bar if inline timer exists
+        if (progressBar && inlineTimer) {
+            const totalTime = parseInt(inlineTimer.dataset.totalTime);
+            const progress = totalTime > 0 ? ((totalTime - remaining) / totalTime) * 100 : 0;
+            progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+        }
     }
 }
 
-function showRestTimerModal(totalSeconds, exerciseName) {
-    // Remove existing modal if any
-    const existingModal = document.getElementById('restTimerModal');
-    if (existingModal) existingModal.remove();
-    
-    const modal = document.createElement('div');
-    modal.id = 'restTimerModal';
-    modal.className = 'modal';
-    modal.style.display = 'flex';
-    modal.style.zIndex = '10001';
+function showInlineRestTimer(totalSeconds, exerciseName, setRowElement) {
+    // Remove any existing inline rest timer
+    const existingTimer = document.querySelector('.inline-rest-timer');
+    if (existingTimer) existingTimer.remove();
     
     const minutes = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     const timeDisplay = `${minutes}:${secs.toString().padStart(2, '0')}`;
     
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <div class="modal-header">
-                <h3>🕐 Rest Timer</h3>
-                <button class="close-btn" onclick="stopRestTimer()">&times;</button>
+    // Create inline rest timer element
+    const restTimerElement = document.createElement('div');
+    restTimerElement.className = 'inline-rest-timer';
+    restTimerElement.innerHTML = `
+        <div class="rest-timer-content">
+            <div class="rest-timer-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12,6 12,12 16,14"></polyline>
+                </svg>
+                <span>Rest Timer</span>
             </div>
-            <div class="modal-body">
-                <p style="margin-bottom: 20px;">Resting after <strong>${exerciseName}</strong></p>
-                <div id="restTimerDisplay" style="font-size: 48px; font-weight: bold; color: #3d7070; margin: 20px 0;">
-                    ${timeDisplay}
-                </div>
-                <div style="display: flex; gap: 12px; justify-content: center;">
-                    <button class="btn btn-secondary" onclick="addRestTime(30)">+30s</button>
-                    <button class="btn btn-secondary" onclick="addRestTime(-30)">-30s</button>
-                    <button class="btn btn-primary" onclick="stopRestTimer()">Skip Rest</button>
-                </div>
-                <p style="font-size: 14px; color: #9ca3af; margin-top: 16px;">
-                    Research-based rest period for optimal hypertrophy
-                </p>
+            <div class="rest-timer-display" id="restTimerDisplay">
+                ${timeDisplay}
+            </div>
+            <div class="rest-timer-progress">
+                <div class="rest-timer-progress-bar" id="restTimerProgressBar" style="width: 100%;"></div>
+            </div>
+            <div class="rest-timer-controls">
+                <button class="btn btn-small btn-secondary" onclick="addRestTime(-30)" title="Reduce by 30s">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    30s
+                </button>
+                <button class="btn btn-small btn-primary" onclick="stopRestTimer()" title="Skip rest">
+                    Skip
+                </button>
+                <button class="btn btn-small btn-secondary" onclick="addRestTime(30)" title="Add 30s">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    30s
+                </button>
             </div>
         </div>
     `;
     
-    document.body.appendChild(modal);
+    // Insert the rest timer after the completed set row
+    if (setRowElement && setRowElement.nextSibling) {
+        setRowElement.parentNode.insertBefore(restTimerElement, setRowElement.nextSibling);
+    } else if (setRowElement) {
+        setRowElement.parentNode.appendChild(restTimerElement);
+    } else {
+        // Fallback: add to set inputs container
+        const setInputs = document.getElementById('setInputs');
+        if (setInputs) {
+            setInputs.appendChild(restTimerElement);
+        }
+    }
     
-    // Close on background click
-    modal.addEventListener('click', function(e) {
-        if (e.target === this) stopRestTimer();
-    });
+    // Store the total time for progress calculation
+    restTimerElement.dataset.totalTime = totalSeconds;
+    
+    // Dull the "Add Set" button during rest
+    const addSetBtn = document.querySelector('button[onclick="addSet()"]');
+    if (addSetBtn) {
+        addSetBtn.disabled = true;
+        addSetBtn.classList.add('disabled-during-rest');
+    }
 }
 
 function addRestTime(seconds) {

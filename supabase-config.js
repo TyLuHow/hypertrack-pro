@@ -6,15 +6,11 @@ const supabaseUrl = window.SUPABASE_URL || 'https://zrmkzgwrmohhbmjfdxdf.supabas
 const supabaseAnonKey = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWt6Z3dybW9oaGJtamZkeGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNjYwODgsImV4cCI6MjA2Njc0MjA4OH0.DJC-PLTnxG8IG-iV7_irb2pnEZJFacDOd9O7RDWwTVU'
 
 // Create Supabase client
-let supabase;
-try {
-    // Try to load Supabase library dynamically
-    supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseAnonKey) : null;
-    console.log('🔗 Supabase client initialized');
-} catch (error) {
-    console.error('❌ Failed to initialize Supabase client:', error);
-    supabase = null;
-}
+let supabase = null;
+window.supabase = null; // Initialize as null for now
+
+// The Supabase client will be initialized when the library loads
+console.log('🔗 Supabase configuration ready (client will be initialized when library loads)');
 
 // Tyler's historical workout data management
 class TylerDataManager {
@@ -130,10 +126,11 @@ class TylerDataManager {
 }
 
 // Global Tyler data manager instance
-export const tylerDataManager = new TylerDataManager();
+const tylerDataManager = new TylerDataManager();
+window.tylerDataManager = tylerDataManager;
 
 // Initialize Tyler data integration
-export async function initializeTylerData() {
+async function initializeTylerData() {
     try {
         // First migrate data if needed
         await tylerDataManager.migrateTylerData();
@@ -167,8 +164,11 @@ export async function initializeTylerData() {
     }
 }
 
+// Make initializeTylerData globally available
+window.initializeTylerData = initializeTylerData;
+
 // Sync workout to Supabase only on workout completion
-export async function syncWorkoutOnCompletion(workout) {
+async function syncWorkoutOnCompletion(workout) {
     try {
         if (!supabase) {
             console.warn('⚠️ Supabase not available - workout saved locally only');
@@ -205,5 +205,8 @@ export async function syncWorkoutOnCompletion(workout) {
         return false;
     }
 }
+
+// Make sync function globally available
+window.syncWorkoutOnCompletion = syncWorkoutOnCompletion;
 
 console.log('📊 Supabase configuration loaded - Tyler data integration ready');
