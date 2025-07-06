@@ -8,17 +8,23 @@ const supabaseAnonKey = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI
 // Create Supabase client when the library is available
 function initializeSupabase() {
     try {
-        if (window.supabase && typeof window.supabase.createClient === 'function') {
-            // Library already loaded and client exists
-            console.log('✅ Supabase library already loaded');
+        // Check if Supabase library is loaded and we haven't created a client yet
+        if (window.supabase && typeof window.supabase.createClient === 'function' && !window.supabaseClient) {
+            // Create the client and store it separately
+            window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+            // Also assign to window.supabase for backward compatibility
+            window.supabase = window.supabaseClient;
+            console.log('✅ Supabase client initialized successfully');
             return;
         }
         
-        if (window.supabase && window.supabase.createClient) {
-            // Create the client
-            window.supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-            console.log('✅ Supabase client initialized successfully');
-        } else {
+        if (window.supabaseClient) {
+            // Client already exists
+            console.log('✅ Supabase client already initialized');
+            return;
+        }
+        
+        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
             console.warn('⚠️ Supabase library not yet available, will retry...');
             setTimeout(initializeSupabase, 200);
         }
@@ -45,7 +51,7 @@ class TylerDataManager {
             console.log('🔄 Migrating Tyler historical data to Supabase...');
             
             // Check if data already exists
-            const { data: existingWorkouts, error: checkError } = await supabase
+            const { data: existingWorkouts, error: checkError } = await window.supabase
                 .from('workouts')
                 .select('id')
                 .eq('user_id', 'tyler_historical')
@@ -80,7 +86,7 @@ class TylerDataManager {
             }));
 
             // Insert into Supabase
-            const { data, error } = await supabase
+            const { data, error } = await window.supabase
                 .from('workouts')
                 .insert(formattedWorkouts);
 
@@ -102,7 +108,7 @@ class TylerDataManager {
     // Load Tyler's data from Supabase
     async loadTylerData() {
         try {
-            const { data: workouts, error } = await supabase
+            const { data: workouts, error } = await window.supabase
                 .from('workouts')
                 .select('*')
                 .eq('user_id', 'tyler_historical')
@@ -191,14 +197,14 @@ window.initializeTylerData = initializeTylerData;
 // Sync workout to Supabase only on workout completion
 async function syncWorkoutOnCompletion(workout) {
     try {
-        if (!supabase) {
+        if (!window.supabase) {
             console.warn('⚠️ Supabase not available - workout saved locally only');
             return false;
         }
 
         console.log('🔄 Syncing completed workout to Supabase...');
         
-        const { data, error } = await supabase
+        const { data, error } = await window.supabase
             .from('workouts')
             .insert([{
                 id: workout.id,

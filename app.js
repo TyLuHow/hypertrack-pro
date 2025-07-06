@@ -2213,6 +2213,22 @@ function loadAnalytics() {
     updateAnalyticsDisplay();
 }
 
+function initializeIntelligence() {
+    console.log('🧠 Initializing intelligent training features...');
+    
+    try {
+        // Initialize the IntelligentTraining class if available
+        if (typeof IntelligentTraining !== 'undefined') {
+            window.intelligentTraining = new IntelligentTraining();
+            console.log('✅ Intelligent training system initialized');
+        } else {
+            console.warn('⚠️ IntelligentTraining class not available');
+        }
+    } catch (error) {
+        console.error('❌ Failed to initialize intelligence features:', error);
+    }
+}
+
 function addMuscleToWorkout(muscleGroup) {
     console.log(`🎯 Adding ${muscleGroup} exercise to workout plan...`);
     
@@ -3985,7 +4001,7 @@ async function initializeApp() {
         loadAnalytics();
         
         // Load intelligence features
-        loadIntelligence();
+        initializeIntelligence();
         
         console.log('✅ HyperTrack Pro initialized successfully!');
         
