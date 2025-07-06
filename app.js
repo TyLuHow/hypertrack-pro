@@ -314,6 +314,19 @@ function showWorkoutDaySelection() {
     modal.style.display = 'flex';
     modal.id = 'workoutDayModal';
     
+    // Check recent workouts to avoid recommending just-completed workouts
+    const recentWorkouts = HyperTrack.state.workouts.filter(workout => {
+        const workoutDateStr = workout.date || workout.workout_date;
+        const dateParts = workoutDateStr.split('T')[0].split('-');
+        const workoutDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+        return workoutDate >= oneDayAgo;
+    });
+    
+    const recentWorkoutTypes = recentWorkouts.map(w => w.split || w.workoutDay).filter(Boolean);
+    console.log('🔍 Recent workout types (last 24h):', recentWorkoutTypes);
+    
     // Research-based workout templates - ordered by recommendation priority
     const workoutDays = {
         'Pull': {
@@ -412,6 +425,18 @@ function showWorkoutDaySelection() {
                 ${Object.entries(workoutDays)
                     .sort(([,a], [,b]) => a.priority - b.priority)
                     .map(([day, info]) => {
+                        // Check if this workout type was done recently
+                        const wasRecentlyDone = recentWorkoutTypes.includes(day);
+                        
+                        // Modify recommendation if done recently
+                        let currentRecommendation = info.recommendation;
+                        let currentReason = info.recommendationReason;
+                        
+                        if (wasRecentlyDone) {
+                            currentRecommendation = 'RECENTLY COMPLETED';
+                            currentReason = `Just did ${day} - let muscles recover`;
+                        }
+                        
                         const getRecommendationColor = (rec) => {
                             switch(rec) {
                                 case 'HIGHLY RECOMMENDED': return '#10b981';
@@ -419,6 +444,7 @@ function showWorkoutDaySelection() {
                                 case 'GOOD OPTION': return '#8b5cf6';
                                 case 'ALTERNATIVE': return '#f59e0b';
                                 case 'SKIP FOR NOW': return '#be185d';
+                                case 'RECENTLY COMPLETED': return '#6b7280';
                                 default: return '#6b7280';
                             }
                         };
@@ -426,7 +452,7 @@ function showWorkoutDaySelection() {
                         return `
                     <div class="workout-day-option" onclick="selectWorkoutDay('${day}')" 
                          style="background: #1f2937; border: 2px solid #374151; border-radius: 12px; padding: 16px; margin: 12px 0; cursor: pointer; transition: all 0.2s; ${info.priority === 5 ? 'opacity: 0.7;' : ''}"
-                         onmouseover="this.style.borderColor='${getRecommendationColor(info.recommendation)}'" onmouseout="this.style.borderColor='#374151'">
+                         onmouseover="this.style.borderColor='${getRecommendationColor(currentRecommendation)}'" onmouseout="this.style.borderColor='#374151'">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                             <div style="display: flex; align-items: center;">
                                 <div style="margin-right: 12px; color: #64748b;">${info.icon}</div>
@@ -436,10 +462,10 @@ function showWorkoutDaySelection() {
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="background: ${getRecommendationColor(info.recommendation)}; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-bottom: 4px;">
-                                    ${info.recommendation}
+                                <div style="background: ${getRecommendationColor(currentRecommendation)}; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-bottom: 4px;">
+                                    ${currentRecommendation}
                                 </div>
-                                <p style="font-size: 10px; color: #9ca3af; margin: 0; text-align: right;">${info.recommendationReason}</p>
+                                <p style="font-size: 10px; color: #9ca3af; margin: 0; text-align: right;">${currentReason}</p>
                             </div>
                         </div>
                         
@@ -1931,10 +1957,17 @@ function updateAnalyticsDisplay() {
 function calculateWeeklyVolume(workouts) {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    oneWeekAgo.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
     
-    const recentWorkouts = workouts.filter(workout => 
-        new Date(workout.date || workout.workout_date) >= oneWeekAgo
-    );
+    const recentWorkouts = workouts.filter(workout => {
+        const workoutDateStr = workout.date || workout.workout_date;
+        // Parse date properly to avoid timezone issues
+        const dateParts = workoutDateStr.split('T')[0].split('-');
+        const workoutDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+        return workoutDate >= oneWeekAgo;
+    });
+    
+    console.log(`📊 Weekly volume: Found ${recentWorkouts.length} workouts in last 7 days`, recentWorkouts);
     
     // Initialize all major muscle groups to 0 (excluding legs as requested)
     const volumeByMuscle = {
@@ -2009,7 +2042,13 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
     const hasData = Object.values(weeklyVolumeWithTargets).some(data => data.current > 0);
     
     let recommendationsHTML = `
-        <h4>📊 Weekly Volume Analysis (Evidence-Based)</h4>
+        <h4>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
+                <path d="M3 3v18h18"></path>
+                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+            </svg>
+            Weekly Volume Analysis (Evidence-Based)
+        </h4>
         <p style="font-size: 13px; color: #9ca3af; margin-bottom: 16px;">
             Based on ${hasData ? 'your last 7 days' : 'complete your first workout to see'} training data
         </p>
@@ -2364,14 +2403,18 @@ function showNotification(message, type = 'info') {
 }
 
 function formatDate(dateString) {
-    const date = new Date(dateString);
+    // Handle timezone issues by parsing date components directly
+    const dateParts = dateString.split('T')[0].split('-'); // Extract YYYY-MM-DD part
+    const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+    
     const today = new Date();
-    const yesterday = new Date(today);
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const yesterday = new Date(todayDate);
     yesterday.setDate(yesterday.getDate() - 1);
     
-    if (date.toDateString() === today.toDateString()) {
+    if (date.getTime() === todayDate.getTime()) {
         return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
+    } else if (date.getTime() === yesterday.getTime()) {
         return 'Yesterday';
     } else {
         return date.toLocaleDateString('en-US', { 
@@ -2642,12 +2685,7 @@ function stopRestTimer() {
     const inlineTimer = document.querySelector('.inline-rest-timer');
     if (inlineTimer) inlineTimer.remove();
     
-    // Re-enable the "Add Set" button
-    const addSetBtn = document.querySelector('button[onclick="addSet()"]');
-    if (addSetBtn) {
-        addSetBtn.disabled = false;
-        addSetBtn.classList.remove('disabled-during-rest');
-    }
+    // Note: Add Set button remains enabled during rest timer per user request
     
     // Hide rest timer modal (fallback for any remaining modals)
     const modal = document.getElementById('restTimerModal');
@@ -2738,12 +2776,7 @@ function showInlineRestTimer(totalSeconds, exerciseName, setRowElement) {
     // Store the total time for progress calculation
     restTimerElement.dataset.totalTime = totalSeconds;
     
-    // Dull the "Add Set" button during rest
-    const addSetBtn = document.querySelector('button[onclick="addSet()"]');
-    if (addSetBtn) {
-        addSetBtn.disabled = true;
-        addSetBtn.classList.add('disabled-during-rest');
-    }
+    // Note: Add Set button remains enabled during rest timer per user request
 }
 
 function addRestTime(seconds) {
