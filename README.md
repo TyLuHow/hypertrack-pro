@@ -7,25 +7,29 @@
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTyLuHow%2Fhypertrack-pro)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-## 🚀 Quick Start (2 minutes)
+## 🚀 Quick Start (Deploy Your Own Instance)
 
-1. **Fork & Clone**
+### Option 1: One-Click Deploy to Vercel
+1. Click the "Deploy with Vercel" button above
+2. Fork the repository to your GitHub account
+3. Set up your own Supabase database (see [Full Setup](#full-setup-database-integration))
+4. Add your Supabase credentials to Vercel environment variables
+
+### Option 2: Manual Setup
+1. **Fork this repository** to your GitHub account
+2. **Clone your fork**:
    ```bash
    git clone https://github.com/YOUR_USERNAME/hypertrack-pro.git
    cd hypertrack-pro
    ```
+3. **Set up environment variables**:
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your Supabase credentials
+   ```
+4. **Deploy to your preferred platform** (Vercel, Netlify, etc.)
 
-2. **Deploy to Vercel**
-   - Click the "Deploy with Vercel" button above, or
-   - Connect your GitHub repo to Vercel
-   - Deploy automatically with zero configuration
-
-3. **Set up Database** (optional for full features)
-   - Create a [Supabase](https://supabase.com) project
-   - Run the provided SQL schema
-   - Add environment variables to Vercel
-
-**That's it!** Your HyperTrack Pro instance is live.
+**🔒 Privacy**: Your data stays in YOUR database. Each deployment is completely isolated.
 
 ## 📋 Table of Contents
 

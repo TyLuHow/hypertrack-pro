@@ -135,16 +135,19 @@ const HyperTrack = {
         console.log('🔄 Loading historical data...');
         let allWorkouts = [];
         
-        // Priority 1: Load Tyler's historical data from JSON (Supabase disabled due to 400 errors)
+        // Priority 1: Load sample data if available (for demo purposes)
         try {
-            const response = await fetch('data/tyler-workouts.json');
+            const response = await fetch('data/sample-workouts.json');
             if (response.ok) {
-                const tylerWorkouts = await response.json();
-                allWorkouts = [...allWorkouts, ...tylerWorkouts];
-                console.log(`✅ Loaded ${tylerWorkouts.length} Tyler historical workouts from JSON`);
+                const sampleWorkouts = await response.json();
+                // Only load sample data if user has no existing workouts
+                if (allWorkouts.length === 0) {
+                    allWorkouts = [...allWorkouts, ...sampleWorkouts];
+                    console.log(`✅ Loaded ${sampleWorkouts.length} sample workouts for demo`);
+                }
             }
         } catch (error) {
-            console.warn('⚠️ Could not load Tyler workouts from JSON:', error);
+            console.log('📝 No sample data found - starting fresh');
         }
         
         // Priority 2: Load current user workouts from localStorage

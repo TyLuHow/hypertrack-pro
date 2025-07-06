@@ -1,9 +1,33 @@
 // Supabase Configuration for HyperTrack Pro
 console.log('🔗 Initializing Supabase configuration...');
 
-// Supabase configuration - Load from environment or use fallback
-const supabaseUrl = window.SUPABASE_URL || 'https://zrmkzgwrmohhbmjfdxdf.supabase.co'
-const supabaseAnonKey = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWt6Z3dybW9oaGJtamZkeGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNjYwODgsImV4cCI6MjA2Njc0MjA4OH0.DJC-PLTnxG8IG-iV7_irb2pnEZJFacDOd9O7RDWwTVU'
+// Supabase configuration - Load from environment variables
+const supabaseUrl = window.SUPABASE_URL || process.env.SUPABASE_URL || ''
+const supabaseAnonKey = window.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+
+// User ID configuration - ensures data separation between users
+function getUserId() {
+    const envUserId = window.USER_ID || process.env.USER_ID;
+    if (envUserId) return envUserId;
+    
+    // Generate unique user ID if not configured
+    let userId = localStorage.getItem('hypertrack_user_id');
+    if (!userId) {
+        userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('hypertrack_user_id', userId);
+        console.log('🆔 Generated unique user ID:', userId);
+    }
+    return userId;
+}
+
+const currentUserId = getUserId();
+
+// Check if Supabase is properly configured
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('⚠️ Supabase not configured. App will work with local storage only.');
+    console.warn('📝 For cloud sync: Copy .env.example to .env.local and add your Supabase credentials.');
+    console.warn('🔗 Get credentials from: https://supabase.com');
+}
 
 // Create Supabase client when the library is available
 function initializeSupabase() {
@@ -206,7 +230,7 @@ async function syncWorkoutOnCompletion(workout) {
             .from('workouts')
             .insert([{
                 id: workout.id,
-                user_id: 'tyler_user', // Your user ID
+                user_id: currentUserId, // Configurable user ID
                 date: workout.date,
                 start_time: workout.startTime,
                 end_time: workout.endTime,
