@@ -1298,7 +1298,7 @@ function openExerciseModal(exerciseName, muscleGroup, category) {
             </svg>
             <span style="color: #4a9eff; font-weight: 600; font-size: 16px;">Research Guidelines</span>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; color: #e2e8f0; font-size: 14px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; color: #e2e8f0; font-size: 14px;">
             <div>
                 <span style="color: #94a3b8; font-weight: 500;">Ideal Sets:</span>
                 <span style="margin-left: 8px; font-weight: 600;">${guidelines.sets}</span>
@@ -1310,10 +1310,6 @@ function openExerciseModal(exerciseName, muscleGroup, category) {
             <div>
                 <span style="color: #94a3b8; font-weight: 500;">Rest Time:</span>
                 <span style="margin-left: 8px; font-weight: 600;">${guidelines.restTime}</span>
-            </div>
-            <div>
-                <span style="color: #94a3b8; font-weight: 500;">Tempo:</span>
-                <span style="margin-left: 8px; font-weight: 600;">${guidelines.tempo}</span>
             </div>
         </div>
         <div style="margin-top: 12px; padding: 8px; background: rgba(74, 158, 255, 0.1); border-radius: 6px; font-size: 13px; color: #cbd5e1;">
@@ -3058,24 +3054,55 @@ function getBalancedRecommendations() {
 
 function getWeightRecommendation(exerciseName) {
     const exercise = HyperTrack.exerciseDatabase.find(e => e.name === exerciseName);
-    console.log(`💡 Getting research-based recommendation for: ${exerciseName}`);
+    console.log(`💡 Getting hybrid recommendation for: ${exerciseName}`);
     
     if (!exercise) {
         console.log(`⚠️ Exercise not found in database: ${exerciseName}`);
         return getBeginnerWeightRecommendation(exerciseName);
     }
     
-    // Get user's bodyweight for bodyweight exercises
-    const bodyWeight = HyperTrack.state.user.bodyWeight || 180;
-    const { trainingLevel } = HyperTrack.state.settings;
+    // Get research-based sets/reps first
+    const researchRecs = getResearchBasedRecommendation(exercise);
     
-    console.log(`📊 User stats: ${bodyWeight}lbs, ${trainingLevel} level`);
+    // Check for workout history to determine weight
+    const workouts = HyperTrack.state.workouts;
+    const exerciseHistory = [];
     
-    if (exercise.equipment === 'Bodyweight') {
-        return getBodyweightRecommendation(exerciseName, bodyWeight, trainingLevel);
+    workouts.forEach(workout => {
+        workout.exercises?.forEach(ex => {
+            if (ex.name === exerciseName) {
+                exerciseHistory.push(ex);
+            }
+        });
+    });
+    
+    console.log(`📈 Found ${exerciseHistory.length} previous instances of ${exerciseName}`);
+    
+    let recommendedWeight;
+    
+    if (exerciseHistory.length > 0) {
+        // Use workout history for weight but modulate for optimal reps
+        recommendedWeight = getHistoryBasedWeight(exerciseHistory, researchRecs.reps, exercise);
+        console.log(`🔄 Using history-based weight: ${recommendedWeight}lbs`);
+    } else {
+        // Use research-based weight for new exercises
+        const bodyWeight = HyperTrack.state.user.bodyWeight || 180;
+        const { trainingLevel } = HyperTrack.state.settings;
+        
+        if (exercise.equipment === 'Bodyweight') {
+            return getBodyweightRecommendation(exerciseName, bodyWeight, trainingLevel);
+        }
+        
+        recommendedWeight = getResearchBasedWeightRecommendation(exercise, trainingLevel, bodyWeight).weight;
+        console.log(`🧪 Using research-based weight: ${recommendedWeight}lbs`);
     }
     
-    return getResearchBasedWeightRecommendation(exercise, trainingLevel, bodyWeight);
+    return {
+        weight: recommendedWeight,
+        reps: researchRecs.reps,
+        sets: researchRecs.sets,
+        note: researchRecs.note
+    };
 }
 
 // Research-based weight recommendations using exercise science principles
@@ -3180,6 +3207,94 @@ function getBeginnerWeightRecommendation(exerciseName) {
     }
     
     return { weight: 30, reps: 10, sets: 3, note: "Conservative starting weight - adjust as needed" };
+}
+
+// Get research-based sets/reps (without weight calculation)
+function getResearchBasedRecommendation(exercise) {
+    const { trainingLevel } = HyperTrack.state.settings;
+    const { target_rep_range, category } = exercise;
+    
+    // Parse target rep range (e.g., "8-12" -> [8, 12])
+    const repRange = target_rep_range ? target_rep_range.split('-').map(Number) : [8, 12];
+    const targetReps = repRange[0]; // Use lower end for strength-focused approach
+    
+    // Research shows 3-4 sets optimal for hypertrophy
+    const sets = category === 'Compound' ? 
+        (trainingLevel === 'advanced' ? 4 : 3) : 3;
+    
+    const note = getResearchNote(exercise, trainingLevel);
+    
+    return {
+        reps: targetReps,
+        sets: sets,
+        note: note
+    };
+}
+
+// Get weight based on workout history, modulated for optimal rep range
+function getHistoryBasedWeight(exerciseHistory, targetReps, exercise) {
+    // Get most recent performance
+    const lastExercise = exerciseHistory[exerciseHistory.length - 1];
+    const lastSets = lastExercise.sets || [];
+    
+    if (lastSets.length === 0) {
+        // Fallback to research-based if no sets
+        const bodyWeight = HyperTrack.state.user.bodyWeight || 180;
+        const { trainingLevel } = HyperTrack.state.settings;
+        return getResearchBasedWeightRecommendation(exercise, trainingLevel, bodyWeight).weight;
+    }
+    
+    // Find the best set (highest weight × reps product)
+    const bestSet = lastSets.reduce((best, current) => {
+        const bestScore = best.weight * best.reps;
+        const currentScore = current.weight * current.reps;
+        return currentScore > bestScore ? current : best;
+    });
+    
+    const lastWeight = bestSet.weight;
+    const lastReps = bestSet.reps;
+    
+    console.log(`📊 Last performance: ${lastWeight}lbs × ${lastReps} reps, targeting ${targetReps} reps`);
+    
+    // Modulate weight to achieve target reps
+    let recommendedWeight = lastWeight;
+    
+    if (lastReps > targetReps + 2) {
+        // User did too many reps - increase weight
+        const repDifference = lastReps - targetReps;
+        const weightIncrease = Math.ceil(repDifference * 0.05 * lastWeight); // 5% per 2 extra reps
+        recommendedWeight = lastWeight + Math.max(weightIncrease, 5); // Minimum 5lb increase
+        console.log(`⬆️ Increasing weight by ${weightIncrease}lbs (did ${repDifference} extra reps)`);
+        
+    } else if (lastReps < targetReps - 1) {
+        // User couldn't reach target reps - decrease weight
+        const repShortfall = targetReps - lastReps;
+        const weightDecrease = Math.ceil(repShortfall * 0.05 * lastWeight); // 5% per missing rep
+        recommendedWeight = lastWeight - Math.max(weightDecrease, 5); // Minimum 5lb decrease
+        console.log(`⬇️ Decreasing weight by ${weightDecrease}lbs (missed ${repShortfall} reps)`);
+        
+    } else {
+        // Reps were in good range - small progressive overload
+        const { trainingLevel } = HyperTrack.state.settings;
+        const progressionRates = {
+            novice: 0.075,      // 7.5% progression
+            intermediate: 0.035, // 3.5% progression
+            advanced: 0.015     // 1.5% progression
+        };
+        
+        const progressionRate = progressionRates[trainingLevel] || progressionRates.intermediate;
+        const weightIncrease = Math.max(Math.ceil(lastWeight * progressionRate), 2.5);
+        recommendedWeight = lastWeight + weightIncrease;
+        console.log(`📈 Progressive overload: +${weightIncrease}lbs (${(progressionRate * 100).toFixed(1)}%)`);
+    }
+    
+    // Round to nearest 2.5lbs for practical loading
+    recommendedWeight = Math.round(recommendedWeight / 2.5) * 2.5;
+    
+    // Minimum weight safety
+    if (recommendedWeight < 10) recommendedWeight = 10;
+    
+    return recommendedWeight;
 }
 
 // Get research-based exercise guidelines for display in modal
