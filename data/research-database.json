@@ -1,0 +1,141 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "lastUpdated": "2025-01-06",
+    "description": "Comprehensive research database for evidence-based training optimization",
+    "totalStudies": 0,
+    "categories": [
+      "volume-response",
+      "frequency",
+      "intensity",
+      "periodization",
+      "recovery",
+      "nutrition",
+      "exercise-science",
+      "biomechanics"
+    ]
+  },
+  "studies": [],
+  "principles": {
+    "volume_response": {
+      "title": "Volume-Response Relationships",
+      "key_findings": [
+        "Dose-response relationship exists between training volume and hypertrophy",
+        "10-20 sets per muscle per week optimal for most intermediate trainees",
+        "Diminishing returns occur beyond 20 sets per week",
+        "Individual variation in volume tolerance is significant"
+      ],
+      "evidence_level": "Strong",
+      "practical_applications": [
+        "Start with MEV (Minimum Effective Volume) and gradually increase",
+        "Monitor recovery markers when increasing volume",
+        "Periodize volume to prevent staleness and overreaching"
+      ]
+    },
+    "frequency": {
+      "title": "Training Frequency Optimization",
+      "key_findings": [
+        "2x per week per muscle group optimal for hypertrophy",
+        "Higher frequency allows for better volume distribution",
+        "No significant benefit beyond 3x per week when volume is matched",
+        "Frequency needs may vary by training experience"
+      ],
+      "evidence_level": "Strong",
+      "practical_applications": [
+        "Implement 2x weekly frequency for major muscle groups",
+        "Use higher frequency for lagging muscle groups",
+        "Consider recovery capacity when determining frequency"
+      ]
+    },
+    "intensity": {
+      "title": "Load and Intensity Management",
+      "key_findings": [
+        "65-85% 1RM optimal for hypertrophy",
+        "Rep ranges 6-20 can be effective when effort is matched",
+        "Proximity to failure more important than absolute load",
+        "RPE 7-9 range optimal for most training"
+      ],
+      "evidence_level": "Strong",
+      "practical_applications": [
+        "Train 1-3 reps from failure for most sets",
+        "Use variety of rep ranges for complete development",
+        "Monitor RPE to autoregulate intensity"
+      ]
+    },
+    "periodization": {
+      "title": "Periodization Strategies",
+      "key_findings": [
+        "Periodization superior to non-periodized training",
+        "Daily undulating periodization effective for intermediates",
+        "Block periodization beneficial for advanced trainees",
+        "Deload weeks necessary every 4-8 weeks"
+      ],
+      "evidence_level": "Moderate",
+      "practical_applications": [
+        "Implement planned deloads every 6 weeks",
+        "Vary intensity and volume throughout mesocycles",
+        "Adjust periodization based on training experience"
+      ]
+    },
+    "recovery": {
+      "title": "Recovery and Adaptation",
+      "key_findings": [
+        "48-72 hours optimal rest between muscle group sessions",
+        "Sleep quality crucial for adaptation",
+        "HRV can indicate recovery status",
+        "Stress management affects training adaptation"
+      ],
+      "evidence_level": "Strong",
+      "practical_applications": [
+        "Ensure adequate rest between training sessions",
+        "Prioritize 7-9 hours of quality sleep",
+        "Monitor subjective recovery markers",
+        "Manage life stress for optimal adaptation"
+      ]
+    }
+  },
+  "exercise_database": {
+    "classification_system": {
+      "tiers": {
+        "tier_1": {
+          "description": "Primary compound movements",
+          "characteristics": ["High muscle recruitment", "Multiple joint involvement", "High training value"],
+          "examples": ["Bench Press", "Deadlift", "Squat", "Pull-ups"]
+        },
+        "tier_2": {
+          "description": "Secondary compound and primary isolation",
+          "characteristics": ["Moderate muscle recruitment", "Good training value", "Specific muscle targeting"],
+          "examples": ["Dumbbell Press", "Rows", "Lateral Raises", "Curls"]
+        },
+        "tier_3": {
+          "description": "Accessory and corrective exercises",
+          "characteristics": ["Low-moderate muscle recruitment", "Injury prevention", "Weak point addressing"],
+          "examples": ["Face Pulls", "External Rotations", "Calf Raises"]
+        }
+      }
+    }
+  },
+  "recommendations": {
+    "beginner": {
+      "volume": "8-12 sets per muscle per week",
+      "frequency": "2x per week",
+      "intensity": "70-80% 1RM",
+      "progression": "5-10% weekly increases",
+      "focus": "Movement quality and consistency"
+    },
+    "intermediate": {
+      "volume": "14-20 sets per muscle per week",
+      "frequency": "2x per week",
+      "intensity": "65-85% 1RM",
+      "progression": "2-5% weekly increases",
+      "focus": "Volume progression and periodization"
+    },
+    "advanced": {
+      "volume": "16-24 sets per muscle per week",
+      "frequency": "2-3x per week",
+      "intensity": "60-90% 1RM",
+      "progression": "<2% monthly increases",
+      "focus": "Specificity and weak point development"
+    }
+  }
+}

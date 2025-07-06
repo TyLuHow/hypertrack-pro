@@ -2627,12 +2627,27 @@ function clearAllData() {
 // Timer Functions
 function startWorkoutTimer() {
     const timer = HyperTrack.state.workoutTimer;
+    
+    // Stop any existing timer first
+    if (timer.interval) {
+        clearInterval(timer.interval);
+    }
+    
     timer.active = true;
     timer.startTime = Date.now();
     timer.elapsed = 0;
     
+    console.log('⏱️ Starting workout timer at:', new Date(timer.startTime).toLocaleTimeString());
+    
     timer.interval = setInterval(() => {
-        timer.elapsed = Date.now() - timer.startTime;
+        // Validate startTime before calculation
+        if (timer.startTime && timer.startTime > 0) {
+            timer.elapsed = Math.max(0, Date.now() - timer.startTime);
+        } else {
+            console.warn('⚠️ Timer startTime corrupted, resetting...');
+            timer.startTime = Date.now();
+            timer.elapsed = 0;
+        }
         updateWorkoutTimerDisplay();
     }, 1000);
 }
@@ -2651,7 +2666,19 @@ function updateWorkoutTimerDisplay() {
     const currentWorkoutDiv = document.getElementById('currentWorkout');
     
     if (timerElement && HyperTrack.state.workoutTimer.active) {
-        const elapsed = HyperTrack.state.workoutTimer.elapsed;
+        const timer = HyperTrack.state.workoutTimer;
+        
+        // Validate timer state and recalculate if needed
+        if (!timer.startTime || timer.startTime <= 0) {
+            console.warn('⚠️ Timer startTime invalid, resetting...');
+            timer.startTime = Date.now();
+            timer.elapsed = 0;
+        }
+        
+        // Recalculate elapsed time to ensure accuracy
+        const elapsed = Math.max(0, Date.now() - timer.startTime);
+        timer.elapsed = elapsed;
+        
         const minutes = Math.floor(elapsed / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
         const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -2730,9 +2757,13 @@ function updateRestTimerDisplay() {
     const inlineTimer = document.querySelector('.inline-rest-timer');
     
     if (timerElement && HyperTrack.state.restTimer.active) {
-        const remaining = HyperTrack.state.restTimer.remaining;
+        const timer = HyperTrack.state.restTimer;
+        
+        // Validate remaining time (ensure it's not negative)
+        const remaining = Math.max(0, timer.remaining);
         const minutes = Math.floor(remaining / 60);
         const seconds = remaining % 60;
+        
         timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         
         // Update progress bar if inline timer exists
