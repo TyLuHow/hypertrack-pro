@@ -289,6 +289,15 @@
                     </div>
 
                     <div class="settings-section">
+                        <h3>Personal Profile</h3>
+                        <div class="setting-item">
+                            <label>Current Body Weight (lbs)</label>
+                            <input type="number" class="setting-input" id="currentWeight" value="225" min="100" max="400" step="0.5" onchange="updateBodyWeight(this.value)">
+                            <small style="color: #9ca3af; font-size: 12px; margin-top: 4px; display: block;">Used for bodyweight exercises (pull-ups, dips, etc.)</small>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
                         <h3>Progressive Overload</h3>
                         <div class="setting-item">
                             <label>Weekly Progression Rate (%)</label>

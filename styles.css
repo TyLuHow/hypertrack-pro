@@ -1263,13 +1263,13 @@ body {
 }
 
 .set-input {
-    flex: 1;
     padding: 8px 12px;
     background: #1f2937;
     border: 1px solid #4b5563;
     border-radius: 6px;
     color: #f8fafc;
     font-size: 14px;
+    width: 80px; /* Fixed width for weight and reps inputs */
 }
 
 .set-input:focus {
@@ -1278,19 +1278,28 @@ body {
     box-shadow: 0 0 0 2px rgba(220, 170, 137, 0.2);
 }
 
-.remove-set-btn {
+.remove-set-btn, .complete-set-btn {
     background: #8B4513;
     color: white;
     border: none;
     border-radius: 4px;
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1;
+    font-weight: bold;
+}
+
+.complete-set-btn {
+    background: #22c55e;
+}
+
+.complete-set-btn:hover {
+    background: #16a34a;
 }
 
 .remove-set-btn:hover {

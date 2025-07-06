@@ -59,7 +59,7 @@ const HyperTrack = {
             optimalFrequency: 2,        // 2x per week per muscle optimal
             maxFrequency: 3             // No benefit beyond 3x when volume matched
         },
-        user: { name: 'Tyler' },
+        user: { name: 'Tyler', bodyWeight: 225 },
         autoSaveInterval: null,
         workoutTimer: { active: false, interval: null, startTime: null, elapsed: 0 },
         restTimer: { active: false, interval: null, remaining: 0, exerciseName: '' }
@@ -135,71 +135,36 @@ const HyperTrack = {
         console.log('🔄 Loading historical data...');
         let allWorkouts = [];
         
-        // Priority 1: Load Tyler's historical data from Supabase
+        // Priority 1: Load Tyler's historical data from JSON (Supabase disabled due to 400 errors)
         try {
-            if (window.initializeTylerData) {
-                const tylerWorkouts = await window.initializeTylerData();
-                if (tylerWorkouts && tylerWorkouts.length > 0) {
-                    allWorkouts = [...allWorkouts, ...tylerWorkouts];
-                    console.log(`✅ Loaded ${tylerWorkouts.length} Tyler historical workouts from Supabase`);
-                }
+            const response = await fetch('data/tyler-workouts.json');
+            if (response.ok) {
+                const tylerWorkouts = await response.json();
+                allWorkouts = [...allWorkouts, ...tylerWorkouts];
+                console.log(`✅ Loaded ${tylerWorkouts.length} Tyler historical workouts from JSON`);
             }
         } catch (error) {
-            console.warn('⚠️ Could not load Tyler data from Supabase:', error);
+            console.warn('⚠️ Could not load Tyler workouts from JSON:', error);
         }
         
-        // Priority 2: Load current user workouts from Supabase
+        // Priority 2: Load current user workouts from localStorage
         try {
-            if (window.supabase) {
-                const { data: userWorkouts, error } = await window.supabase
-                    .from('workouts')
-                    .select('*')
-                    .eq('user_id', 'tyler_user')
-                    .order('date', { ascending: false });
-                    
-                if (!error && userWorkouts && userWorkouts.length > 0) {
-                    // Convert Supabase format to app format
-                    const formattedWorkouts = userWorkouts.map(workout => ({
-                        id: workout.id,
-                        date: workout.date,
-                        startTime: workout.start_time,
-                        endTime: workout.end_time,
-                        duration: workout.duration,
-                        split: workout.split,
-                        tod: workout.time_of_day,
-                        notes: workout.notes,
-                        exercises: workout.exercises
-                    }));
-                    
-                    allWorkouts = [...allWorkouts, ...formattedWorkouts];
-                    console.log(`✅ Loaded ${formattedWorkouts.length} user workouts from Supabase`);
-                }
-            }
-        } catch (error) {
-            console.warn('⚠️ Could not load user workouts from Supabase:', error);
-        }
-        
-        // Priority 3: Load Tyler data from JSON as fallback
-        if (allWorkouts.length === 0) {
-            try {
-                const response = await fetch('data/tyler-workouts.json');
-                if (response.ok) {
-                    const tylerWorkouts = await response.json();
-                    allWorkouts = [...tylerWorkouts];
-                    console.log(`✅ Loaded ${tylerWorkouts.length} historical workouts from JSON data`);
-                }
-            } catch (error) {
-                console.warn('⚠️ Could not load Tyler workouts from JSON:', error);
-            }
-        }
-        
-        // Priority 4: localStorage data as final fallback
-        if (allWorkouts.length === 0) {
             const localWorkouts = localStorage.getItem('hypertrack_workouts');
             if (localWorkouts) {
-                allWorkouts = JSON.parse(localWorkouts);
-                console.log(`✅ Loaded ${allWorkouts.length} workouts from localStorage`);
+                const userWorkouts = JSON.parse(localWorkouts);
+                if (userWorkouts && userWorkouts.length > 0) {
+                    allWorkouts = [...allWorkouts, ...userWorkouts];
+                    console.log(`✅ Loaded ${userWorkouts.length} user workouts from localStorage`);
+                }
             }
+        } catch (error) {
+            console.warn('⚠️ Could not load user workouts from localStorage:', error);
+        }
+        
+        // Fallback: Load Tyler data from legacy location if still empty
+        if (allWorkouts.length === 0 && typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
+            allWorkouts = [...tylerCompleteWorkouts];
+            console.log(`✅ Loaded ${tylerCompleteWorkouts.length} historical workouts from legacy data`);
         }
         
         // Sort all workouts by date (newest first) and remove duplicates
@@ -1395,6 +1360,15 @@ function addSet(defaultWeight = '', defaultReps = '') {
         console.log(`🔄 Auto-populating from previous set: ${defaultWeight}lbs × ${defaultReps} reps`);
     }
     
+    // If still no weight and this is a bodyweight exercise, use body weight
+    if (!defaultWeight && HyperTrack.state.currentExercise) {
+        const bodyWeightDefault = getDefaultWeight(HyperTrack.state.currentExercise.name);
+        if (bodyWeightDefault) {
+            defaultWeight = bodyWeightDefault;
+            console.log(`🎯 Auto-populated bodyweight exercise with ${defaultWeight}lbs`);
+        }
+    }
+    
     const setDiv = document.createElement('div');
     setDiv.className = 'set-input-row';
     setDiv.innerHTML = `
@@ -1923,6 +1897,12 @@ function updateAnalyticsDisplay() {
     const workouts = HyperTrack.state.workouts;
     console.log('📊 Updating analytics display...');
     console.log(`📊 Total workouts found: ${workouts.length}`, workouts);
+    
+    // Debug: Check workout structure
+    if (workouts.length > 0) {
+        console.log('📊 First workout structure:', workouts[0]);
+        console.log('📊 First workout exercises:', workouts[0].exercises);
+    }
     
     document.getElementById('totalWorkouts').textContent = workouts.length;
     
@@ -4005,6 +3985,34 @@ async function initializeApp() {
         await initializeExercises();
         loadAnalytics();
     }
+}
+
+// Update body weight setting
+function updateBodyWeight(weight) {
+    const weightValue = parseFloat(weight) || 225;
+    HyperTrack.state.user.bodyWeight = weightValue;
+    saveAppData();
+    console.log(`🎯 Body weight updated to ${weightValue}lbs`);
+    showNotification(`Body weight updated to ${weightValue}lbs`, 'success');
+}
+
+// Check if exercise is bodyweight and return appropriate default weight
+function getDefaultWeight(exerciseName) {
+    const bodyweightExercises = [
+        'Pull-ups', 'Chin-ups', 'Dips', 'Bodyweight Dips', 'Push-ups',
+        'Bodyweight Squats', 'Lunges', 'Pistol Squats', 'Muscle-ups',
+        'Handstand Push-ups', 'Pike Push-ups', 'Diamond Push-ups'
+    ];
+    
+    const isBodyweight = bodyweightExercises.some(exercise => 
+        exerciseName.toLowerCase().includes(exercise.toLowerCase())
+    );
+    
+    if (isBodyweight) {
+        return HyperTrack.state.user.bodyWeight;
+    }
+    
+    return '';
 }
 
 // Start the app when page loads
