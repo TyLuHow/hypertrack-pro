@@ -842,7 +842,14 @@ function showMissedMuscleGroupsWarning(selectedDayType) {
     
     warningHTML += `
         <div style="background: #0f172a; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-            <h5 style="margin: 0 0 8px 0; color: #60a5fa;">🎯 Action Options</h5>
+            <h5 style="margin: 0 0 8px 0; color: #60a5fa;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="6"></circle>
+                    <circle cx="12" cy="12" r="2"></circle>
+                </svg>
+                Action Options
+            </h5>
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
                 <button onclick="document.getElementById('hybridVolumeWarningModal').remove();" 
                         style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">
@@ -1007,7 +1014,11 @@ function updateRecommendationsPanel(panel = null) {
     
     targetPanel.innerHTML = `
         <h4 style="margin: 0 0 12px 0; color: #60a5fa; display: flex; align-items: center;">
-            <span style="margin-right: 8px;">🎯</span> 
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="6"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+            </svg> 
             ${currentWorkout.workoutDay} Workout Plan
         </h4>
         
@@ -2267,6 +2278,10 @@ function updateResearchBanner() {
         ];
         textElement.textContent = randomFact;
     }
+}
+
+function rotateResearchFact() {
+    updateResearchBanner();
 }
 
 function showNotification(message, type = 'info') {
@@ -3813,6 +3828,37 @@ function loadAppData() {
     } catch (error) {
         console.error('❌ Failed to load app data:', error);
         return false;
+    }
+}
+
+// Initialize exercise system after database is loaded
+async function initializeExercises() {
+    console.log('🏋️‍♂️ Initializing exercise system...');
+    
+    try {
+        // Ensure exercise database is loaded
+        if (!HyperTrack.exerciseDatabase || HyperTrack.exerciseDatabase.length === 0) {
+            console.log('⚠️ Exercise database not loaded, attempting to load...');
+            await HyperTrack.loadExerciseDatabase();
+        }
+        
+        // Initialize exercise list UI
+        updateExerciseList();
+        
+        // Verify exercise list container exists
+        const exerciseListContainer = document.getElementById('exerciseList');
+        if (exerciseListContainer) {
+            console.log('✅ Exercise list container initialized');
+        } else {
+            console.warn('⚠️ Exercise list container not found');
+        }
+        
+        console.log(`✅ Exercise system initialized with ${HyperTrack.exerciseDatabase.length} exercises`);
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize exercise system:', error);
+        // Fallback: Initialize with empty state
+        updateExerciseList();
     }
 }
 

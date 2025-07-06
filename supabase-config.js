@@ -1,16 +1,37 @@
 // Supabase Configuration for HyperTrack Pro
-import { createClient } from '@supabase/supabase-js'
+console.log('🔗 Initializing Supabase configuration...');
 
 // Supabase configuration - Load from environment or use fallback
 const supabaseUrl = window.SUPABASE_URL || 'https://zrmkzgwrmohhbmjfdxdf.supabase.co'
 const supabaseAnonKey = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybWt6Z3dybW9oaGJtamZkeGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNjYwODgsImV4cCI6MjA2Njc0MjA4OH0.DJC-PLTnxG8IG-iV7_irb2pnEZJFacDOd9O7RDWwTVU'
 
-// Create Supabase client
-let supabase = null;
-window.supabase = null; // Initialize as null for now
+// Create Supabase client when the library is available
+function initializeSupabase() {
+    try {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+            // Library already loaded and client exists
+            console.log('✅ Supabase library already loaded');
+            return;
+        }
+        
+        if (window.supabase && window.supabase.createClient) {
+            // Create the client
+            window.supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+            console.log('✅ Supabase client initialized successfully');
+        } else {
+            console.warn('⚠️ Supabase library not yet available, will retry...');
+            setTimeout(initializeSupabase, 200);
+        }
+    } catch (error) {
+        console.warn('⚠️ Supabase initialization failed, will retry...', error);
+        setTimeout(initializeSupabase, 200);
+    }
+}
 
-// The Supabase client will be initialized when the library loads
-console.log('🔗 Supabase configuration ready (client will be initialized when library loads)');
+// Wait for page load then initialize
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initializeSupabase, 100);
+});
 
 // Tyler's historical workout data management
 class TylerDataManager {

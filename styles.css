@@ -102,8 +102,8 @@ body {
 
 /* Demo Banner */
 .demo-banner {
-    background: linear-gradient(135deg, #E74C3C, #C0392B);
-    border-bottom: 1px solid #A93226;
+    background: linear-gradient(135deg, #64748b, #475569);
+    border-bottom: 1px solid #374151;
     padding: 12px 20px;
     animation: demo-pulse 3s ease-in-out infinite;
 }
@@ -226,13 +226,13 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #475569, #64748b);
     color: white;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    background: linear-gradient(135deg, #64748b, #475569);
     transform: translateY(-1px);
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
 }
@@ -248,12 +248,12 @@ body {
 }
 
 .btn-danger {
-    background: #ef4444;
+    background: #be185d;
     color: white;
 }
 
 .btn-danger:hover {
-    background: #dc2626;
+    background: #9d174d;
 }
 
 .btn-success {
@@ -266,7 +266,7 @@ body {
 }
 
 .btn-remove {
-    background: #8B4513;
+    background: #64748b;
     color: white;
     border: none;
     width: 30px;
@@ -355,8 +355,8 @@ body {
 
 .search-input:focus {
     outline: none;
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    border-color: #64748b;
+    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
 }
 
 .search-icon {
@@ -449,7 +449,7 @@ body {
 .stat-value {
     font-size: 32px;
     font-weight: 800;
-    color: #8b5cf6;
+    color: #64748b;
     margin-bottom: 8px;
 }
 
@@ -522,7 +522,7 @@ body {
 .setting-label input[type="checkbox"] {
     width: 20px;
     height: 20px;
-    accent-color: #8b5cf6;
+    accent-color: #64748b;
 }
 
 /* Empty State */
@@ -578,7 +578,7 @@ body {
 }
 
 .nav-btn.active {
-    color: #8b5cf6;
+    color: #64748b;
 }
 
 .nav-btn:hover {
@@ -801,8 +801,8 @@ body {
 
 .exercise-notes-input:focus {
     outline: none;
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 1px #8b5cf6;
+    border-color: #64748b;
+    box-shadow: 0 0 0 1px #64748b;
 }
 
 .exercise-notes-input::placeholder {
@@ -870,7 +870,7 @@ body {
 
 .rest-timer-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+    background: linear-gradient(90deg, #64748b, #475569);
     border-radius: 3px;
     transition: width 1s ease-out;
 }
@@ -961,8 +961,8 @@ body {
 
 .set-row input[type="number"]:focus {
     outline: none;
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 1px #8b5cf6;
+    border-color: #64748b;
+    box-shadow: 0 0 0 1px #64748b;
 }
 
 /* Recommendation */
@@ -975,7 +975,7 @@ body {
 }
 
 .recommendation h4 {
-    color: #8b5cf6;
+    color: #64748b;
     margin-bottom: 8px;
     font-size: 16px;
 }
