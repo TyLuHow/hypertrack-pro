@@ -135,19 +135,16 @@ const HyperTrack = {
         console.log('🔄 Loading historical data...');
         let allWorkouts = [];
         
-        // Priority 1: Load sample data if available (for demo purposes)
+        // Priority 1: Load Tyler's historical data from JSON
         try {
-            const response = await fetch('data/sample-workouts.json');
+            const response = await fetch('data/tyler-workouts.json');
             if (response.ok) {
-                const sampleWorkouts = await response.json();
-                // Only load sample data if user has no existing workouts
-                if (allWorkouts.length === 0) {
-                    allWorkouts = [...allWorkouts, ...sampleWorkouts];
-                    console.log(`✅ Loaded ${sampleWorkouts.length} sample workouts for demo`);
-                }
+                const tylerWorkouts = await response.json();
+                allWorkouts = [...allWorkouts, ...tylerWorkouts];
+                console.log(`✅ Loaded ${tylerWorkouts.length} Tyler historical workouts from JSON`);
             }
         } catch (error) {
-            console.log('📝 No sample data found - starting fresh');
+            console.warn('⚠️ Could not load Tyler workouts from JSON:', error);
         }
         
         // Priority 2: Load current user workouts from localStorage
@@ -3015,6 +3012,9 @@ function getWeightRecommendation(exerciseName) {
     const workouts = HyperTrack.state.workouts;
     const exerciseHistory = [];
     
+    console.log(`💡 Getting recommendation for: ${exerciseName}`);
+    console.log(`📊 Total workouts available: ${workouts.length}`);
+    
     // Collect all instances of this exercise
     workouts.forEach(workout => {
         workout.exercises?.forEach(exercise => {
@@ -3023,6 +3023,8 @@ function getWeightRecommendation(exerciseName) {
             }
         });
     });
+    
+    console.log(`📈 Found ${exerciseHistory.length} previous instances of ${exerciseName}`);
     
     if (exerciseHistory.length === 0) {
         return getBeginnerWeightRecommendation(exerciseName);
