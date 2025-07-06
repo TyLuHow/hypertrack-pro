@@ -1903,6 +1903,8 @@ function updateHistoryDisplay() {
 
 function updateAnalyticsDisplay() {
     const workouts = HyperTrack.state.workouts;
+    console.log('📊 Updating analytics display...');
+    console.log(`📊 Total workouts found: ${workouts.length}`, workouts);
     
     document.getElementById('totalWorkouts').textContent = workouts.length;
     
@@ -1996,8 +1998,12 @@ function getWeeklyVolumeWithTargets(workouts) {
 }
 
 function displayVolumeRecommendations(weeklyVolumeWithTargets) {
+    console.log('📊 Displaying volume recommendations...', weeklyVolumeWithTargets);
     const progressSection = document.querySelector('.progress-section');
-    if (!progressSection) return;
+    if (!progressSection) {
+        console.warn('📊 Progress section not found!');
+        return;
+    }
     
     // Check if we have any volume data
     const hasData = Object.values(weeklyVolumeWithTargets).some(data => data.current > 0);

@@ -1098,6 +1098,57 @@ body {
     font-weight: 600;
 }
 
+/* Progress Section */
+.progress-section {
+    margin-top: 32px;
+}
+
+.progress-section h3 {
+    color: white;
+    margin-bottom: 16px;
+    font-size: 18px;
+}
+
+.progress-chart {
+    background: #30525C;
+    border: 1px solid #4C848D;
+    border-radius: 12px;
+    padding: 20px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-placeholder {
+    color: #94a3b8;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Volume Recommendations */
+.volume-recommendations {
+    margin-top: 16px;
+}
+
+.volume-recommendations h4 {
+    color: white;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.volume-recommendations h5 {
+    color: #cbd5e1;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.volume-recommendations h6 {
+    color: #64748b;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
 .warning-indicator {
     color: #f59e0b;
     font-weight: 600;
