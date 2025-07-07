@@ -1640,9 +1640,338 @@ function switchTab(tabName) {
     
     // Update content
     if (tabName === 'history') updateHistoryDisplay();
+    if (tabName === 'intelligence') updateIntelligenceTab();
     if (tabName === 'analytics') updateAnalyticsDisplay();
     
     console.log(`🧭 Switched to ${tabName} tab`);
+}
+
+// Initialize frequency and performance analyzers
+let frequencyAnalyzer;
+let performanceRestAnalyzer;
+
+// Initialize analyzers when app loads
+function initializeAnalyzers() {
+    if (window.FrequencyAnalyzer) {
+        frequencyAnalyzer = new FrequencyAnalyzer();
+        console.log('✅ Frequency Analyzer initialized');
+    }
+    
+    if (window.PerformanceRestAnalyzer) {
+        performanceRestAnalyzer = new PerformanceRestAnalyzer();
+        console.log('✅ Performance Rest Analyzer initialized');
+    }
+}
+
+// Update Intelligence Tab with frequency and performance analysis
+function updateIntelligenceTab() {
+    console.log('🧠 Updating Intelligence Tab...');
+    
+    // Load workout history data
+    const workoutHistory = HyperTrack.state.workouts || [];
+    
+    if (workoutHistory.length === 0) {
+        updateIntelligenceTabEmpty();
+        return;
+    }
+    
+    // Update frequency analysis
+    updateFrequencyAnalysis(workoutHistory);
+    
+    // Update performance vs rest analysis
+    updatePerformanceRestAnalysis(workoutHistory);
+    
+    // Update existing AI features
+    updateExistingAIFeatures(workoutHistory);
+}
+
+function updateIntelligenceTabEmpty() {
+    const frequencyOverview = document.getElementById('frequencyOverview');
+    const restPerformanceOverview = document.getElementById('restPerformanceOverview');
+    
+    if (frequencyOverview) {
+        frequencyOverview.innerHTML = '<div class="analysis-loading">Complete more workouts to analyze training frequency patterns</div>';
+    }
+    
+    if (restPerformanceOverview) {
+        restPerformanceOverview.innerHTML = '<div class="analysis-loading">Complete more workouts to analyze performance vs rest patterns</div>';
+    }
+}
+
+function updateFrequencyAnalysis(workoutHistory) {
+    if (!frequencyAnalyzer || workoutHistory.length < 2) {
+        return;
+    }
+    
+    try {
+        // Load workout history into analyzer
+        frequencyAnalyzer.loadWorkoutHistory(workoutHistory);
+        
+        // Get comprehensive analysis
+        const analysis = frequencyAnalyzer.getComprehensiveReport();
+        
+        // Update frequency overview
+        const frequencyOverview = document.getElementById('frequencyOverview');
+        if (frequencyOverview) {
+            frequencyOverview.innerHTML = renderFrequencyOverview(analysis);
+            
+            // Show muscle group frequencies section
+            const muscleGroupSection = document.getElementById('muscleGroupFrequencies');
+            if (muscleGroupSection) {
+                muscleGroupSection.style.display = 'block';
+                muscleGroupSection.innerHTML = renderMuscleGroupFrequencies(analysis);
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Error updating frequency analysis:', error);
+        const frequencyOverview = document.getElementById('frequencyOverview');
+        if (frequencyOverview) {
+            frequencyOverview.innerHTML = '<div class="analysis-error">Error analyzing frequency data</div>';
+        }
+    }
+}
+
+function updatePerformanceRestAnalysis(workoutHistory) {
+    if (!performanceRestAnalyzer || workoutHistory.length < 3) {
+        return;
+    }
+    
+    try {
+        // Analyze performance vs rest patterns
+        const analysis = performanceRestAnalyzer.analyzePerformanceVsRest(workoutHistory);
+        
+        // Update rest performance overview
+        const restOverview = document.getElementById('restPerformanceOverview');
+        if (restOverview) {
+            restOverview.innerHTML = renderPerformanceRestOverview(analysis);
+            
+            // Show recommendations section
+            const recommendationsSection = document.getElementById('optimalRestRecommendations');
+            if (recommendationsSection && analysis.recommendations?.length > 0) {
+                recommendationsSection.style.display = 'block';
+                recommendationsSection.innerHTML = renderRestRecommendations(analysis);
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Error updating performance rest analysis:', error);
+        const restOverview = document.getElementById('restPerformanceOverview');
+        if (restOverview) {
+            restOverview.innerHTML = '<div class="analysis-error">Error analyzing performance vs rest data</div>';
+        }
+    }
+}
+
+function renderFrequencyOverview(analysis) {
+    const { overview, recommendations, insights } = analysis;
+    
+    let html = '<div class="frequency-overview-content">';
+    
+    // Overview stats
+    html += `
+        <div class="frequency-stats">
+            <div class="freq-stat">
+                <div class="freq-stat-value">${overview.totalMuscleGroups}</div>
+                <div class="freq-stat-label">Muscle Groups Tracked</div>
+            </div>
+            <div class="freq-stat">
+                <div class="freq-stat-value">${overview.totalWorkouts}</div>
+                <div class="freq-stat-label">Total Workouts</div>
+            </div>
+            <div class="freq-stat">
+                <div class="freq-stat-value">${overview.timespanDays}</div>
+                <div class="freq-stat-label">Days Tracked</div>
+            </div>
+        </div>
+    `;
+    
+    // High priority recommendations
+    const highPriorityRecs = recommendations.filter(r => r.priority === 'high');
+    if (highPriorityRecs.length > 0) {
+        html += '<div class="frequency-recommendations">';
+        html += '<h4>🔥 Priority Recommendations</h4>';
+        highPriorityRecs.forEach(rec => {
+            html += `
+                <div class="frequency-rec high-priority">
+                    <strong>${rec.muscleGroup}:</strong> ${rec.action}
+                    ${rec.suggestion ? `<br><small>${rec.suggestion}</small>` : ''}
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    // Insights
+    if (insights.length > 0) {
+        html += '<div class="frequency-insights">';
+        insights.forEach(insight => {
+            html += `
+                <div class="frequency-insight">
+                    <strong>${insight.insight}</strong>
+                    <div class="insight-interpretation">${insight.interpretation}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+function renderMuscleGroupFrequencies(analysis) {
+    let html = '<div class="muscle-group-frequencies-content">';
+    
+    analysis.muscleGroupAnalysis.forEach(mgAnalysis => {
+        const { muscleGroup, analysis: mgData, recommendations } = mgAnalysis;
+        
+        if (mgData.currentFrequencyPerWeek) {
+            const rec = recommendations;
+            const status = rec.adjustmentNeeded.type;
+            const statusClass = status === 'optimal' ? 'optimal' : 
+                              status === 'increase' ? 'needs-increase' : 'needs-decrease';
+            
+            html += `
+                <div class="muscle-group-frequency ${statusClass}">
+                    <div class="mg-header">
+                        <h4>${muscleGroup}</h4>
+                        <div class="frequency-badge">${mgData.currentFrequencyPerWeek}x/week</div>
+                    </div>
+                    <div class="mg-details">
+                        <div class="frequency-comparison">
+                            <span>Current: ${mgData.currentFrequencyPerWeek}x/week</span>
+                            <span>Recommended: ${rec.recommendedFrequency}x/week</span>
+                        </div>
+                        <div class="frequency-adjustment">
+                            ${rec.adjustmentNeeded.message}
+                        </div>
+                        ${rec.personalized ? `<div class="personalized-note">${rec.personalized}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function renderPerformanceRestOverview(analysis) {
+    const { overview, insights } = analysis;
+    
+    let html = '<div class="performance-rest-overview-content">';
+    
+    // Overview stats
+    html += `
+        <div class="rest-overview-stats">
+            <div class="rest-stat">
+                <div class="rest-stat-value">${overview.totalWorkouts}</div>
+                <div class="rest-stat-label">Workouts Analyzed</div>
+            </div>
+            <div class="rest-stat">
+                <div class="rest-stat-value">${overview.timespanDays}</div>
+                <div class="rest-stat-label">Days of Data</div>
+            </div>
+            <div class="rest-stat">
+                <div class="rest-stat-value">${overview.avgWorkoutsPerWeek}</div>
+                <div class="rest-stat-label">Avg Workouts/Week</div>
+            </div>
+        </div>
+    `;
+    
+    // Global patterns if available
+    if (analysis.globalPatterns?.status === 'analyzed') {
+        const global = analysis.globalPatterns;
+        html += `
+            <div class="global-rest-pattern">
+                <h4>🎯 Optimal Rest Period</h4>
+                <div class="optimal-rest-display">
+                    <div class="rest-hours">${global.avgOptimalRest} hours</div>
+                    <div class="rest-days">(${Math.round(global.avgOptimalRest / 24 * 10) / 10} days)</div>
+                </div>
+                <div class="rest-adaptation">${global.overallAdaptation.replace(/_/g, ' ')}</div>
+            </div>
+        `;
+    }
+    
+    // High priority insights
+    const highPriorityInsights = insights.filter(i => i.priority === 'high');
+    if (highPriorityInsights.length > 0) {
+        html += '<div class="rest-insights">';
+        highPriorityInsights.forEach(insight => {
+            html += `
+                <div class="rest-insight high-priority">
+                    <strong>${insight.insight}</strong>
+                    <div class="insight-interpretation">${insight.interpretation}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+function renderRestRecommendations(analysis) {
+    const { recommendations } = analysis;
+    
+    let html = '<div class="rest-recommendations-content">';
+    
+    recommendations.forEach(rec => {
+        const priorityClass = rec.priority === 'high' ? 'high-priority' : 
+                            rec.priority === 'medium' ? 'medium-priority' : 'low-priority';
+        
+        html += `
+            <div class="rest-recommendation ${priorityClass}">
+                <div class="rec-header">
+                    ${rec.type === 'muscle_group' ? `<strong>${rec.muscleGroup}</strong>` : '<strong>General</strong>'}
+                    <span class="priority-badge">${rec.priority}</span>
+                </div>
+                <div class="rec-content">${rec.recommendation}</div>
+                ${rec.reasoning ? `<div class="rec-reasoning">${rec.reasoning}</div>` : ''}
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function updateExistingAIFeatures(workoutHistory) {
+    // Update plateau prediction and progression optimization
+    // This would integrate with existing intelligent-training.js features
+    
+    if (window.IntelligentTraining) {
+        try {
+            const intelligentTraining = new IntelligentTraining();
+            
+            // Update periodization if we have enough data
+            if (workoutHistory.length >= 4) {
+                const currentPhase = intelligentTraining.periodizationState.currentPhase;
+                const analysis = intelligentTraining.analyzeCurrentPhase(currentPhase, workoutHistory);
+                
+                // Update week counter based on actual workouts
+                const weeksSinceStart = Math.floor(workoutHistory.length / 2); // Assuming 2 workouts per week
+                const currentWeek = Math.max(1, Math.min(4, weeksSinceStart % 4 + 1));
+                
+                // Update UI
+                const phaseWeekElement = document.getElementById('currentPhaseWeek');
+                if (phaseWeekElement) {
+                    phaseWeekElement.textContent = `Week ${currentWeek} of 4`;
+                }
+                
+                const progressFill = document.getElementById('progressFill');
+                if (progressFill) {
+                    progressFill.style.width = `${(currentWeek / 4) * 100}%`;
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ Error updating existing AI features:', error);
+        }
+    }
 }
 
 function updateUI() {
@@ -2067,9 +2396,9 @@ function getWeeklyVolumeWithTargets(workouts) {
 
 function displayVolumeRecommendations(weeklyVolumeWithTargets) {
     console.log('📊 Displaying volume recommendations...', weeklyVolumeWithTargets);
-    const progressSection = document.querySelector('.progress-section');
-    if (!progressSection) {
-        console.warn('📊 Progress section not found!');
+    const progressChart = document.getElementById('progressChart');
+    if (!progressChart) {
+        console.warn('📊 Progress chart element not found!');
         return;
     }
     
@@ -2230,16 +2559,8 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
         `;
     }
     
-    // Add recommendations to progress section
-    const existingRecommendations = progressSection.querySelector('.volume-recommendations');
-    if (existingRecommendations) {
-        existingRecommendations.innerHTML = recommendationsHTML;
-    } else {
-        const recommendationsDiv = document.createElement('div');
-        recommendationsDiv.className = 'volume-recommendations';
-        recommendationsDiv.innerHTML = recommendationsHTML;
-        progressSection.appendChild(recommendationsDiv);
-    }
+    // Add recommendations to progress chart
+    progressChart.innerHTML = recommendationsHTML;
 }
 
 // ANALYTICS FUNCTIONS
@@ -4322,6 +4643,9 @@ async function initializeApp() {
         
         // Initialize auto-save for mobile persistence
         initializeAutoSave();
+        
+        // Initialize frequency and performance analyzers
+        initializeAnalyzers();
         
         // Initialize background timer persistence for mobile PWA
         initializeBackgroundTimerPersistence();

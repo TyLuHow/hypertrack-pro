@@ -208,6 +208,32 @@
                         </div>
                     </div>
                     
+                    <!-- Training Frequency Analysis -->
+                    <div class="settings-section">
+                        <h3>Training Frequency Analysis</h3>
+                        <div id="frequencyAnalysis" class="frequency-analysis">
+                            <div class="frequency-overview" id="frequencyOverview">
+                                <div class="analysis-loading">Analyzing workout frequency patterns...</div>
+                            </div>
+                            <div class="muscle-group-frequencies" id="muscleGroupFrequencies" style="display: none;">
+                                <!-- Muscle group frequency recommendations will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance vs Rest Analysis -->
+                    <div class="settings-section">
+                        <h3>Performance vs Rest Days</h3>
+                        <div id="performanceRestAnalysis" class="performance-rest-analysis">
+                            <div class="rest-performance-overview" id="restPerformanceOverview">
+                                <div class="analysis-loading">Analyzing performance vs rest patterns...</div>
+                            </div>
+                            <div class="optimal-rest-recommendations" id="optimalRestRecommendations" style="display: none;">
+                                <!-- Rest recommendations will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Plateau Prediction -->
                     <div class="settings-section">
                         <h3>Plateau Prediction</h3>
@@ -426,6 +452,8 @@
     <script src="exercise-utils.js"></script>
     <script src="adaptive-timer.js"></script>
     <script src="intelligent-training.js"></script>
+    <script src="frequency-analyzer.js"></script>
+    <script src="performance-rest-analyzer.js"></script>
     <script src="production-optimizer.js"></script>
     <script src="app.js"></script>
     <script>

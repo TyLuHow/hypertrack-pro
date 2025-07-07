@@ -348,6 +348,279 @@ class IntelligentTraining {
             recoveryRecommendations: this.generateRecoveryRecommendations(recoveryScore)
         };
     }
+
+    // 5. FREQUENCY-BASED RECOVERY ANALYSIS
+    analyzeRecoveryBasedFrequency(workoutHistory, muscleGroup) {
+        if (!workoutHistory || workoutHistory.length < 3) {
+            return {
+                recommendation: 'insufficient_data',
+                message: 'Need at least 3 workouts to analyze recovery patterns'
+            };
+        }
+
+        // Filter workouts for specific muscle group
+        const muscleGroupWorkouts = workoutHistory.filter(workout => 
+            workout.exercises?.some(exercise => exercise.muscle_group === muscleGroup)
+        ).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (muscleGroupWorkouts.length < 3) {
+            return {
+                recommendation: 'insufficient_data',
+                message: `Need more ${muscleGroup} workouts to analyze recovery`
+            };
+        }
+
+        // Analyze performance vs recovery time
+        const recoveryAnalysis = this.analyzePerformanceVsRecovery(muscleGroupWorkouts, muscleGroup);
+        const frequencyRecommendation = this.generateFrequencyRecommendation(recoveryAnalysis, muscleGroup);
+
+        return {
+            muscleGroup: muscleGroup,
+            analysis: recoveryAnalysis,
+            recommendation: frequencyRecommendation,
+            optimalRestHours: this.calculateOptimalRestHours(recoveryAnalysis),
+            adaptationStatus: this.assessAdaptationStatus(recoveryAnalysis)
+        };
+    }
+
+    analyzePerformanceVsRecovery(workouts, muscleGroup) {
+        const recoveryData = [];
+        
+        for (let i = 0; i < workouts.length - 1; i++) {
+            const currentWorkout = workouts[i];
+            const previousWorkout = workouts[i + 1];
+            
+            const restHours = (new Date(currentWorkout.date) - new Date(previousWorkout.date)) / (1000 * 60 * 60);
+            const currentPerformance = this.calculateMuscleGroupPerformance(currentWorkout, muscleGroup);
+            const previousPerformance = this.calculateMuscleGroupPerformance(previousWorkout, muscleGroup);
+            
+            // Calculate performance change
+            const performanceChange = previousPerformance > 0 ? 
+                (currentPerformance - previousPerformance) / previousPerformance : 0;
+            
+            recoveryData.push({
+                restHours: Math.round(restHours),
+                performanceChange: performanceChange,
+                currentPerformance: currentPerformance,
+                previousPerformance: previousPerformance,
+                workoutDate: currentWorkout.date
+            });
+        }
+        
+        // Group by rest time intervals
+        const recoveryGroups = this.groupByRestTime(recoveryData);
+        const optimalRecovery = this.findOptimalRecoveryTime(recoveryGroups);
+        
+        return {
+            recoveryData: recoveryData,
+            recoveryGroups: recoveryGroups,
+            optimalRecoveryHours: optimalRecovery.hours,
+            optimalPerformanceGain: optimalRecovery.performanceGain,
+            recoveryTrend: this.calculateRecoveryTrend(recoveryGroups)
+        };
+    }
+
+    calculateMuscleGroupPerformance(workout, muscleGroup) {
+        if (!workout.exercises) return 0;
+        
+        let totalVolume = 0;
+        let exerciseCount = 0;
+        
+        workout.exercises.forEach(exercise => {
+            if (exercise.muscle_group === muscleGroup && exercise.sets) {
+                let exerciseVolume = 0;
+                exercise.sets.forEach(set => {
+                    exerciseVolume += (set.weight || 0) * (set.reps || 0);
+                });
+                totalVolume += exerciseVolume;
+                exerciseCount++;
+            }
+        });
+        
+        return exerciseCount > 0 ? totalVolume / exerciseCount : 0;
+    }
+
+    groupByRestTime(recoveryData) {
+        const groups = new Map();
+        
+        recoveryData.forEach(data => {
+            // Group by 12-hour intervals
+            const interval = Math.floor(data.restHours / 12) * 12;
+            const key = `${interval}-${interval + 12}h`;
+            
+            if (!groups.has(key)) {
+                groups.set(key, []);
+            }
+            groups.get(key).push(data);
+        });
+        
+        // Calculate averages for each group
+        const groupedResults = new Map();
+        groups.forEach((dataPoints, timeRange) => {
+            const avgPerformanceChange = dataPoints.reduce((sum, d) => sum + d.performanceChange, 0) / dataPoints.length;
+            const avgRestHours = dataPoints.reduce((sum, d) => sum + d.restHours, 0) / dataPoints.length;
+            
+            groupedResults.set(timeRange, {
+                timeRange: timeRange,
+                avgRestHours: Math.round(avgRestHours),
+                avgPerformanceChange: Math.round(avgPerformanceChange * 1000) / 10, // Percentage
+                sampleSize: dataPoints.length,
+                dataPoints: dataPoints
+            });
+        });
+        
+        return groupedResults;
+    }
+
+    findOptimalRecoveryTime(recoveryGroups) {
+        let bestHours = 48;
+        let bestPerformanceGain = 0;
+        
+        recoveryGroups.forEach((group, timeRange) => {
+            // Weight by sample size and performance gain
+            const weightedScore = group.avgPerformanceChange * Math.min(group.sampleSize / 2, 1);
+            
+            if (weightedScore > bestPerformanceGain && group.sampleSize >= 2) {
+                bestPerformanceGain = weightedScore;
+                bestHours = group.avgRestHours;
+            }
+        });
+        
+        return {
+            hours: bestHours,
+            performanceGain: bestPerformanceGain
+        };
+    }
+
+    calculateRecoveryTrend(recoveryGroups) {
+        const sortedGroups = Array.from(recoveryGroups.values())
+            .sort((a, b) => a.avgRestHours - b.avgRestHours);
+        
+        if (sortedGroups.length < 2) return 'insufficient_data';
+        
+        // Calculate if performance improves with more rest
+        const correlationData = sortedGroups.map(group => ({
+            x: group.avgRestHours,
+            y: group.avgPerformanceChange
+        }));
+        
+        const correlation = this.calculateCorrelation(correlationData);
+        
+        if (correlation > 0.3) return 'benefits_from_more_rest';
+        if (correlation < -0.3) return 'performs_better_with_less_rest';
+        return 'rest_time_neutral';
+    }
+
+    calculateCorrelation(data) {
+        if (data.length < 2) return 0;
+        
+        const n = data.length;
+        const sumX = data.reduce((sum, d) => sum + d.x, 0);
+        const sumY = data.reduce((sum, d) => sum + d.y, 0);
+        const sumXY = data.reduce((sum, d) => sum + d.x * d.y, 0);
+        const sumX2 = data.reduce((sum, d) => sum + d.x * d.x, 0);
+        const sumY2 = data.reduce((sum, d) => sum + d.y * d.y, 0);
+        
+        const numerator = n * sumXY - sumX * sumY;
+        const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+        
+        return denominator !== 0 ? numerator / denominator : 0;
+    }
+
+    generateFrequencyRecommendation(recoveryAnalysis, muscleGroup) {
+        const optimalHours = recoveryAnalysis.optimalRecoveryHours;
+        const trend = recoveryAnalysis.recoveryTrend;
+        
+        // Convert hours to frequency per week
+        const optimalFrequency = (7 * 24) / optimalHours;
+        
+        let recommendation = {
+            frequencyPerWeek: Math.round(optimalFrequency * 10) / 10,
+            restHoursBetween: optimalHours,
+            confidence: this.calculateConfidence(recoveryAnalysis)
+        };
+        
+        // Adjust based on muscle group characteristics
+        const muscleGroupAdjustments = {
+            'Side Delts': { multiplier: 1.2, reason: 'Small muscle group recovers faster' },
+            'Rear Delts': { multiplier: 1.2, reason: 'Small muscle group recovers faster' },
+            'Biceps': { multiplier: 1.1, reason: 'Smaller muscle group' },
+            'Triceps': { multiplier: 1.1, reason: 'Smaller muscle group' },
+            'Abs': { multiplier: 1.5, reason: 'Postural muscles recover quickly' },
+            'Calves': { multiplier: 1.3, reason: 'High endurance muscle fibers' },
+            'Legs': { multiplier: 0.8, reason: 'Large muscle group needs more recovery' },
+            'Horizontal Push': { multiplier: 0.9, reason: 'Compound movements are more demanding' }
+        };
+        
+        const adjustment = muscleGroupAdjustments[muscleGroup];
+        if (adjustment) {
+            recommendation.frequencyPerWeek *= adjustment.multiplier;
+            recommendation.frequencyPerWeek = Math.round(recommendation.frequencyPerWeek * 10) / 10;
+            recommendation.adjustment = adjustment.reason;
+        }
+        
+        // Add trend-based recommendations
+        if (trend === 'benefits_from_more_rest') {
+            recommendation.frequencyPerWeek *= 0.8;
+            recommendation.note = 'Your data shows better performance with additional recovery time';
+        } else if (trend === 'performs_better_with_less_rest') {
+            recommendation.frequencyPerWeek *= 1.2;
+            recommendation.note = 'Your data shows you recover faster than average';
+        }
+        
+        recommendation.frequencyPerWeek = Math.round(recommendation.frequencyPerWeek * 10) / 10;
+        
+        return recommendation;
+    }
+
+    calculateOptimalRestHours(recoveryAnalysis) {
+        return {
+            minimum: Math.max(24, recoveryAnalysis.optimalRecoveryHours * 0.8),
+            optimal: recoveryAnalysis.optimalRecoveryHours,
+            maximum: recoveryAnalysis.optimalRecoveryHours * 1.3,
+            recommendation: this.formatRestRecommendation(recoveryAnalysis.optimalRecoveryHours)
+        };
+    }
+
+    formatRestRecommendation(hours) {
+        if (hours < 36) return 'Daily training with lighter loads';
+        if (hours < 60) return 'Every other day training';
+        if (hours < 84) return '2-3 days rest between sessions';
+        return 'Extended rest periods recommended';
+    }
+
+    assessAdaptationStatus(recoveryAnalysis) {
+        const avgPerformanceChange = recoveryAnalysis.recoveryData
+            .reduce((sum, d) => sum + d.performanceChange, 0) / recoveryAnalysis.recoveryData.length;
+        
+        if (avgPerformanceChange > 0.05) return 'adapting_well';
+        if (avgPerformanceChange > -0.02) return 'maintaining';
+        if (avgPerformanceChange > -0.05) return 'slight_decline';
+        return 'significant_decline';
+    }
+
+    calculateConfidence(recoveryAnalysis) {
+        const dataPoints = recoveryAnalysis.recoveryData.length;
+        const variability = this.calculateVariability(recoveryAnalysis.recoveryData);
+        
+        // Confidence based on data points and consistency
+        let confidence = Math.min(dataPoints / 10, 1) * 0.7; // 70% max from data volume
+        confidence += (1 - variability) * 0.3; // 30% from consistency
+        
+        if (confidence > 0.8) return 'high';
+        if (confidence > 0.6) return 'medium';
+        return 'low';
+    }
+
+    calculateVariability(data) {
+        if (data.length < 2) return 1;
+        
+        const performanceChanges = data.map(d => d.performanceChange);
+        const mean = performanceChanges.reduce((sum, val) => sum + val, 0) / performanceChanges.length;
+        const variance = performanceChanges.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / performanceChanges.length;
+        
+        return Math.min(Math.sqrt(variance), 1); // Normalize to 0-1
+    }
     
     calculateRecoveryScore(recoveryData) {
         // Composite recovery score based on multiple markers
