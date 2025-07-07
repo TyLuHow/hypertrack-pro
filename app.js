@@ -1649,6 +1649,7 @@ function switchTab(tabName) {
 // Initialize frequency and performance analyzers
 let frequencyAnalyzer;
 let performanceRestAnalyzer;
+let workoutTimingAdvisor;
 
 // Initialize analyzers when app loads
 function initializeAnalyzers() {
@@ -1660,6 +1661,11 @@ function initializeAnalyzers() {
     if (window.PerformanceRestAnalyzer) {
         performanceRestAnalyzer = new PerformanceRestAnalyzer();
         console.log('✅ Performance Rest Analyzer initialized');
+    }
+    
+    if (window.WorkoutTimingAdvisor) {
+        workoutTimingAdvisor = new WorkoutTimingAdvisor();
+        console.log('✅ Workout Timing Advisor initialized');
     }
 }
 
@@ -1680,6 +1686,9 @@ function updateIntelligenceTab() {
     
     // Update performance vs rest analysis
     updatePerformanceRestAnalysis(workoutHistory);
+    
+    // Update workout timing recommendations
+    updateWorkoutTimingAnalysis(workoutHistory);
     
     // Update existing AI features
     updateExistingAIFeatures(workoutHistory);
@@ -1939,10 +1948,30 @@ function renderRestRecommendations(analysis) {
     return html;
 }
 
+function updateWorkoutTimingAnalysis(workoutHistory) {
+    if (!workoutTimingAdvisor || workoutHistory.length < 2) {
+        return;
+    }
+    
+    try {
+        // Get performance rest analysis for optimal rest periods
+        let performanceAnalysis = null;
+        if (performanceRestAnalyzer && workoutHistory.length >= 3) {
+            performanceAnalysis = performanceRestAnalyzer.analyzePerformanceVsRest(workoutHistory);
+        }
+        
+        // Initialize timing advisor with data
+        workoutTimingAdvisor.initialize(workoutHistory, performanceAnalysis);
+        
+        console.log('✅ Workout timing analysis updated');
+        
+    } catch (error) {
+        console.error('❌ Error updating workout timing analysis:', error);
+    }
+}
+
 function updateExistingAIFeatures(workoutHistory) {
     // Update plateau prediction and progression optimization
-    // This would integrate with existing intelligent-training.js features
-    
     if (window.IntelligentTraining) {
         try {
             const intelligentTraining = new IntelligentTraining();
@@ -1968,9 +1997,189 @@ function updateExistingAIFeatures(workoutHistory) {
                 }
             }
             
+            // Update plateau prediction
+            updatePlateauPrediction(workoutHistory, intelligentTraining);
+            
+            // Update personalized progression
+            updatePersonalizedProgression(workoutHistory, intelligentTraining);
+            
         } catch (error) {
             console.error('❌ Error updating existing AI features:', error);
         }
+    }
+}
+
+function updatePlateauPrediction(workoutHistory, intelligentTraining) {
+    const plateauElement = document.getElementById('plateauAnalysis');
+    if (!plateauElement || workoutHistory.length < 6) {
+        if (plateauElement) {
+            plateauElement.innerHTML = '<div class="analysis-loading">Need more workouts to predict plateaus</div>';
+        }
+        return;
+    }
+    
+    try {
+        // Analyze each exercise for plateau risk
+        const plateauAnalyses = [];
+        const exerciseHistory = {};
+        
+        // Group exercises by name
+        workoutHistory.forEach(workout => {
+            workout.exercises?.forEach(exercise => {
+                if (!exerciseHistory[exercise.name]) {
+                    exerciseHistory[exercise.name] = [];
+                }
+                exerciseHistory[exercise.name].push({
+                    date: workout.date,
+                    sets: exercise.sets || []
+                });
+            });
+        });
+        
+        // Analyze plateau risk for each exercise
+        Object.entries(exerciseHistory).forEach(([exerciseName, history]) => {
+            if (history.length >= 3) {
+                const plateauRisk = intelligentTraining.analyzePlateauRisk(history);
+                if (plateauRisk.riskScore > 30) {
+                    plateauAnalyses.push({
+                        exercise: exerciseName,
+                        riskScore: plateauRisk.riskScore,
+                        riskLevel: plateauRisk.riskLevel,
+                        strategies: plateauRisk.preventionStrategies
+                    });
+                }
+            }
+        });
+        
+        // Sort by risk score
+        plateauAnalyses.sort((a, b) => b.riskScore - a.riskScore);
+        
+        let html = '<div class="plateau-prediction-content">';
+        
+        if (plateauAnalyses.length === 0) {
+            html += `
+                <div class="low-plateau-risk" style="background: #22c55e20; border-radius: 8px; padding: 16px; border-left: 4px solid #22c55e;">
+                    <div style="color: #22c55e; font-weight: 600; margin-bottom: 8px;">✅ Low Plateau Risk</div>
+                    <div style="color: #e2e8f0; font-size: 14px;">Your current progression patterns show good adaptation</div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="plateau-risks">
+                    ${plateauAnalyses.slice(0, 3).map(analysis => `
+                        <div class="plateau-risk ${analysis.riskLevel}" style="background: ${analysis.riskLevel === 'high' ? '#ef444420' : '#f59e0b20'}; border-radius: 8px; padding: 12px; margin-bottom: 12px; border-left: 4px solid ${analysis.riskLevel === 'high' ? '#ef4444' : '#f59e0b'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="color: #e2e8f0; font-weight: 600;">${analysis.exercise}</div>
+                                <div style="color: ${analysis.riskLevel === 'high' ? '#ef4444' : '#f59e0b'}; font-size: 12px; text-transform: uppercase;">${analysis.riskLevel} Risk</div>
+                            </div>
+                            <div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Risk Score: ${Math.round(analysis.riskScore)}%</div>
+                            ${analysis.strategies.length > 0 ? `
+                                <div style="color: #d1d5db; font-size: 12px;">
+                                    💡 ${analysis.strategies[0].description}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        plateauElement.innerHTML = html;
+        
+    } catch (error) {
+        console.error('❌ Error updating plateau prediction:', error);
+        plateauElement.innerHTML = '<div class="analysis-error">Error analyzing plateau risk</div>';
+    }
+}
+
+function updatePersonalizedProgression(workoutHistory, intelligentTraining) {
+    const progressionElement = document.getElementById('progressionOptimization');
+    if (!progressionElement || workoutHistory.length < 4) {
+        if (progressionElement) {
+            progressionElement.innerHTML = '<div class="analysis-loading">Need more workout data for personalized progressions</div>';
+        }
+        return;
+    }
+    
+    try {
+        // Get recent exercises for progression analysis
+        const recentExercises = new Map();
+        
+        workoutHistory.slice(0, 6).forEach(workout => {
+            workout.exercises?.forEach(exercise => {
+                if (!recentExercises.has(exercise.name)) {
+                    recentExercises.set(exercise.name, {
+                        name: exercise.name,
+                        muscle_group: exercise.muscle_group,
+                        category: exercise.category || 'Unknown',
+                        recentSets: []
+                    });
+                }
+                
+                const exerciseData = recentExercises.get(exercise.name);
+                if (exercise.sets) {
+                    exerciseData.recentSets.push(...exercise.sets);
+                }
+            });
+        });
+        
+        // Calculate progressions for top exercises
+        const progressionRecommendations = [];
+        
+        Array.from(recentExercises.values()).slice(0, 5).forEach(exercise => {
+            if (exercise.recentSets.length >= 3) {
+                const progression = intelligentTraining.calculateOptimalProgression(
+                    exercise,
+                    exercise.recentSets,
+                    { rate: 'medium' }
+                );
+                
+                progressionRecommendations.push({
+                    exercise: exercise.name,
+                    muscleGroup: exercise.muscle_group,
+                    progression: progression
+                });
+            }
+        });
+        
+        let html = '<div class="progression-optimization-content">';
+        
+        if (progressionRecommendations.length === 0) {
+            html += `
+                <div class="no-progressions" style="background: #374151; border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="color: #9ca3af;">Need consistent exercise data for progression analysis</div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="progression-recommendations">
+                    ${progressionRecommendations.map(rec => `
+                        <div class="progression-rec" style="background: #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 12px; border-left: 4px solid #3b82f6;">
+                            <div style="color: #e2e8f0; font-weight: 600; margin-bottom: 4px;">${rec.exercise}</div>
+                            <div style="color: #94a3b8; font-size: 12px; margin-bottom: 8px;">${rec.muscleGroup}</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                                <div>
+                                    <div style="color: #60a5fa;">Weight: +${rec.progression.weightIncrease}lbs</div>
+                                    <div style="color: #34d399;">Reps: +${rec.progression.repIncrease}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #fbbf24;">Volume: +${Math.round(rec.progression.volumeIncrease * 100)}%</div>
+                                    <div style="color: #a78bfa;">Confidence: ${rec.progression.confidence}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        progressionElement.innerHTML = html;
+        
+    } catch (error) {
+        console.error('❌ Error updating personalized progression:', error);
+        progressionElement.innerHTML = '<div class="analysis-error">Error calculating progressions</div>';
     }
 }
 
@@ -2434,116 +2643,58 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
             </div>
         `;
     } else {
-        // Get priority muscles (those needing attention)
-        const priorityMuscles = [];
-        const optimalMuscles = [];
-        const excessiveMuscles = [];
-        const untouchedMuscles = [];
+        // Get all muscles and sort by current volume (descending)
+        const allMuscles = Object.entries(weeklyVolumeWithTargets)
+            .map(([muscle, data]) => ({ muscle, data }))
+            .sort((a, b) => b.data.current - a.data.current);
         
-        Object.entries(weeklyVolumeWithTargets).forEach(([muscle, data]) => {
-            if (data.current === 0) {
-                untouchedMuscles.push({ muscle, data });
-            } else if (data.recommendation.status === 'low') {
-                priorityMuscles.push({ muscle, data });
-            } else if (data.recommendation.status === 'optimal') {
-                optimalMuscles.push({ muscle, data });
-            } else if (data.recommendation.status === 'high') {
-                excessiveMuscles.push({ muscle, data });
-            }
-        });
-        
-        // Untouched muscles (0 sets this week)
-        if (untouchedMuscles.length > 0) {
-            recommendationsHTML += `
-                <div style="margin-bottom: 16px;">
-                    <h5 style="color: #be185d; margin: 0 0 8px 0;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
-                            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-                            <path d="M12 9v4"></path>
-                            <path d="m12 17 .01 0"></path>
-                        </svg>
-                        Untrained This Week (0 Sets)
-                    </h5>
-                    ${untouchedMuscles.map(({ muscle, data }) => `
-                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #be185d;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600;">${muscle}</span>
-                                <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">0/${data.mev} sets</span>
+        // Display all muscle groups in descending volume order
+        recommendationsHTML += `
+            <div style="margin-bottom: 16px;">
+                <h5 style="color: #64748b; margin: 0 0 8px 0;">📊 Muscle Groups by Volume (High → Low)</h5>
+                ${allMuscles.map(({ muscle, data }) => {
+                    let borderColor, bgColor, statusColor, statusText, statusIcon;
+                    
+                    if (data.recommendation.status === 'high') {
+                        borderColor = '#f59e0b';
+                        bgColor = '#1f1611';
+                        statusColor = '#fcd34d';
+                        statusText = 'High Volume';
+                        statusIcon = '⚠️';
+                    } else if (data.recommendation.status === 'optimal') {
+                        borderColor = '#22c55e';
+                        bgColor = '#0f1f13';
+                        statusColor = '#86efac';
+                        statusText = 'Optimal';
+                        statusIcon = '✅';
+                    } else if (data.current > 0) {
+                        borderColor = '#f59e0b';
+                        bgColor = '#451a03';
+                        statusColor = '#fcd34d';
+                        statusText = `Need +${data.deficit} sets`;
+                        statusIcon = '⬆️';
+                    } else {
+                        borderColor = '#be185d';
+                        bgColor = '#450a0a';
+                        statusColor = '#fda4af';
+                        statusText = `Need ${data.mev}+ sets`;
+                        statusIcon = '🚨';
+                    }
+                    
+                    return `
+                        <div style="background: ${bgColor}; border-radius: 6px; padding: 10px; margin: 4px 0; border-left: 3px solid ${borderColor}; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: ${statusColor};">${muscle}</strong>
+                                <span style="color: #94a3b8; font-size: 11px; margin-left: 8px;">${data.current} sets</span>
                             </div>
-                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">Need ${data.mev} sets minimum for muscle growth</p>
-                            <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">
-                                + Add ${muscle} Exercise
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-        
-        // Priority muscles (need more volume)
-        if (priorityMuscles.length > 0) {
-            recommendationsHTML += `
-                <div style="margin-bottom: 16px;">
-                    <h5 style="color: #be185d; margin: 0 0 8px 0;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
-                            <path d="M12 9v3"></path>
-                            <path d="m12 16 .01 0"></path>
-                            <circle cx="12" cy="12" r="10"></circle>
-                        </svg>
-                        Priority Muscles (Need More Volume)
-                    </h5>
-                    ${priorityMuscles.map(({ muscle, data }) => `
-                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid ${data.recommendation.color};">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600;">${muscle}</span>
-                                <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">${data.current}/${data.mev} sets</span>
+                            <div style="text-align: right;">
+                                <span style="color: ${statusColor}; font-size: 11px;">${statusIcon} ${statusText}</span>
                             </div>
-                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">${data.recommendation.message}</p>
-                            <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer;">
-                                + Add ${data.deficit} Sets
-                            </button>
                         </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-        
-        // Optimal muscles
-        if (optimalMuscles.length > 0) {
-            recommendationsHTML += `
-                <div style="margin-bottom: 16px;">
-                    <h5 style="color: #22c55e; margin: 0 0 8px 0;">✅ Optimal Volume</h5>
-                    ${optimalMuscles.map(({ muscle, data }) => `
-                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid ${data.recommendation.color};">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-weight: 600;">${muscle}</span>
-                                <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">${data.current} sets</span>
-                            </div>
-                            <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 0 0;">${data.recommendation.message}</p>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-        
-        // Excessive muscles
-        if (excessiveMuscles.length > 0) {
-            recommendationsHTML += `
-                <div style="margin-bottom: 16px;">
-                    <h5 style="color: #f59e0b; margin: 0 0 8px 0;">⚠️ High Volume (Risk of Junk Volume)</h5>
-                    ${excessiveMuscles.map(({ muscle, data }) => `
-                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid ${data.recommendation.color};">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="font-weight: 600;">${muscle}</span>
-                                <span style="background: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px;">${data.current} sets</span>
-                            </div>
-                            <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px 0;">${data.recommendation.message}</p>
-                            <p style="font-size: 11px; color: #f59e0b; margin: 0;">💡 Consider reducing volume or taking a deload week</p>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
+                    `;
+                }).join('')}
+            </div>
+        `;
         
         // Weekly summary
         const totalSets = Object.values(weeklyVolumeWithTargets).reduce((sum, data) => sum + data.current, 0);
