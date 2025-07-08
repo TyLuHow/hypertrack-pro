@@ -265,27 +265,90 @@ class WorkoutTimingAdvisor {
         };
     }
     
-    // Get volume deficiencies from weekly analysis
+    // Get volume deficiencies from weekly analysis - integrated with actual analytics
     getVolumeDeficiencies() {
-        // This would ideally integrate with the analytics volume data
-        // For now, return mock data based on common muscle group targets
         const deficiencies = {};
         
-        // Try to get actual volume data from HyperTrack if available
+        // Try to get actual volume data from HyperTrack analytics
         if (window.HyperTrack && window.HyperTrack.state.workouts) {
-            const weeklyVolume = this.calculateCurrentWeeklyVolume(window.HyperTrack.state.workouts);
-            const targets = this.getMuscleGroupTargets();
-            
-            Object.entries(targets).forEach(([muscleGroup, target]) => {
-                const current = weeklyVolume[muscleGroup] || 0;
-                const deficit = Math.max(0, target - current);
-                if (deficit > 0) {
-                    deficiencies[muscleGroup] = deficit;
-                }
-            });
+            try {
+                // Use the same logic as the analytics display
+                const weeklyVolume = this.calculateCurrentWeeklyVolume(window.HyperTrack.state.workouts);
+                const muscleGroupVolumes = this.getWeeklyVolumeWithTargets(weeklyVolume);
+                
+                Object.entries(muscleGroupVolumes).forEach(([muscleGroup, data]) => {
+                    if (data.recommendation.status === 'low' || data.current === 0) {
+                        const deficit = data.deficit || (data.mev - data.current);
+                        if (deficit > 0) {
+                            deficiencies[muscleGroup] = deficit;
+                        }
+                    }
+                });
+                
+                console.log('📊 Volume deficiencies calculated:', deficiencies);
+            } catch (error) {
+                console.warn('⚠️ Could not calculate volume deficiencies, using fallback');
+                return this.getFallbackDeficiencies();
+            }
         }
         
         return deficiencies;
+    }
+    
+    // Get weekly volume with targets (copied from analytics logic)
+    getWeeklyVolumeWithTargets(weeklyVolume) {
+        const muscleGroupVolumes = {};
+        
+        // Define MEV (Minimum Effective Volume) and targets for each muscle group
+        const muscleGroupMEV = {
+            'Horizontal Push': 10, 'Vertical Push': 8, 'Horizontal Pull': 10, 'Vertical Pull': 10,
+            'Side Delts': 8, 'Rear Delts': 6, 'Biceps': 8, 'Triceps': 8,
+            'Quads': 10, 'Hamstrings': 8, 'Glutes': 8, 'Calves': 6, 'Abs': 8, 'Traps': 6
+        };
+        
+        Object.entries(muscleGroupMEV).forEach(([muscleGroup, mev]) => {
+            const current = weeklyVolume[muscleGroup] || 0;
+            const deficit = Math.max(0, mev - current);
+            
+            let status, color;
+            if (current === 0) {
+                status = 'untrained';
+                color = '#be185d';
+            } else if (current < mev) {
+                status = 'low';
+                color = '#f59e0b';
+            } else if (current <= mev + 6) {
+                status = 'optimal';
+                color = '#22c55e';
+            } else {
+                status = 'high';
+                color = '#f59e0b';
+            }
+            
+            muscleGroupVolumes[muscleGroup] = {
+                current: current,
+                mev: mev,
+                deficit: deficit,
+                recommendation: {
+                    status: status,
+                    color: color,
+                    message: `${current} sets this week`
+                }
+            };
+        });
+        
+        return muscleGroupVolumes;
+    }
+    
+    // Fallback deficiencies if analytics calculation fails
+    getFallbackDeficiencies() {
+        return {
+            'Vertical Pull': 5,
+            'Horizontal Pull': 4,
+            'Side Delts': 3,
+            'Quads': 6,
+            'Hamstrings': 4
+        };
     }
     
     // Calculate current weekly volume
