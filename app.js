@@ -2986,81 +2986,75 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
             .map(([muscle, data]) => ({ muscle, data }))
             .sort((a, b) => b.data.current - a.data.current);
         
-        // Weekly summary above each individual muscle group
+        // Compact weekly summary
         const totalSets = Object.values(weeklyVolumeWithTargets).reduce((sum, data) => sum + data.current, 0);
         const trainedMuscles = Object.values(weeklyVolumeWithTargets).filter(data => data.current > 0).length;
         
         recommendationsHTML += `
-            <div style="background: #1f2937; border-radius: 8px; padding: 16px; margin-bottom: 20px; border: 1px solid #374151; width: 100%;">
-                <h6 style="margin: 0 0 12px 0; color: #60a5fa; display: flex; align-items: center;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                        <path d="M3 3v18h18"></path>
-                        <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
-                    </svg>
-                    📈 Weekly Summary
-                </h6>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
-                    <div>
-                        <div style="color: #94a3b8;">Total Weekly Sets</div>
-                        <div style="color: #e2e8f0; font-weight: 600; font-size: 16px;">${totalSets}</div>
+            <div style="background: #1f2937; border-radius: 6px; padding: 12px; margin-bottom: 16px; border: 1px solid #374151;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="color: #60a5fa; font-weight: 600; font-size: 14px;">📈 Weekly Summary</span>
+                    <span style="color: #94a3b8; font-size: 12px;">Last 7 days</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px;">
+                    <div style="text-align: center;">
+                        <div style="color: #e2e8f0; font-weight: 600; font-size: 18px;">${totalSets}</div>
+                        <div style="color: #94a3b8; font-size: 10px;">Total Sets</div>
                     </div>
-                    <div>
-                        <div style="color: #94a3b8;">Muscle Groups Trained</div>
-                        <div style="color: #e2e8f0; font-weight: 600; font-size: 16px;">${trainedMuscles}/${Object.keys(weeklyVolumeWithTargets).length}</div>
+                    <div style="text-align: center;">
+                        <div style="color: #e2e8f0; font-weight: 600; font-size: 18px;">${trainedMuscles}</div>
+                        <div style="color: #94a3b8; font-size: 10px;">Groups Trained</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="color: #e2e8f0; font-weight: 600; font-size: 18px;">${Math.round(totalSets / 7 * 10) / 10}</div>
+                        <div style="color: #94a3b8; font-size: 10px;">Sets/Day</div>
                     </div>
                 </div>
             </div>
         `;
         
-        // Display all muscle groups in stacked layout  
+        // Compact muscle group grid layout
         recommendationsHTML += `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px;">
                 ${allMuscles.map(({ muscle, data }) => {
-                    let borderColor, bgColor, statusColor, statusText, statusIcon;
+                    let borderColor, statusColor, statusIcon;
                     
                     if (data.recommendation.status === 'high') {
                         borderColor = '#f59e0b';
-                        bgColor = '#1f1611';
                         statusColor = '#fcd34d';
-                        statusText = 'High Volume';
                         statusIcon = '⚠️';
                     } else if (data.recommendation.status === 'optimal') {
                         borderColor = '#22c55e';
-                        bgColor = '#0f1f13';
                         statusColor = '#86efac';
-                        statusText = 'Optimal';
                         statusIcon = '✅';
                     } else if (data.current > 0) {
                         borderColor = '#f59e0b';
-                        bgColor = '#451a03';
                         statusColor = '#fcd34d';
-                        statusText = `Need +${data.deficit} sets`;
                         statusIcon = '⬆️';
                     } else {
                         borderColor = '#be185d';
-                        bgColor = '#450a0a';
                         statusColor = '#fda4af';
-                        statusText = `Need ${data.mev}+ sets`;
                         statusIcon = '🚨';
                     }
                     
                     return `
-                        <div style="background: ${bgColor}; border-radius: 8px; padding: 16px; border-left: 4px solid ${borderColor}; width: 100%;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                                <div>
-                                    <h6 style="color: ${statusColor}; margin: 0 0 4px 0; font-size: 16px; font-weight: 600;">${muscle}</h6>
-                                    <div style="color: #94a3b8; font-size: 12px;">Current: ${data.current} sets | Target: ${data.mev}-${data.mev + 6} sets</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="color: ${statusColor}; font-size: 12px; font-weight: 600;">${statusIcon} ${statusText}</div>
-                                </div>
+                        <div style="background: #1f2937; border-radius: 6px; padding: 10px; border-left: 3px solid ${borderColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="color: ${statusColor}; font-weight: 600; font-size: 13px;">${muscle}</span>
+                                <span style="color: ${statusColor}; font-size: 11px;">${statusIcon}</span>
                             </div>
-                            <div style="background: #0f172a; border-radius: 4px; padding: 8px; font-size: 11px; color: #9ca3af;">
-                                ${data.recommendation.message}
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="color: #94a3b8; font-size: 11px;">${data.current}/${data.mev} sets</span>
+                                <span style="color: #6b7280; font-size: 10px;">
+                                    ${data.recommendation.status === 'optimal' ? 'On target' :
+                                      data.current === 0 ? 'Not trained' :
+                                      data.recommendation.status === 'low' ? `+${data.deficit} needed` :
+                                      'High volume'}
+                                </span>
                             </div>
                             ${data.current === 0 || data.recommendation.status === 'low' ? `
-                                <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 8px;">
-                                    + Add ${muscle} Exercise
+                                <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; width: 100%;">
+                                    + Add Exercise
                                 </button>
                             ` : ''}
                         </div>
