@@ -817,6 +817,214 @@ class IntelligentTraining {
         if (prevVolume === 0) return 0;
         return (currentVolume - prevVolume) / prevVolume;
     }
+
+    // MISSING METHODS IMPLEMENTATION
+    
+    // Get recent performance data for analysis
+    getRecentPerformanceData(exerciseHistory, timeframe = 21) {
+        if (!exerciseHistory || exerciseHistory.length === 0) {
+            return [];
+        }
+        
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - timeframe);
+        
+        return exerciseHistory.filter(session => {
+            const sessionDate = new Date(session.date);
+            return sessionDate >= cutoffDate;
+        }).map(session => {
+            const sets = session.sets || [];
+            const maxWeight = sets.reduce((max, set) => Math.max(max, set.weight || 0), 0);
+            const totalReps = sets.reduce((total, set) => total + (set.reps || 0), 0);
+            const totalVolume = sets.reduce((total, set) => total + ((set.weight || 0) * (set.reps || 0)), 0);
+            
+            return {
+                date: session.date,
+                maxWeight: maxWeight,
+                totalReps: totalReps,
+                totalVolume: totalVolume,
+                setCount: sets.length,
+                avgReps: totalReps / (sets.length || 1)
+            };
+        });
+    }
+    
+    // Adjust progression based on plateau risk
+    adjustForPlateauRisk(progression) {
+        const riskMultipliers = {
+            'low': { weight: 1.0, reps: 1.0, volume: 1.0 },
+            'medium': { weight: 0.8, reps: 0.9, volume: 0.85 },
+            'high': { weight: 0.6, reps: 0.7, volume: 0.7 }
+        };
+        
+        const risk = this.adaptationData.plateauRisk > 70 ? 'high' : 
+                    this.adaptationData.plateauRisk > 40 ? 'medium' : 'low';
+        const multiplier = riskMultipliers[risk];
+        
+        return {
+            weight: progression.weight * multiplier.weight,
+            reps: progression.reps * multiplier.reps,
+            volume: progression.volume * multiplier.volume
+        };
+    }
+    
+    // Adjust progression based on recovery status
+    adjustForRecovery(progression) {
+        const recoveryMultipliers = {
+            'excellent': { weight: 1.2, reps: 1.1, volume: 1.15 },
+            'good': { weight: 1.0, reps: 1.0, volume: 1.0 },
+            'poor': { weight: 0.7, reps: 0.8, volume: 0.75 }
+        };
+        
+        const multiplier = recoveryMultipliers[this.userProfile.recoveryRate] || recoveryMultipliers['good'];
+        
+        return {
+            weight: progression.weight * multiplier.weight,
+            reps: progression.reps * multiplier.reps,
+            volume: progression.volume * multiplier.volume
+        };
+    }
+    
+    // Calculate progression confidence
+    calculateProgressionConfidence(recentPerformance) {
+        if (!recentPerformance || recentPerformance.length < 2) {
+            return 'low';
+        }
+        
+        const trend = this.analyzePerformanceTrend(recentPerformance);
+        const consistency = this.calculatePerformanceConsistency(recentPerformance);
+        
+        if (trend > 0.1 && consistency > 0.7) return 'high';
+        if (trend > 0.05 && consistency > 0.5) return 'medium';
+        return 'low';
+    }
+    
+    // Generate progression reasoning
+    generateProgressionReasoning(exercise, progression) {
+        const reasons = [];
+        
+        if (progression.weight > 0.03) {
+            reasons.push('Aggressive weight progression based on recent performance');
+        } else if (progression.weight > 0.015) {
+            reasons.push('Moderate weight progression following periodization plan');
+        } else {
+            reasons.push('Conservative weight progression due to plateau risk');
+        }
+        
+        if (progression.volume > 0.08) {
+            reasons.push('Volume increase recommended for continued adaptation');
+        }
+        
+        return reasons.join('. ');
+    }
+    
+    // Calculate adaptation saturation
+    calculateAdaptationSaturation(recentData) {
+        if (!recentData || recentData.length < 3) return 0;
+        
+        const volumeTrend = this.analyzePerformanceTrend(recentData.map(d => d.totalVolume));
+        const weightTrend = this.analyzePerformanceTrend(recentData.map(d => d.maxWeight));
+        
+        return Math.max(0, Math.min(100, (1 - Math.abs(volumeTrend + weightTrend)) * 100));
+    }
+    
+    // Calculate intensity overreach
+    calculateIntensityOverreach(recentData) {
+        if (!recentData || recentData.length < 2) return 0;
+        
+        const avgIntensity = recentData.reduce((sum, d) => sum + d.maxWeight, 0) / recentData.length;
+        const recentIntensity = recentData.slice(0, 3).reduce((sum, d) => sum + d.maxWeight, 0) / Math.min(3, recentData.length);
+        
+        return Math.max(0, Math.min(100, ((recentIntensity - avgIntensity) / avgIntensity) * 100));
+    }
+    
+    // Calculate recovery debt
+    calculateRecoveryDebt(recentData) {
+        if (!recentData || recentData.length < 2) return 0;
+        
+        // Simple implementation based on training frequency
+        const avgDaysBetween = this.calculateAvgDaysBetweenSessions(recentData);
+        const optimalDays = 2; // 48-72 hours
+        
+        return Math.max(0, Math.min(100, (optimalDays - avgDaysBetween) / optimalDays * 100));
+    }
+    
+    // Calculate plateau risk
+    calculatePlateauRisk(riskFactors) {
+        const weights = {
+            progressionStagnation: 0.3,
+            volumeAccumulation: 0.2,
+            intensityOverreach: 0.2,
+            recoveryDebt: 0.15,
+            adaptationSaturation: 0.15
+        };
+        
+        return Object.entries(riskFactors).reduce((total, [factor, value]) => {
+            return total + (value * (weights[factor] || 0));
+        }, 0);
+    }
+    
+    // Categorize plateau risk
+    categorizePlateauRisk(riskScore) {
+        if (riskScore >= 70) return 'high';
+        if (riskScore >= 40) return 'medium';
+        return 'low';
+    }
+    
+    // Identify primary risk factors
+    identifyPrimaryRiskFactors(riskFactors) {
+        return Object.entries(riskFactors)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 2)
+            .map(([factor, value]) => ({ factor, value }));
+    }
+    
+    // Estimate time to plateau
+    estimateTimeToPlateauPrediction(riskFactors) {
+        const avgRisk = Object.values(riskFactors).reduce((sum, val) => sum + val, 0) / Object.keys(riskFactors).length;
+        
+        if (avgRisk >= 70) return '1-2 weeks';
+        if (avgRisk >= 40) return '3-4 weeks';
+        return '5+ weeks';
+    }
+    
+    // Helper methods
+    analyzePerformanceTrend(dataArray) {
+        if (!dataArray || dataArray.length < 2) return 0;
+        
+        const firstHalf = dataArray.slice(0, Math.floor(dataArray.length / 2));
+        const secondHalf = dataArray.slice(Math.floor(dataArray.length / 2));
+        
+        const firstAvg = firstHalf.reduce((sum, val) => sum + val, 0) / firstHalf.length;
+        const secondAvg = secondHalf.reduce((sum, val) => sum + val, 0) / secondHalf.length;
+        
+        return firstAvg > 0 ? (secondAvg - firstAvg) / firstAvg : 0;
+    }
+    
+    calculatePerformanceConsistency(dataArray) {
+        if (!dataArray || dataArray.length < 2) return 0;
+        
+        const values = dataArray.map(d => d.totalVolume || 0);
+        const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+        const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+        const stdDev = Math.sqrt(variance);
+        
+        return mean > 0 ? Math.max(0, 1 - (stdDev / mean)) : 0;
+    }
+    
+    calculateAvgDaysBetweenSessions(dataArray) {
+        if (!dataArray || dataArray.length < 2) return 7;
+        
+        const dates = dataArray.map(d => new Date(d.date)).sort((a, b) => a - b);
+        const intervals = [];
+        
+        for (let i = 1; i < dates.length; i++) {
+            const days = (dates[i] - dates[i-1]) / (1000 * 60 * 60 * 24);
+            intervals.push(days);
+        }
+        
+        return intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+    }
 }
 
 // Export for use in main app

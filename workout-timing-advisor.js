@@ -163,7 +163,7 @@ class WorkoutTimingAdvisor {
         }
     }
 
-    // Get next recommended workout
+    // Get next recommended workout prioritizing deficiencies + least recently trained
     getNextRecommendedWorkout() {
         const muscleStatuses = Array.from(this.lastWorkouts.keys())
             .map(muscleGroup => this.calculateRestStatus(muscleGroup))
@@ -176,31 +176,75 @@ class WorkoutTimingAdvisor {
             };
         }
 
-        // Find muscle groups that are ready or optimal
-        const readyMuscles = muscleStatuses.filter(status => 
-            status.readiness === 'ready' || status.status === 'optimal'
-        );
+        // Get volume deficiencies from weekly analysis
+        const volumeDeficiencies = this.getVolumeDeficiencies();
+        
+        // Enhance muscle statuses with volume deficiency and priority scoring
+        const enhancedStatuses = muscleStatuses.map(status => {
+            const volumeDeficit = volumeDeficiencies[status.muscleGroup] || 0;
+            const hasDeficiency = volumeDeficit > 0;
+            
+            // Calculate priority score (higher = more priority)
+            let priorityScore = 0;
+            
+            // 1. Volume deficiency priority (highest weight)
+            if (hasDeficiency) {
+                priorityScore += volumeDeficit * 10; // Major priority for deficiencies
+            }
+            
+            // 2. Time since last workout (longer = higher priority)
+            priorityScore += status.hoursRested * 0.1;
+            
+            // 3. Recovery readiness bonus
+            if (status.readiness === 'ready' || status.status === 'optimal') {
+                priorityScore += 50; // Bonus for being ready to train
+            }
+            
+            // 4. Penalty for very recent training (< 24 hours)
+            if (status.hoursRested < 24) {
+                priorityScore -= 100; // Heavy penalty for recent training
+            }
+            
+            return {
+                ...status,
+                volumeDeficit,
+                hasDeficiency,
+                priorityScore,
+                daysSinceWorkout: Math.round(status.hoursRested / 24 * 10) / 10
+            };
+        });
 
-        if (readyMuscles.length > 0) {
-            // Sort by priority: optimal first, then by percentage rested
-            readyMuscles.sort((a, b) => {
-                if (a.status === 'optimal' && b.status !== 'optimal') return -1;
-                if (b.status === 'optimal' && a.status !== 'optimal') return 1;
-                return b.percentageRested - a.percentageRested;
-            });
+        // Sort by priority score (highest priority first)
+        enhancedStatuses.sort((a, b) => b.priorityScore - a.priorityScore);
+        
+        // Find the best recommendations
+        const topRecommendations = enhancedStatuses.slice(0, 3);
+        const primaryRecommendation = topRecommendations[0];
 
-            const recommended = readyMuscles[0];
+        if (primaryRecommendation.priorityScore > 0) {
+            let message;
+            if (primaryRecommendation.hasDeficiency) {
+                message = `${primaryRecommendation.muscleGroup} needs volume (${primaryRecommendation.daysSinceWorkout} days since last)`;
+            } else {
+                message = `${primaryRecommendation.muscleGroup} ready (${primaryRecommendation.daysSinceWorkout} days rested)`;
+            }
+            
             return {
                 recommendation: 'ready',
-                muscleGroup: recommended.muscleGroup,
-                message: `${recommended.muscleGroup} is ${recommended.message.toLowerCase()}`,
-                status: recommended,
-                alternatives: readyMuscles.slice(1, 3) // Up to 2 alternatives
+                muscleGroup: primaryRecommendation.muscleGroup,
+                message: message,
+                status: primaryRecommendation,
+                reasoning: this.generateRecommendationReasoning(primaryRecommendation),
+                alternatives: topRecommendations.slice(1).map(alt => ({
+                    muscleGroup: alt.muscleGroup,
+                    daysSince: alt.daysSinceWorkout,
+                    hasDeficiency: alt.hasDeficiency
+                }))
             };
         }
 
-        // No muscles ready, find the one closest to being ready
-        const sortedByTimeRemaining = muscleStatuses
+        // If no good recommendations, find muscle that will be ready soonest
+        const sortedByTimeRemaining = enhancedStatuses
             .filter(status => status.timeUntilOptimal > 0)
             .sort((a, b) => a.timeUntilOptimal - b.timeUntilOptimal);
 
@@ -219,6 +263,93 @@ class WorkoutTimingAdvisor {
             recommendation: 'all_ready',
             message: 'All muscle groups appear to be well rested'
         };
+    }
+    
+    // Get volume deficiencies from weekly analysis
+    getVolumeDeficiencies() {
+        // This would ideally integrate with the analytics volume data
+        // For now, return mock data based on common muscle group targets
+        const deficiencies = {};
+        
+        // Try to get actual volume data from HyperTrack if available
+        if (window.HyperTrack && window.HyperTrack.state.workouts) {
+            const weeklyVolume = this.calculateCurrentWeeklyVolume(window.HyperTrack.state.workouts);
+            const targets = this.getMuscleGroupTargets();
+            
+            Object.entries(targets).forEach(([muscleGroup, target]) => {
+                const current = weeklyVolume[muscleGroup] || 0;
+                const deficit = Math.max(0, target - current);
+                if (deficit > 0) {
+                    deficiencies[muscleGroup] = deficit;
+                }
+            });
+        }
+        
+        return deficiencies;
+    }
+    
+    // Calculate current weekly volume
+    calculateCurrentWeeklyVolume(workouts) {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const weeklyVolume = {};
+        
+        workouts.forEach(workout => {
+            const workoutDate = new Date(workout.date);
+            if (workoutDate >= oneWeekAgo) {
+                workout.exercises?.forEach(exercise => {
+                    const muscleGroup = exercise.muscle_group;
+                    if (muscleGroup) {
+                        const sets = exercise.sets?.length || 0;
+                        weeklyVolume[muscleGroup] = (weeklyVolume[muscleGroup] || 0) + sets;
+                    }
+                });
+            }
+        });
+        
+        return weeklyVolume;
+    }
+    
+    // Get muscle group minimum targets
+    getMuscleGroupTargets() {
+        return {
+            'Horizontal Push': 10,
+            'Vertical Push': 8,
+            'Horizontal Pull': 10,
+            'Vertical Pull': 10,
+            'Side Delts': 8,
+            'Rear Delts': 6,
+            'Biceps': 8,
+            'Triceps': 8,
+            'Quads': 10,
+            'Hamstrings': 8,
+            'Glutes': 8,
+            'Calves': 6,
+            'Abs': 8,
+            'Traps': 6
+        };
+    }
+    
+    // Generate reasoning for recommendation
+    generateRecommendationReasoning(recommendation) {
+        const reasons = [];
+        
+        if (recommendation.hasDeficiency) {
+            reasons.push(`Volume deficit: needs ${recommendation.volumeDeficit} more sets this week`);
+        }
+        
+        if (recommendation.daysSinceWorkout >= 3) {
+            reasons.push(`Well rested: ${recommendation.daysSinceWorkout} days since last workout`);
+        } else if (recommendation.daysSinceWorkout >= 2) {
+            reasons.push(`Adequate rest: ${recommendation.daysSinceWorkout} days recovery`);
+        }
+        
+        if (recommendation.readiness === 'ready') {
+            reasons.push('Optimal recovery window');
+        }
+        
+        return reasons.join(' • ');
     }
 
     // Start real-time updates

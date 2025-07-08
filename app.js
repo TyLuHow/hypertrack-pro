@@ -2003,6 +2003,12 @@ function updateExistingAIFeatures(workoutHistory) {
             // Update personalized progression
             updatePersonalizedProgression(workoutHistory, intelligentTraining);
             
+            // Update recovery score and readiness
+            updateRecoveryStatus(workoutHistory, intelligentTraining);
+            
+            // Update periodization status
+            updatePeriodizationStatus(workoutHistory, intelligentTraining);
+            
         } catch (error) {
             console.error('❌ Error updating existing AI features:', error);
         }
@@ -2180,6 +2186,189 @@ function updatePersonalizedProgression(workoutHistory, intelligentTraining) {
     } catch (error) {
         console.error('❌ Error updating personalized progression:', error);
         progressionElement.innerHTML = '<div class="analysis-error">Error calculating progressions</div>';
+    }
+}
+
+function updateRecoveryStatus(workoutHistory, intelligentTraining) {
+    const recoveryNumberElement = document.getElementById('recoveryNumber');
+    const readinessLevelElement = document.getElementById('readinessLevel');
+    const recoveryRecommendationsElement = document.getElementById('recoveryRecommendations');
+    
+    if (!recoveryNumberElement || !readinessLevelElement) {
+        return;
+    }
+    
+    try {
+        // Calculate days since last workout
+        const today = new Date();
+        const lastWorkoutDate = workoutHistory.length > 0 ? new Date(workoutHistory[0].date) : null;
+        const daysSinceWorkout = lastWorkoutDate ? Math.floor((today - lastWorkoutDate) / (1000 * 60 * 60 * 24)) : 0;
+        
+        // Generate mock recovery data (in a real app this would come from user input/sensors)
+        const recoveryData = {
+            sleep: Math.max(6, 8 - (daysSinceWorkout * 0.5)), // Sleep quality decreases over time
+            stress: Math.min(7, 3 + (daysSinceWorkout * 0.3)), // Stress increases over time  
+            soreness: Math.max(1, 5 - (daysSinceWorkout * 0.8)), // Soreness decreases over time
+            energy: Math.min(8, 5 + (daysSinceWorkout * 0.6)), // Energy increases over time
+            motivation: Math.min(9, 6 + (daysSinceWorkout * 0.4)) // Motivation increases over time
+        };
+        
+        // Calculate recovery score
+        const recoveryScore = intelligentTraining.calculateRecoveryScore(recoveryData);
+        const readinessLevel = intelligentTraining.determineReadinessLevel(recoveryScore);
+        
+        // Update recovery score display
+        recoveryNumberElement.textContent = Math.round(recoveryScore);
+        
+        // Update readiness level with appropriate styling
+        let readinessText, readinessColor;
+        if (readinessLevel === 'excellent') {
+            readinessText = '🟢 Excellent - Ready to train hard';
+            readinessColor = '#22c55e';
+        } else if (readinessLevel === 'good') {
+            readinessText = '🟡 Good - Normal training ready';
+            readinessColor = '#eab308';
+        } else if (readinessLevel === 'moderate') {
+            readinessText = '🟠 Moderate - Light training recommended';
+            readinessColor = '#f97316';
+        } else {
+            readinessText = '🔴 Poor - Consider rest day';
+            readinessColor = '#ef4444';
+        }
+        
+        readinessLevelElement.innerHTML = `<span style="color: ${readinessColor};">${readinessText}</span>`;
+        
+        // Update recovery recommendations
+        if (recoveryRecommendationsElement) {
+            const recommendations = intelligentTraining.generateRecoveryRecommendations(recoveryScore);
+            let recommendationsHTML = '';
+            
+            if (recommendations && recommendations.length > 0) {
+                recommendationsHTML = recommendations.slice(0, 3).map(rec => 
+                    `<div style="background: #1f2937; border-radius: 4px; padding: 8px; margin: 4px 0; font-size: 12px; color: #d1d5db;">
+                        💡 ${rec}
+                    </div>`
+                ).join('');
+            } else {
+                recommendationsHTML = `
+                    <div style="background: #1f2937; border-radius: 4px; padding: 8px; margin: 4px 0; font-size: 12px; color: #9ca3af;">
+                        Keep up your current recovery routine!
+                    </div>
+                `;
+            }
+            
+            recoveryRecommendationsElement.innerHTML = recommendationsHTML;
+        }
+        
+        // Update recovery circle color
+        const recoveryCircle = document.getElementById('recoveryCircle');
+        if (recoveryCircle) {
+            const circleColor = recoveryScore >= 80 ? '#22c55e' : 
+                               recoveryScore >= 60 ? '#eab308' : 
+                               recoveryScore >= 40 ? '#f97316' : '#ef4444';
+            recoveryCircle.style.borderColor = circleColor;
+        }
+        
+        console.log(`✅ Recovery status updated: ${Math.round(recoveryScore)}/100 (${readinessLevel})`);
+        
+    } catch (error) {
+        console.error('❌ Error updating recovery status:', error);
+        recoveryNumberElement.textContent = '--';
+        readinessLevelElement.textContent = 'Error calculating readiness';
+    }
+}
+
+function updatePeriodizationStatus(workoutHistory, intelligentTraining) {
+    const phaseNameElement = document.getElementById('currentPhaseName');
+    const phaseWeekElement = document.getElementById('currentPhaseWeek');
+    const progressFillElement = document.getElementById('progressFill');
+    const nextPhaseElement = document.getElementById('nextPhase');
+    
+    if (!phaseNameElement || !phaseWeekElement) {
+        return;
+    }
+    
+    try {
+        // Calculate current training phase based on workout history
+        const totalWorkouts = workoutHistory.length;
+        const weeksOfTraining = Math.floor(totalWorkouts / 3); // Assuming ~3 workouts per week
+        
+        // 4-week periodization cycle
+        const cycleLength = 4;
+        const currentCycleWeek = (weeksOfTraining % cycleLength) + 1;
+        
+        // Determine phase based on cycle position
+        let currentPhase, phaseEmoji, phaseDescription;
+        
+        if (currentCycleWeek === 1) {
+            currentPhase = 'Accumulation Phase';
+            phaseEmoji = '📈';
+            phaseDescription = 'Building volume and work capacity';
+        } else if (currentCycleWeek === 2) {
+            currentPhase = 'Accumulation Phase';
+            phaseEmoji = '📈';
+            phaseDescription = 'Continued volume progression';
+        } else if (currentCycleWeek === 3) {
+            currentPhase = 'Intensification Phase';
+            phaseEmoji = '🔥';
+            phaseDescription = 'Increased intensity, reduced volume';
+        } else {
+            currentPhase = 'Deload Phase';
+            phaseEmoji = '🔄';
+            phaseDescription = 'Active recovery and adaptation';
+        }
+        
+        // Calculate next phase
+        let nextPhase, weeksToNext;
+        if (currentCycleWeek === 1 || currentCycleWeek === 2) {
+            nextPhase = 'Intensification Phase';
+            weeksToNext = 3 - currentCycleWeek;
+        } else if (currentCycleWeek === 3) {
+            nextPhase = 'Deload Phase';
+            weeksToNext = 1;
+        } else {
+            nextPhase = 'Accumulation Phase';
+            weeksToNext = 1;
+        }
+        
+        // Calculate progress percentage
+        const progressPercentage = (currentCycleWeek / cycleLength) * 100;
+        
+        // Update UI elements
+        phaseNameElement.innerHTML = `${phaseEmoji} ${currentPhase}`;
+        phaseWeekElement.textContent = `Week ${currentCycleWeek} of ${cycleLength}`;
+        
+        if (progressFillElement) {
+            progressFillElement.style.width = `${progressPercentage}%`;
+        }
+        
+        if (nextPhaseElement) {
+            if (weeksToNext === 1) {
+                nextPhaseElement.textContent = `Next: ${nextPhase} in 1 week`;
+            } else {
+                nextPhaseElement.textContent = `Next: ${nextPhase} in ${weeksToNext} weeks`;
+            }
+        }
+        
+        // Add phase description if there's a details element
+        const phaseDetailsElement = document.querySelector('.periodization-status .phase-details');
+        if (phaseDetailsElement) {
+            phaseDetailsElement.textContent = phaseDescription;
+        } else {
+            // Create phase details element if it doesn't exist
+            const detailsElement = document.createElement('div');
+            detailsElement.className = 'phase-details';
+            detailsElement.style.cssText = 'color: #94a3b8; font-size: 12px; margin-top: 4px;';
+            detailsElement.textContent = phaseDescription;
+            phaseNameElement.parentNode.appendChild(detailsElement);
+        }
+        
+        console.log(`✅ Periodization updated: ${currentPhase} (Week ${currentCycleWeek}/${cycleLength})`);
+        
+    } catch (error) {
+        console.error('❌ Error updating periodization status:', error);
+        phaseNameElement.textContent = 'Accumulation Phase';
+        phaseWeekElement.textContent = 'Week 1 of 4';
     }
 }
 
@@ -2620,7 +2809,7 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
                 <path d="M3 3v18h18"></path>
                 <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
             </svg>
-            Weekly Volume Analysis (Evidence-Based)
+            Recent Progress & Weekly Volume Analysis
         </h4>
         <p style="font-size: 13px; color: #9ca3af; margin-bottom: 16px;">
             Based on ${hasData ? 'your last 7 days' : 'complete your first workout to see'} training data
@@ -2643,15 +2832,40 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
             </div>
         `;
     } else {
+        // Weekly summary at the top
+        const totalSets = Object.values(weeklyVolumeWithTargets).reduce((sum, data) => sum + data.current, 0);
+        const trainedMuscles = Object.values(weeklyVolumeWithTargets).filter(data => data.current > 0).length;
+        recommendationsHTML += `
+            <div style="background: #1f2937; border-radius: 8px; padding: 16px; margin-bottom: 20px; border: 1px solid #374151;">
+                <h6 style="margin: 0 0 12px 0; color: #60a5fa; display: flex; align-items: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                        <path d="M3 3v18h18"></path>
+                        <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+                    </svg>
+                    📈 Weekly Summary
+                </h6>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+                    <div>
+                        <div style="color: #94a3b8;">Total Weekly Sets</div>
+                        <div style="color: #e2e8f0; font-weight: 600; font-size: 16px;">${totalSets}</div>
+                    </div>
+                    <div>
+                        <div style="color: #94a3b8;">Muscle Groups Trained</div>
+                        <div style="color: #e2e8f0; font-weight: 600; font-size: 16px;">${trainedMuscles}/${Object.keys(weeklyVolumeWithTargets).length}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
         // Get all muscles and sort by current volume (descending)
         const allMuscles = Object.entries(weeklyVolumeWithTargets)
             .map(([muscle, data]) => ({ muscle, data }))
             .sort((a, b) => b.data.current - a.data.current);
         
-        // Display all muscle groups in descending volume order
+        // Display all muscle groups in full-width stacked layout
         recommendationsHTML += `
             <div style="margin-bottom: 16px;">
-                <h5 style="color: #64748b; margin: 0 0 8px 0;">📊 Muscle Groups by Volume (High → Low)</h5>
+                <h5 style="color: #64748b; margin: 0 0 12px 0;">📊 Muscle Groups by Volume (High → Low)</h5>
                 ${allMuscles.map(({ muscle, data }) => {
                     let borderColor, bgColor, statusColor, statusText, statusIcon;
                     
@@ -2682,30 +2896,27 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
                     }
                     
                     return `
-                        <div style="background: ${bgColor}; border-radius: 6px; padding: 10px; margin: 4px 0; border-left: 3px solid ${borderColor}; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong style="color: ${statusColor};">${muscle}</strong>
-                                <span style="color: #94a3b8; font-size: 11px; margin-left: 8px;">${data.current} sets</span>
+                        <div style="background: ${bgColor}; border-radius: 8px; padding: 16px; margin-bottom: 12px; border-left: 4px solid ${borderColor}; width: 100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div>
+                                    <h6 style="color: ${statusColor}; margin: 0 0 4px 0; font-size: 16px; font-weight: 600;">${muscle}</h6>
+                                    <div style="color: #94a3b8; font-size: 12px;">Current: ${data.current} sets | Target: ${data.mev}-${data.mev + 6} sets</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: ${statusColor}; font-size: 12px; font-weight: 600;">${statusIcon} ${statusText}</div>
+                                </div>
                             </div>
-                            <div style="text-align: right;">
-                                <span style="color: ${statusColor}; font-size: 11px;">${statusIcon} ${statusText}</span>
+                            <div style="background: #0f172a; border-radius: 4px; padding: 8px; font-size: 11px; color: #9ca3af;">
+                                ${data.recommendation.message}
                             </div>
+                            ${data.current === 0 || data.recommendation.status === 'low' ? `
+                                <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 8px;">
+                                    + Add ${muscle} Exercise
+                                </button>
+                            ` : ''}
                         </div>
                     `;
                 }).join('')}
-            </div>
-        `;
-        
-        // Weekly summary
-        const totalSets = Object.values(weeklyVolumeWithTargets).reduce((sum, data) => sum + data.current, 0);
-        const trainedMuscles = Object.values(weeklyVolumeWithTargets).filter(data => data.current > 0).length;
-        recommendationsHTML += `
-            <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 16px 0; border: 1px solid #374151;">
-                <h6 style="margin: 0 0 8px 0; color: #60a5fa;">📈 Weekly Summary</h6>
-                <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-                    Total weekly sets: <strong>${totalSets}</strong> | 
-                    Muscle groups trained: <strong>${trainedMuscles}</strong>/${Object.keys(weeklyVolumeWithTargets).length}
-                </p>
             </div>
         `;
     }
