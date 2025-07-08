@@ -3012,58 +3012,62 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
             </div>
         `;
         
-        // Display each muscle group in full-width layout
-        allMuscles.forEach(({ muscle, data }) => {
-            let borderColor, bgColor, statusColor, statusText, statusIcon;
-            
-            if (data.recommendation.status === 'high') {
-                borderColor = '#f59e0b';
-                bgColor = '#1f1611';
-                statusColor = '#fcd34d';
-                statusText = 'High Volume';
-                statusIcon = '⚠️';
-            } else if (data.recommendation.status === 'optimal') {
-                borderColor = '#22c55e';
-                bgColor = '#0f1f13';
-                statusColor = '#86efac';
-                statusText = 'Optimal';
-                statusIcon = '✅';
-            } else if (data.current > 0) {
-                borderColor = '#f59e0b';
-                bgColor = '#451a03';
-                statusColor = '#fcd34d';
-                statusText = `Need +${data.deficit} sets`;
-                statusIcon = '⬆️';
-            } else {
-                borderColor = '#be185d';
-                bgColor = '#450a0a';
-                statusColor = '#fda4af';
-                statusText = `Need ${data.mev}+ sets`;
-                statusIcon = '🚨';
-            }
-            
-            recommendationsHTML += `
-                <div style="background: ${bgColor}; border-radius: 8px; padding: 16px; margin-bottom: 12px; border-left: 4px solid ${borderColor}; width: 100%;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                        <div>
-                            <h6 style="color: ${statusColor}; margin: 0 0 4px 0; font-size: 16px; font-weight: 600;">${muscle}</h6>
-                            <div style="color: #94a3b8; font-size: 12px;">Current: ${data.current} sets | Target: ${data.mev}-${data.mev + 6} sets</div>
+        // Display all muscle groups in stacked layout  
+        recommendationsHTML += `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${allMuscles.map(({ muscle, data }) => {
+                    let borderColor, bgColor, statusColor, statusText, statusIcon;
+                    
+                    if (data.recommendation.status === 'high') {
+                        borderColor = '#f59e0b';
+                        bgColor = '#1f1611';
+                        statusColor = '#fcd34d';
+                        statusText = 'High Volume';
+                        statusIcon = '⚠️';
+                    } else if (data.recommendation.status === 'optimal') {
+                        borderColor = '#22c55e';
+                        bgColor = '#0f1f13';
+                        statusColor = '#86efac';
+                        statusText = 'Optimal';
+                        statusIcon = '✅';
+                    } else if (data.current > 0) {
+                        borderColor = '#f59e0b';
+                        bgColor = '#451a03';
+                        statusColor = '#fcd34d';
+                        statusText = `Need +${data.deficit} sets`;
+                        statusIcon = '⬆️';
+                    } else {
+                        borderColor = '#be185d';
+                        bgColor = '#450a0a';
+                        statusColor = '#fda4af';
+                        statusText = `Need ${data.mev}+ sets`;
+                        statusIcon = '🚨';
+                    }
+                    
+                    return `
+                        <div style="background: ${bgColor}; border-radius: 8px; padding: 16px; border-left: 4px solid ${borderColor}; width: 100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div>
+                                    <h6 style="color: ${statusColor}; margin: 0 0 4px 0; font-size: 16px; font-weight: 600;">${muscle}</h6>
+                                    <div style="color: #94a3b8; font-size: 12px;">Current: ${data.current} sets | Target: ${data.mev}-${data.mev + 6} sets</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: ${statusColor}; font-size: 12px; font-weight: 600;">${statusIcon} ${statusText}</div>
+                                </div>
+                            </div>
+                            <div style="background: #0f172a; border-radius: 4px; padding: 8px; font-size: 11px; color: #9ca3af;">
+                                ${data.recommendation.message}
+                            </div>
+                            ${data.current === 0 || data.recommendation.status === 'low' ? `
+                                <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 8px;">
+                                    + Add ${muscle} Exercise
+                                </button>
+                            ` : ''}
                         </div>
-                        <div style="text-align: right;">
-                            <div style="color: ${statusColor}; font-size: 12px; font-weight: 600;">${statusIcon} ${statusText}</div>
-                        </div>
-                    </div>
-                    <div style="background: #0f172a; border-radius: 4px; padding: 8px; font-size: 11px; color: #9ca3af;">
-                        ${data.recommendation.message}
-                    </div>
-                    ${data.current === 0 || data.recommendation.status === 'low' ? `
-                        <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; margin-top: 8px;">
-                            + Add ${muscle} Exercise
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-        });
+                    `;
+                }).join('')}
+            </div>
+        `;
     }
     
     // Add recommendations to progress chart
