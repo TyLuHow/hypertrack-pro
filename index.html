@@ -295,24 +295,27 @@
                         </div>
                     </div>
 
+                    <!-- Rest Timer Settings - Disabled for iOS compatibility -->
+                    <!--
                     <div class="settings-section">
                         <h3>Rest Timer Settings</h3>
                         <div class="setting-item">
                             <label class="setting-label">
-                                <input type="checkbox" id="autoStartRestTimer" checked onchange="toggleAutoRestTimer(this.checked)">
+                                <input type="checkbox" id="autoStartRestTimer" onchange="toggleAutoRestTimer(this.checked)">
                                 <span class="checkmark"></span>
-                                Auto-Start Rest Timer After Set
+                                Auto-Start Rest Timer After Set (Disabled for iOS)
                             </label>
                         </div>
                         <div class="setting-item">
                             <label>Compound Exercise Rest (seconds)</label>
-                            <input type="number" class="setting-input" id="compoundRest" value="150" min="60" max="300">
+                            <input type="number" class="setting-input" id="compoundRest" value="180" min="60" max="300" disabled>
                         </div>
                         <div class="setting-item">
                             <label>Isolation Exercise Rest (seconds)</label>
-                            <input type="number" class="setting-input" id="isolationRest" value="90" min="30" max="180">
+                            <input type="number" class="setting-input" id="isolationRest" value="120" min="30" max="180" disabled>
                         </div>
                     </div>
+                    -->
 
                     <div class="settings-section">
                         <h3>Personal Profile</h3>

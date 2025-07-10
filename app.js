@@ -18,7 +18,7 @@ const HyperTrack = {
             compoundRest: 180,          // 3 minutes for compounds (optimal for hypertrophy)
             isolationRest: 120,         // 2 minutes for isolation exercises  
             heavyRest: 300,             // 5 minutes for heavy sets (≤5 reps)
-            autoStartRestTimer: true,
+            autoStartRestTimer: false, // Disabled for iOS compatibility
             
             // Progression rates by training experience (intermediate-focused)
             noviceProgression: 7.5,     // 5-10% weekly (research range)
@@ -62,7 +62,8 @@ const HyperTrack = {
         user: { name: 'Tyler', bodyWeight: 225 },
         autoSaveInterval: null,
         workoutTimer: { active: false, interval: null, startTime: null, elapsed: 0 },
-        restTimer: { active: false, interval: null, remaining: 0, exerciseName: '' }
+        // Rest timers removed for iOS compatibility
+        // restTimer: { active: false, interval: null, remaining: 0, exerciseName: '' }
     },
     
     researchFacts: [], // Loaded dynamically from data/research-facts.json
@@ -188,7 +189,10 @@ const HyperTrack = {
         // Save to localStorage for persistence
         localStorage.setItem('hypertrack_workouts', JSON.stringify(this.state.workouts));
         
-        console.log('💾 Workout saved to localStorage');
+        // Update all displays to reflect new workout data
+        this.updateAllDisplays();
+        
+        console.log('💾 Workout saved to localStorage and displays updated');
         return { success: true };
     },
     
@@ -476,13 +480,16 @@ function selectWorkoutDay(dayType) {
 
 function initializeWorkoutWithDay(dayType) {
     // Create workout object
+    const recommendedExercises = getRecommendedExercises(dayType);
+    
     HyperTrack.state.currentWorkout = {
         id: Date.now(),
         date: new Date().toISOString().split('T')[0],
         startTime: new Date().toISOString(),
         exercises: [],
         workoutDay: dayType,
-        recommendedExercises: getRecommendedExercises(dayType),
+        recommendedExercises: recommendedExercises,
+        originalRecommendations: [...recommendedExercises], // Store original for reverting
         currentExerciseIndex: 0
     };
     
@@ -993,12 +1000,87 @@ function showWorkoutRecommendations() {
     }
 }
 
+// Dynamic workout recommendations - updates during workout based on completed exercises
+function updateWorkoutRecommendations() {
+    const currentWorkout = HyperTrack.state.currentWorkout;
+    if (!currentWorkout) return;
+    
+    const completedExercises = currentWorkout.exercises.map(ex => ex.name);
+    const originalRecommendations = currentWorkout.recommendedExercises || [];
+    
+    // Remove completed exercises from recommendations
+    currentWorkout.recommendedExercises = originalRecommendations.filter(rec => 
+        !completedExercises.includes(rec.name)
+    );
+    
+    // If recommendations are running low, add complementary exercises
+    if (currentWorkout.recommendedExercises.length <= 2) {
+        const completedMuscleGroups = currentWorkout.exercises.map(ex => ex.muscle_group);
+        const newRecommendations = getComplementaryExercises(completedMuscleGroups, completedExercises);
+        currentWorkout.recommendedExercises = [...currentWorkout.recommendedExercises, ...newRecommendations];
+    }
+    
+    console.log(`🎯 Updated recommendations: ${currentWorkout.recommendedExercises.length} remaining`);
+}
+
+// Get complementary exercises based on what's been trained
+function getComplementaryExercises(trainedMuscles, excludeExercises) {
+    const complementaryMap = {
+        'Horizontal Push': ['Side Delts', 'Triceps', 'Rear Delts'],
+        'Vertical Pull': ['Biceps', 'Rear Delts', 'Horizontal Pull'],
+        'Horizontal Pull': ['Biceps', 'Traps', 'Vertical Pull'],
+        'Side Delts': ['Rear Delts', 'Traps'],
+        'Triceps': ['Horizontal Push'],
+        'Biceps': ['Vertical Pull', 'Horizontal Pull']
+    };
+    
+    const suggestions = [];
+    trainedMuscles.forEach(muscle => {
+        const complements = complementaryMap[muscle] || [];
+        complements.forEach(comp => {
+            if (!trainedMuscles.includes(comp)) {
+                suggestions.push(comp);
+            }
+        });
+    });
+    
+    // Get exercises for suggested muscle groups
+    const recommendedExercises = [];
+    const uniqueSuggestions = [...new Set(suggestions)];
+    
+    uniqueSuggestions.slice(0, 3).forEach(muscleGroup => {
+        const exercises = HyperTrack.exerciseDatabase.filter(ex => 
+            ex.muscle_group === muscleGroup && 
+            !excludeExercises.includes(ex.name)
+        );
+        
+        if (exercises.length > 0) {
+            const bestExercise = exercises.sort((a, b) => (b.tier || 0) - (a.tier || 0))[0];
+            recommendedExercises.push({
+                name: bestExercise.name,
+                muscle_group: bestExercise.muscle_group,
+                category: bestExercise.category,
+                type: bestExercise.category,
+                sets: bestExercise.category === 'Compound' ? '3-4' : '3',
+                reps: bestExercise.target_rep_range || '8-12',
+                priority: 10
+            });
+        }
+    });
+    
+    return recommendedExercises;
+}
+
 function updateRecommendationsPanel(panel = null) {
     const targetPanel = panel || document.getElementById('workoutRecommendations');
     if (!targetPanel) return;
     
     const currentWorkout = HyperTrack.state.currentWorkout;
     const completed = currentWorkout.exercises.map(ex => ex.name);
+    
+    // Dynamic recommendations: Update based on completed exercises
+    updateWorkoutRecommendations();
+    
     const remaining = currentWorkout.recommendedExercises.filter(ex => !completed.includes(ex.name));
     const next = remaining[0];
     
@@ -1061,7 +1143,7 @@ async function finishWorkout() {
     
     const workout = HyperTrack.state.currentWorkout;
     workout.endTime = new Date().toISOString();
-    workout.duration = new Date(workout.endTime) - new Date(workout.startTime);
+    // Duration tracking removed - using start/end times for metadata only
     
     // Stop timers
     stopWorkoutTimer();
@@ -1081,15 +1163,23 @@ async function finishWorkout() {
         console.log('📊 Progress recorded for workout exercises');
     }
     
-    // Save workout using new method
+    // Save workout using new method (localStorage + Supabase sync)
     const result = await HyperTrack.saveWorkout(workout);
+    
+    // Also sync to Supabase to ensure unified logging
+    if (typeof syncWorkoutOnCompletion === 'function') {
+        await syncWorkoutOnCompletion(workout);
+        console.log('🔄 Workout synced to Supabase for unified logging');
+    }
     
     if (result.success) {
         HyperTrack.state.currentWorkout = null;
         saveAppData();
         updateUI();
         
-        const duration = Math.round(workout.duration / 60000);
+        const startTime = new Date(workout.startTime);
+        const endTime = new Date(workout.endTime);
+        const duration = Math.round((endTime - startTime) / 60000);
         showNotification(`Workout completed! ${workout.exercises.length} exercises • ${duration} minutes`, 'success');
         
         // Check for progress recommendations after workout
@@ -1439,7 +1529,7 @@ function addSet(defaultWeight = '', defaultReps = '') {
         <div class="input-group">
             <input type="number" class="set-input" placeholder="Weight (lbs)" min="0" step="2.5" value="${defaultWeight}">
             <input type="number" class="set-input" placeholder="Reps" min="1" max="50" value="${defaultReps}">
-            <button type="button" class="complete-set-btn" onclick="completeSet(this)" title="Complete set and start rest timer">✓</button>
+            <button type="button" class="complete-set-btn" onclick="completeSet(this)" title="Complete set">✓</button>
             <button type="button" class="remove-set-btn" onclick="removeSet(this)" title="Remove set">×</button>
         </div>
     `;
@@ -1489,11 +1579,8 @@ function completeSet(button) {
     const restTime = calculateOptimalRestTime(HyperTrack.state.currentExercise, reps);
     const restMinutes = Math.round(restTime / 60 * 10) / 10;
     
-    // Start rest timer if enabled
-    if (HyperTrack.state.settings.autoStartRestTimer) {
-        const exerciseName = HyperTrack.state.currentExercise?.name || 'Exercise';
-        startRestTimer(restTime, `${exerciseName} - Set completed`);
-    }
+    // Rest timers removed for iOS compatibility
+    // Timer functionality disabled to prevent iOS web app refresh issues
     
     showNotification(`Set completed! ${weight}lbs × ${reps} reps. Rest ${restMinutes}min recommended.`, 'success');
 }
@@ -1611,12 +1698,16 @@ function finishExercise() {
     const betweenExerciseRest = 180; // 3 minutes between exercises (research-based)
     const restMinutes = Math.round(betweenExerciseRest / 60 * 10) / 10;
     
-    // Auto-start rest timer between exercises if enabled
-    if (HyperTrack.state.settings.autoStartRestTimer) {
-        startRestTimer(betweenExerciseRest, `${exercise.name} complete - Rest before next exercise`);
-    }
+    // Rest timers removed for iOS compatibility
+    // Timer functionality disabled to prevent iOS web app refresh issues
     
     showNotification(`${exercise.name} completed - ${sets.length} sets logged! Rest ${restMinutes}min before next exercise.`, 'success');
+    
+    // Update recommendations after completing an exercise
+    updateWorkoutRecommendations();
+    
+    // Update the recommendations panel if visible
+    updateRecommendationsPanel();
 }
 
 function switchTab(tabName) {
@@ -2804,7 +2895,7 @@ function updateHistoryDisplay() {
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12,6 12,12 16,14"></polyline>
                         </svg>
-                        ${Math.round((workout.duration || 0) / 60000)} min
+                        ${Math.round(((new Date(workout.endTime || workout.startTime) - new Date(workout.startTime)) || 0) / 60000)} min
                     </span>
                     <span>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#708090" stroke-width="2" style="margin-right: 6px; display: inline;">
@@ -2857,7 +2948,11 @@ function updateAnalyticsDisplay() {
     document.getElementById('totalVolume').textContent = Math.round(totalVolume);
     
     const avgDuration = workouts.length > 0 ? 
-        workouts.reduce((sum, w) => sum + (w.duration || 0), 0) / workouts.length / 60000 : 0;
+        workouts.reduce((sum, w) => {
+            const duration = w.endTime && w.startTime ? 
+                (new Date(w.endTime) - new Date(w.startTime)) : 0;
+            return sum + duration;
+        }, 0) / workouts.length / 60000 : 0;
     document.getElementById('avgDuration').textContent = Math.round(avgDuration);
     
     // Generate weekly volume recommendations by muscle group
@@ -3193,7 +3288,7 @@ function viewWorkoutDetails(workoutId) {
                 </div>
                 
                 <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #374151; font-size: 14px; color: #9ca3af;">
-                    <div>⏱️ Duration: ${Math.round((workout.duration || 0) / 60000)} minutes</div>
+                    <div>⏱️ Duration: ${Math.round(((new Date(workout.endTime || workout.startTime) - new Date(workout.startTime)) || 0) / 60000)} minutes</div>
                     <div>📅 ${workout.tod || 'N/A'} workout</div>
                     <div>🏷️ Split: ${workout.split || 'General'}</div>
                 </div>
@@ -3370,10 +3465,34 @@ function toggleWorkout() {
     if (HyperTrack.state.currentWorkout) {
         if (confirm('Finish current workout?')) {
             finishWorkout();
+        } else {
+            // User chose not to finish - this is an abandonment
+            abandonWorkout();
         }
     } else {
         startWorkout();
     }
+}
+
+// Handle workout abandonment - revert any dynamic recommendations
+function abandonWorkout() {
+    const currentWorkout = HyperTrack.state.currentWorkout;
+    if (!currentWorkout) return;
+    
+    console.log('🚫 Workout abandoned - reverting recommendations...');
+    
+    // Store original recommendations if they were modified
+    if (currentWorkout.originalRecommendations) {
+        currentWorkout.recommendedExercises = currentWorkout.originalRecommendations;
+        console.log('✅ Recommendations reverted to original state');
+    }
+    
+    // Clear the current workout
+    HyperTrack.state.currentWorkout = null;
+    saveAppData();
+    updateUI();
+    
+    showNotification('Workout cancelled. Recommendations reset for next session.', 'info');
 }
 
 // Data Management
@@ -3550,136 +3669,24 @@ function updateWorkoutTimerDisplay() {
     }
 }
 
-function startRestTimer(seconds, exerciseName) {
-    // Stop any existing rest timer
-    stopRestTimer();
-    
-    const timer = HyperTrack.state.restTimer;
-    timer.active = true;
-    timer.remaining = seconds;
-    timer.exerciseName = exerciseName;
-    
-    // Show inline rest timer
-    const lastSetRow = document.querySelector('.set-input-row:last-child');
-    showInlineRestTimer(seconds, exerciseName, lastSetRow);
-    
-    timer.interval = setInterval(() => {
-        timer.remaining--;
-        updateRestTimerDisplay();
-        
-        if (timer.remaining <= 0) {
-            stopRestTimer();
-            showNotification(`Rest complete! Ready for next set of ${exerciseName}`, 'success');
-            // Play notification sound if available
-            playNotificationSound();
-        }
-    }, 1000);
-}
+// Rest timer functions removed for iOS compatibility
+// These functions caused iOS web app refresh issues
 
-function stopRestTimer() {
-    const timer = HyperTrack.state.restTimer;
-    if (timer.interval) {
-        clearInterval(timer.interval);
-        timer.interval = null;
-    }
-    timer.active = false;
-    timer.remaining = 0;
-    
-    // Remove inline rest timer
-    const inlineTimer = document.querySelector('.inline-rest-timer');
-    if (inlineTimer) inlineTimer.remove();
-    
-    // Note: Add Set button remains enabled during rest timer per user request
-    
-    // Hide rest timer modal (fallback for any remaining modals)
-    const modal = document.getElementById('restTimerModal');
-    if (modal) modal.remove();
-}
+// function startRestTimer(seconds, exerciseName) {
+//     Disabled - iOS compatibility
+// }
 
-function updateRestTimerDisplay() {
-    const timerElement = document.getElementById('restTimerDisplay');
-    const progressBar = document.getElementById('restTimerProgressBar');
-    const inlineTimer = document.querySelector('.inline-rest-timer');
-    
-    if (timerElement && HyperTrack.state.restTimer.active) {
-        const timer = HyperTrack.state.restTimer;
-        
-        // Validate remaining time (ensure it's not negative)
-        const remaining = Math.max(0, timer.remaining);
-        const minutes = Math.floor(remaining / 60);
-        const seconds = remaining % 60;
-        
-        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        
-        // Update progress bar if inline timer exists
-        if (progressBar && inlineTimer) {
-            const totalTime = parseInt(inlineTimer.dataset.totalTime);
-            const progress = totalTime > 0 ? ((totalTime - remaining) / totalTime) * 100 : 0;
-            progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
-        }
-    }
-}
+// function stopRestTimer() {
+//     Disabled - iOS compatibility
+// }
 
-function showInlineRestTimer(totalSeconds, exerciseName, setRowElement) {
-    // Remove any existing inline rest timer
-    const existingTimer = document.querySelector('.inline-rest-timer');
-    if (existingTimer) existingTimer.remove();
-    
-    const minutes = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    const timeDisplay = `${minutes}:${secs.toString().padStart(2, '0')}`;
-    
-    // Create inline rest timer element
-    const restTimerElement = document.createElement('div');
-    restTimerElement.className = 'inline-rest-timer';
-    restTimerElement.innerHTML = `
-        <div class="rest-timer-content">
-            <div class="rest-timer-header">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12,6 12,12 16,14"></polyline>
-                </svg>
-                <span>Rest Timer</span>
-            </div>
-            <div class="rest-timer-display" id="restTimerDisplay">
-                ${timeDisplay}
-            </div>
-            <div class="rest-timer-progress">
-                <div class="rest-timer-progress-bar" id="restTimerProgressBar" style="width: 100%;"></div>
-            </div>
-            <div class="rest-timer-controls">
-                <button class="btn btn-small btn-secondary" onclick="addRestTime(-30)" title="Reduce by 30s">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    30s
-                </button>
-                <button class="btn btn-small btn-primary" onclick="stopRestTimer()" title="Skip rest">
-                    Skip
-                </button>
-                <button class="btn btn-small btn-secondary" onclick="addRestTime(30)" title="Add 30s">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    30s
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Insert the rest timer after the completed set row
-    if (setRowElement && setRowElement.nextSibling) {
-        setRowElement.parentNode.insertBefore(restTimerElement, setRowElement.nextSibling);
-    } else if (setRowElement) {
-        setRowElement.parentNode.appendChild(restTimerElement);
-    } else {
-        // Fallback: add to set inputs container
-        const setInputs = document.getElementById('setInputs');
-        if (setInputs) {
-            setInputs.appendChild(restTimerElement);
-        }
-    }
+// function updateRestTimerDisplay() {
+//     Disabled - iOS compatibility
+// }
+
+// function showInlineRestTimer(totalSeconds, exerciseName, setRowElement) {
+//     Disabled - iOS compatibility
+// }
     
     // Store the total time for progress calculation
     restTimerElement.dataset.totalTime = totalSeconds;
@@ -4984,6 +4991,33 @@ function restoreTimerStateFromBackground() {
     }
 }
 
+// DAILY PROGRESS UPDATES 
+function initializeDailyUpdates() {
+    console.log('📅 Initializing daily progress updates...');
+    
+    // Update immediately on load
+    updateAnalyticsDisplay();
+    
+    // Set up daily updates at midnight
+    const now = new Date();
+    const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0) - now;
+    
+    // Initial timeout to first midnight
+    setTimeout(() => {
+        updateAnalyticsDisplay();
+        console.log('📅 Daily progress updated at midnight');
+        
+        // Then update every 24 hours
+        setInterval(() => {
+            updateAnalyticsDisplay();
+            console.log('📅 Daily progress updated');
+        }, 24 * 60 * 60 * 1000); // 24 hours
+        
+    }, msUntilMidnight);
+    
+    console.log(`📅 Next daily update scheduled in ${Math.round(msUntilMidnight / 60000)} minutes`);
+}
+
 // AUTO-SAVE FUNCTIONALITY FOR MOBILE PERSISTENCE
 function initializeAutoSave() {
     console.log('🔄 Initializing auto-save for mobile persistence...');
@@ -5149,6 +5183,9 @@ async function initializeApp() {
         // Initialize auto-save for mobile persistence
         initializeAutoSave();
         
+        // Initialize daily progress updates
+        initializeDailyUpdates();
+        
         // Initialize frequency and performance analyzers
         initializeAnalyzers();
         
@@ -5270,7 +5307,16 @@ function getDefaultWeight(exerciseName) {
     );
     
     if (isBodyweight) {
-        return HyperTrack.state.user.bodyWeight;
+        const weight = HyperTrack.state.user.bodyWeight;
+        console.log(`🎯 Getting bodyweight for ${exerciseName}: ${weight}lbs`);
+        
+        // Debug logging to track weight calculation issues
+        if (weight !== 225) {
+            console.warn(`⚠️ Unexpected bodyweight: ${weight} (expected 225)`);
+            console.log('Current user state:', HyperTrack.state.user);
+        }
+        
+        return weight;
     }
     
     return '';

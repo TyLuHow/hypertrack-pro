@@ -1642,5 +1642,18 @@
         "target_rep_range": "20-40 steps",
         "rest_period": 120,
         "notes": "45-55% grip strength, 35-45% core stability"
+    },
+    {
+        "id": 135,
+        "name": "Hanging Leg Raises",
+        "muscle_group": "Abs",
+        "category": "Compound",
+        "tier": 1,
+        "mvc_percentage": 85,
+        "equipment": "bodyweight",
+        "biomechanical_function": "Hip Flexion + Spinal Flexion",
+        "target_rep_range": "8-15",
+        "rest_period": 90,
+        "notes": "High rectus abdominis activation, requires grip strength"
     }
 ]
