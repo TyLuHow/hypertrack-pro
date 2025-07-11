@@ -8,7 +8,7 @@
 - **13,112 lines** of JavaScript code across 21 modules
 - **2,811 lines** of HTML/CSS for responsive UI  
 - **133 exercises** in the comprehensive database
-- **30 research insights** integrated with expansion framework
+- **52 research insights** integrated with evidence-based algorithms
 - **Zero external frameworks** - Pure vanilla JavaScript
 - **100% offline capable** with service worker caching
 - **5 serverless API endpoints** for comprehensive backend functionality
@@ -73,7 +73,7 @@ hypertrack-pro/
 ├── 📊 Data Files
 │   ├── data/
 │   │   ├── exercises.json         # 133 exercise database (48.8KB)
-│   │   ├── research-facts.json    # 30 research insights (2.9KB)
+│   │   ├── research-facts.json    # 52 research insights (3.8KB)
 │   │   ├── research-database.json # Structured research data (5.2KB)
 │   │   ├── static-config.json     # Static configuration (0.6KB)
 │   │   └── tyler-workouts.json    # 9 demo workouts (29.3KB)
@@ -136,7 +136,7 @@ hypertrack-pro/
 ## 🔬 Research Integration
 
 ### Evidence-Based Training Principles
-HyperTrack Pro integrates 30+ research insights with framework for expansion:
+HyperTrack Pro integrates 52 research insights with evidence-based algorithms:
 
 **Volume & Frequency:**
 - Schoenfeld et al. (2016): Rest period optimization
