@@ -133,42 +133,67 @@ const HyperTrack = {
     },
     
     async loadHistoricalData() {
-        console.log('🔄 Loading historical data...');
+        console.log('🔄 Loading historical data from all sources...');
         let allWorkouts = [];
         
-        // Priority 1: Load Tyler's historical data from JSON
+        // Priority 1: Load from Supabase if available
+        try {
+            if (window.supabaseClient) {
+                const { data: supabaseWorkouts, error } = await window.supabaseClient
+                    .from('workouts')
+                    .select('*')
+                    .order('date', { ascending: false });
+                    
+                if (!error && supabaseWorkouts && supabaseWorkouts.length > 0) {
+                    allWorkouts = [...allWorkouts, ...supabaseWorkouts];
+                    console.log(`✅ Loaded ${supabaseWorkouts.length} workouts from Supabase`);
+                } else if (error) {
+                    console.warn('⚠️ Could not load workouts from Supabase:', error);
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Supabase workout loading failed:', error);
+        }
+        
+        // Priority 2: Load Tyler's historical data from JSON (if not already in Supabase)
         try {
             const response = await fetch('data/tyler-workouts.json');
             if (response.ok) {
                 const tylerWorkouts = await response.json();
-                allWorkouts = [...allWorkouts, ...tylerWorkouts];
-                console.log(`✅ Loaded ${tylerWorkouts.length} Tyler historical workouts from JSON`);
+                // Only add Tyler workouts that aren't already loaded from Supabase
+                const existingIds = new Set(allWorkouts.map(w => w.id));
+                const newTylerWorkouts = tylerWorkouts.filter(w => !existingIds.has(w.id));
+                
+                if (newTylerWorkouts.length > 0) {
+                    allWorkouts = [...allWorkouts, ...newTylerWorkouts];
+                    console.log(`✅ Loaded ${newTylerWorkouts.length} Tyler historical workouts from JSON`);
+                }
             }
         } catch (error) {
             console.warn('⚠️ Could not load Tyler workouts from JSON:', error);
         }
         
-        // Priority 2: Load current user workouts from localStorage
+        // Priority 3: Load current user workouts from localStorage (if not already synced)
         try {
             const localWorkouts = localStorage.getItem('hypertrack_workouts');
             if (localWorkouts) {
                 const userWorkouts = JSON.parse(localWorkouts);
                 if (userWorkouts && userWorkouts.length > 0) {
-                    allWorkouts = [...allWorkouts, ...userWorkouts];
-                    console.log(`✅ Loaded ${userWorkouts.length} user workouts from localStorage`);
+                    // Only add local workouts that aren't already loaded from Supabase
+                    const existingIds = new Set(allWorkouts.map(w => w.id));
+                    const newUserWorkouts = userWorkouts.filter(w => !existingIds.has(w.id));
+                    
+                    if (newUserWorkouts.length > 0) {
+                        allWorkouts = [...allWorkouts, ...newUserWorkouts];
+                        console.log(`✅ Loaded ${newUserWorkouts.length} user workouts from localStorage`);
+                    }
                 }
             }
         } catch (error) {
             console.warn('⚠️ Could not load user workouts from localStorage:', error);
         }
         
-        // Fallback: Load Tyler data from legacy location if still empty
-        if (allWorkouts.length === 0 && typeof tylerCompleteWorkouts !== 'undefined' && tylerCompleteWorkouts.length > 0) {
-            allWorkouts = [...tylerCompleteWorkouts];
-            console.log(`✅ Loaded ${tylerCompleteWorkouts.length} historical workouts from legacy data`);
-        }
-        
-        // Sort all workouts by date (newest first) and remove duplicates
+        // Sort all workouts by date (newest first) and remove any remaining duplicates
         if (allWorkouts.length > 0) {
             const uniqueWorkouts = allWorkouts.filter((workout, index, self) => 
                 index === self.findIndex(w => w.id === workout.id)
@@ -176,7 +201,12 @@ const HyperTrack = {
             
             uniqueWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
             this.state.workouts = uniqueWorkouts;
-            console.log(`✅ Total workouts loaded: ${uniqueWorkouts.length}`);
+            console.log(`✅ Total unique workouts loaded: ${uniqueWorkouts.length}`);
+            
+            // Log data sources breakdown
+            const supabaseCount = allWorkouts.filter(w => w.user_id).length;
+            const localCount = uniqueWorkouts.length - supabaseCount;
+            console.log(`📊 Data sources: ${supabaseCount} from Supabase, ${localCount} from local files`);
         } else {
             console.log('📝 No existing workout data found - starting fresh');
         }
@@ -1168,8 +1198,14 @@ async function finishWorkout() {
     
     // Also sync to Supabase to ensure unified logging
     if (typeof syncWorkoutOnCompletion === 'function') {
-        await syncWorkoutOnCompletion(workout);
-        console.log('🔄 Workout synced to Supabase for unified logging');
+        const syncResult = await syncWorkoutOnCompletion(workout);
+        if (syncResult.success) {
+            console.log('✅ Workout synced to Supabase for unified logging');
+        } else {
+            console.warn('⚠️ Supabase sync failed but workout saved locally:', syncResult.reason);
+            // Show user notification about sync failure
+            showNotification('Workout saved locally. Cloud sync will retry later.', 'warning');
+        }
     }
     
     if (result.success) {
@@ -4991,6 +5027,64 @@ function restoreTimerStateFromBackground() {
     }
 }
 
+// COMPREHENSIVE WORKOUT SYNC SYSTEM
+async function initializeWorkoutSync() {
+    console.log('🔄 Initializing comprehensive workout sync system...');
+    
+    try {
+        // Wait for Supabase to be initialized
+        let retries = 0;
+        while (!window.supabaseClient && retries < 10) {
+            console.log('⏳ Waiting for Supabase client...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            retries++;
+        }
+        
+        if (!window.supabaseClient) {
+            console.warn('⚠️ Supabase not available - sync system will work in local-only mode');
+            return;
+        }
+        
+        console.log('✅ Supabase client available, proceeding with sync...');
+        
+        // Test connection first
+        if (typeof testSupabaseConnection === 'function') {
+            const connectionTest = await testSupabaseConnection();
+            if (!connectionTest) {
+                console.warn('⚠️ Supabase connection test failed - sync may not work properly');
+            }
+        }
+        
+        // Migrate Tyler's historical data
+        if (typeof initializeTylerData === 'function') {
+            console.log('📚 Initializing Tyler historical data...');
+            await initializeTylerData();
+        }
+        
+        // Migrate any local user workouts to Supabase
+        if (typeof migrateLocalWorkoutsToSupabase === 'function') {
+            console.log('📦 Migrating local workouts to Supabase...');
+            const migrationResult = await migrateLocalWorkoutsToSupabase();
+            
+            if (migrationResult.success && migrationResult.migrated > 0) {
+                console.log(`✅ Successfully migrated ${migrationResult.migrated} workouts to Supabase`);
+                // Update displays after successful migration
+                HyperTrack.updateAllDisplays();
+            } else if (migrationResult.migrated === 0) {
+                console.log('📋 No new workouts to migrate');
+            } else {
+                console.warn('⚠️ Migration completed with errors:', migrationResult);
+            }
+        }
+        
+        console.log('✅ Workout sync system initialized successfully');
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize workout sync system:', error);
+        console.log('📱 App will continue in local-only mode');
+    }
+}
+
 // DAILY PROGRESS UPDATES 
 function initializeDailyUpdates() {
     console.log('📅 Initializing daily progress updates...');
@@ -5179,6 +5273,9 @@ async function initializeApp() {
         
         // Load historical workout data
         await HyperTrack.loadHistoricalData();
+        
+        // Initialize comprehensive workout sync system
+        await initializeWorkoutSync();
         
         // Initialize auto-save for mobile persistence
         initializeAutoSave();
