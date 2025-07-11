@@ -48,7 +48,7 @@ npm start
 - **Frequency Monitoring**: Optimize workout scheduling
 
 ### 🔬 Research Integration
-- **Evidence-Based**: 50+ research findings integrated into algorithms
+- **Evidence-Based**: 52 research insights integrated into algorithms
 - **Smart Recommendations**: Research-backed training suggestions
 - **Adaptive Algorithms**: Personalized based on individual response patterns
 - **Continuous Learning**: System improves with usage data
@@ -191,7 +191,7 @@ npm start
 
 ## 📚 Research Foundation
 
-HyperTrack Pro integrates findings from 50+ peer-reviewed studies:
+HyperTrack Pro integrates findings from 52 research insights:
 
 - **Schoenfeld et al. (2016)** - Optimal rest period durations
 - **Helms et al. (2018)** - Periodization for hypertrophy
