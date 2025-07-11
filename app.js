@@ -132,42 +132,134 @@ const HyperTrack = {
         }
     },
     
+    async loadCompleteWorkoutsFromSupabase() {
+        console.log('🔄 Loading complete workout data from Supabase...');
+        
+        try {
+            // Load workouts with exercises and sets in a single query using joins
+            const { data: workouts, error: workoutsError } = await window.supabaseClient
+                .from('workouts')
+                .select(`
+                    *,
+                    workout_exercises (
+                        *,
+                        sets (*)
+                    )
+                `)
+                .order('date', { ascending: false });
+                
+            if (workoutsError) {
+                console.error('Error loading workouts:', workoutsError);
+                return [];
+            }
+            
+            if (!workouts || workouts.length === 0) {
+                console.log('No workouts found in Supabase');
+                return [];
+            }
+            
+            // Transform Supabase format to app format
+            const transformedWorkouts = workouts.map(workout => {
+                return {
+                    id: workout.id,
+                    date: workout.date,
+                    startTime: `${workout.date}T${workout.start_time}Z`,
+                    endTime: `${workout.date}T${workout.end_time}Z`,
+                    duration: workout.duration_minutes * 60000, // Convert to milliseconds
+                    split: workout.workout_type,
+                    tod: this.calculateTimeOfDay(workout.start_time),
+                    notes: workout.notes || '',
+                    exercises: (workout.workout_exercises || []).map(exercise => {
+                        return {
+                            id: exercise.id,
+                            name: exercise.exercise_name,
+                            muscle_group: this.inferMuscleGroup(exercise.exercise_name),
+                            category: this.inferCategory(exercise.exercise_name),
+                            sets: (exercise.sets || []).map(set => {
+                                return {
+                                    weight: parseFloat(set.weight),
+                                    reps: set.reps,
+                                    timestamp: set.timestamp
+                                };
+                            }).sort((a, b) => a.set_number - b.set_number)
+                        };
+                    }).sort((a, b) => a.order_in_workout - b.order_in_workout)
+                };
+            });
+            
+            console.log(`✅ Transformed ${transformedWorkouts.length} workouts from Supabase`);
+            return transformedWorkouts;
+            
+        } catch (error) {
+            console.error('Failed to load complete workouts from Supabase:', error);
+            return [];
+        }
+    },
+    
+    calculateTimeOfDay(timeString) {
+        if (!timeString) return 'PM';
+        const hour = parseInt(timeString.split(':')[0]);
+        return hour < 12 ? 'AM' : 'PM';
+    },
+    
+    inferMuscleGroup(exerciseName) {
+        // Simple inference based on exercise name
+        const name = exerciseName.toLowerCase();
+        if (name.includes('lat') || name.includes('pulldown')) return 'Vertical Pull';
+        if (name.includes('row')) return 'Horizontal Pull';
+        if (name.includes('bench') || name.includes('press') && !name.includes('shoulder')) return 'Horizontal Push';
+        if (name.includes('shoulder') || name.includes('lateral')) return 'Side Delts';
+        if (name.includes('face') || name.includes('rear')) return 'Rear Delts';
+        if (name.includes('curl') && name.includes('bicep')) return 'Biceps';
+        if (name.includes('curl') && name.includes('hammer')) return 'Biceps';
+        if (name.includes('tricep') || name.includes('close-grip')) return 'Triceps';
+        if (name.includes('squat') || name.includes('leg')) return 'Legs';
+        if (name.includes('abs') || name.includes('crunch') || name.includes('plank')) return 'Abs';
+        if (name.includes('dip')) return 'Horizontal Push';
+        if (name.includes('fly')) return 'Horizontal Push';
+        return 'Other';
+    },
+    
+    inferCategory(exerciseName) {
+        // Simple inference based on exercise name
+        const name = exerciseName.toLowerCase();
+        if (name.includes('press') || name.includes('row') || name.includes('pulldown') || 
+            name.includes('squat') || name.includes('deadlift') || name.includes('dip')) {
+            return 'Compound';
+        }
+        return 'Isolation';
+    },
+    
     async loadHistoricalData() {
         console.log('🔄 Loading historical data from all sources...');
         let allWorkouts = [];
         
-        // Priority 1: Load from Supabase if available
+        // Priority 1: Load complete workout data from Supabase (including exercises and sets)
         try {
             if (window.supabaseClient) {
-                const { data: supabaseWorkouts, error } = await window.supabaseClient
-                    .from('workouts')
-                    .select('*')
-                    .order('date', { ascending: false });
-                    
-                if (!error && supabaseWorkouts && supabaseWorkouts.length > 0) {
-                    allWorkouts = [...allWorkouts, ...supabaseWorkouts];
-                    console.log(`✅ Loaded ${supabaseWorkouts.length} workouts from Supabase`);
-                } else if (error) {
-                    console.warn('⚠️ Could not load workouts from Supabase:', error);
+                const fullWorkouts = await this.loadCompleteWorkoutsFromSupabase();
+                if (fullWorkouts && fullWorkouts.length > 0) {
+                    allWorkouts = [...allWorkouts, ...fullWorkouts];
+                    console.log(`✅ Loaded ${fullWorkouts.length} complete workouts from Supabase`);
                 }
             }
         } catch (error) {
             console.warn('⚠️ Supabase workout loading failed:', error);
         }
         
-        // Priority 2: Load Tyler's historical data from JSON (if not already in Supabase)
+        // Priority 2: Fallback to Tyler's historical data from JSON (DEPRECATED - use Supabase migration)
         try {
-            const response = await fetch('data/tyler-workouts.json');
-            if (response.ok) {
-                const tylerWorkouts = await response.json();
-                // Only add Tyler workouts that aren't already loaded from Supabase
-                const existingIds = new Set(allWorkouts.map(w => w.id));
-                const newTylerWorkouts = tylerWorkouts.filter(w => !existingIds.has(w.id));
-                
-                if (newTylerWorkouts.length > 0) {
-                    allWorkouts = [...allWorkouts, ...newTylerWorkouts];
-                    console.log(`✅ Loaded ${newTylerWorkouts.length} Tyler historical workouts from JSON`);
+            if (allWorkouts.length === 0) {
+                console.warn('⚠️ No Supabase data found, falling back to local JSON');
+                const response = await fetch('data/tyler-workouts.json');
+                if (response.ok) {
+                    const tylerWorkouts = await response.json();
+                    allWorkouts = [...allWorkouts, ...tylerWorkouts];
+                    console.log(`⚠️ FALLBACK: Loaded ${tylerWorkouts.length} workouts from tyler-workouts.json`);
+                    console.log('📢 RECOMMENDATION: Run supabase-migration.sql to migrate this data to Supabase');
                 }
+            } else {
+                console.log('✅ Supabase data loaded successfully, skipping JSON fallback');
             }
         } catch (error) {
             console.warn('⚠️ Could not load Tyler workouts from JSON:', error);

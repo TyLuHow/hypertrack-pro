@@ -22,7 +22,7 @@
 
 ### ✅ Database Integration
 - **Supabase**: Full PostgreSQL integration with RLS policies
-- **Data Sync**: Missing July 8-9 workouts successfully synced
+- **Data Migration**: Complete migration to Supabase as single source of truth
 - **Schema**: Aligned simplified JSONB structure with normalized backup
 - **Migration**: Automatic historical data migration system
 
