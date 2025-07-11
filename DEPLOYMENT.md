@@ -1,8 +1,22 @@
-# HyperTrack Pro Deployment Guide
+# Deployment Guide
 
-## Quick Setup for Your Own Instance
+This guide covers deploying HyperTrack Pro to various platforms and setting up production environments.
 
-Follow these steps to deploy your own HyperTrack Pro instance with your own data:
+## 🚀 Quick Deploy Options
+
+### One-Click Deployment
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTyLuHow%2Fhypertrack-pro)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/TyLuHow/hypertrack-pro)
+
+## 📋 Pre-Deployment Checklist
+
+- [ ] Fork the repository to your GitHub account
+- [ ] Set up Supabase database (optional but recommended)
+- [ ] Configure environment variables
+- [ ] Test locally before deploying
+
+## 🗄️ Database Setup (Optional but Recommended)
 
 ### 1. Setup Supabase Database
 

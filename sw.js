@@ -1,13 +1,15 @@
-const CACHE_NAME = 'hypertrack-pro-v1';
+const CACHE_NAME = 'hypertrack-pro-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
-  '/tyler-data-integration.js',
+  '/intelligent-training.js',
   '/manifest.json',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  '/data/exercises.json',
+  '/data/research-facts.json'
 ];
 
 self.addEventListener('install', event => {

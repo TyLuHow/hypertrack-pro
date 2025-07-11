@@ -1,14 +1,31 @@
 # Contributing to HyperTrack Pro
 
-Thank you for your interest in contributing to HyperTrack Pro! This guide will help you get started with contributing to our evidence-based fitness tracking application.
+We welcome contributions to HyperTrack Pro! This guide will help you get started with development and ensure your contributions align with the project's goals.
 
 ## 🚀 Quick Start
 
-1. **Fork the repository** on GitHub
-2. **Clone your fork** locally
-3. **Create a feature branch** from `main`
-4. **Make your changes** and test them
-5. **Submit a pull request** with a clear description
+### Prerequisites
+- **Node.js** 14+ (for development server)
+- **Git** for version control
+- **Python 3** (alternative development server)
+- **Modern web browser** with developer tools
+
+### Initial Setup
+```bash
+# Fork the repository on GitHub
+# Clone your fork
+git clone https://github.com/YOUR_USERNAME/hypertrack-pro.git
+cd hypertrack-pro
+
+# Run the automated setup
+chmod +x setup.sh
+./setup.sh
+
+# Start development server
+npm start
+# or alternatively
+python3 -m http.server 3000
+```
 
 ## 📋 Table of Contents
 
