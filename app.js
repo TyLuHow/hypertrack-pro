@@ -180,7 +180,6 @@ const HyperTrack = {
         }
     },
     
-    
     async loadHistoricalData() {
         console.log('🔄 Loading historical data from all sources...');
         let allWorkouts = [];
@@ -3766,12 +3765,6 @@ function updateWorkoutTimerDisplay() {
 // function showInlineRestTimer(totalSeconds, exerciseName, setRowElement) {
 //     Disabled - iOS compatibility
 // }
-    
-    // Store the total time for progress calculation
-    restTimerElement.dataset.totalTime = totalSeconds;
-    
-    // Note: Add Set button remains enabled during rest timer per user request
-}
 
 function addRestTime(seconds) {
     if (HyperTrack.state.restTimer.active) {
