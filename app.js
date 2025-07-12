@@ -3039,16 +3039,40 @@ function updateAnalyticsDisplay() {
 }
 
 function calculateWeeklyVolume(workouts) {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)); // Exactly 7 days ago
     oneWeekAgo.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+    
+    console.log(`📅 Calculating weekly volume from ${oneWeekAgo.toISOString()} to ${now.toISOString()}`);
     
     const recentWorkouts = workouts.filter(workout => {
         const workoutDateStr = workout.date || workout.workout_date;
+        if (!workoutDateStr) {
+            console.warn('⚠️ Workout missing date:', workout);
+            return false;
+        }
+        
         // Parse date properly to avoid timezone issues
-        const dateParts = workoutDateStr.split('T')[0].split('-');
-        const workoutDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
-        return workoutDate >= oneWeekAgo;
+        let workoutDate;
+        try {
+            if (workoutDateStr.includes('T')) {
+                // ISO format with time
+                workoutDate = new Date(workoutDateStr);
+            } else {
+                // Date only format
+                const dateParts = workoutDateStr.split('-');
+                workoutDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+            }
+        } catch (error) {
+            console.warn('⚠️ Invalid workout date format:', workoutDateStr, workout);
+            return false;
+        }
+        
+        const isInRange = workoutDate >= oneWeekAgo && workoutDate <= now;
+        if (isInRange) {
+            console.log(`📊 Including workout from ${workoutDate.toDateString()}: ${workout.split || 'General'}`);
+        }
+        return isInRange;
     });
     
     console.log(`📊 Weekly volume: Found ${recentWorkouts.length} workouts in last 7 days`, recentWorkouts);
@@ -3143,10 +3167,28 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
             </div>
         `;
     } else {
-        // Get all muscles and sort by current volume (descending)
+        // Get all muscles and sort by deficit/need (descending)
         const allMuscles = Object.entries(weeklyVolumeWithTargets)
             .map(([muscle, data]) => ({ muscle, data }))
-            .sort((a, b) => b.data.current - a.data.current);
+            .sort((a, b) => {
+                // First priority: Sort by deficit (muscles with higher deficits first)
+                const aDeficit = a.data.deficit || 0;
+                const bDeficit = b.data.deficit || 0;
+                if (aDeficit !== bDeficit) {
+                    return bDeficit - aDeficit; // Higher deficit first
+                }
+                
+                // Second priority: For muscles with same deficit, sort by status priority
+                const statusPriority = { 'high': 2, 'low': 1, 'optimal': 0 };
+                const aStatus = statusPriority[a.data.recommendation.status] || 0;
+                const bStatus = statusPriority[b.data.recommendation.status] || 0;
+                if (aStatus !== bStatus) {
+                    return bStatus - aStatus; // Higher status priority first
+                }
+                
+                // Third priority: Sort by current volume (lower volume first for same deficit)
+                return a.data.current - b.data.current;
+            });
         
         // Weekly summary at the top with wider layout
         const totalSets = Object.values(weeklyVolumeWithTargets).reduce((sum, data) => sum + data.current, 0);

@@ -351,16 +351,37 @@ class WorkoutTimingAdvisor {
         };
     }
     
-    // Calculate current weekly volume
+    // Calculate current weekly volume - synchronized with analytics logic
     calculateCurrentWeeklyVolume(workouts) {
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const now = new Date();
+        const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)); // Exactly 7 days ago
+        oneWeekAgo.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+        
+        console.log(`🔄 AI Recommendations: Calculating weekly volume from ${oneWeekAgo.toISOString()} to ${now.toISOString()}`);
         
         const weeklyVolume = {};
         
         workouts.forEach(workout => {
-            const workoutDate = new Date(workout.date);
-            if (workoutDate >= oneWeekAgo) {
+            const workoutDateStr = workout.date || workout.workout_date;
+            if (!workoutDateStr) return;
+            
+            let workoutDate;
+            try {
+                if (workoutDateStr.includes('T')) {
+                    // ISO format with time
+                    workoutDate = new Date(workoutDateStr);
+                } else {
+                    // Date only format
+                    const dateParts = workoutDateStr.split('-');
+                    workoutDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+                }
+            } catch (error) {
+                console.warn('⚠️ AI Recommendations: Invalid workout date format:', workoutDateStr);
+                return;
+            }
+            
+            const isInRange = workoutDate >= oneWeekAgo && workoutDate <= now;
+            if (isInRange) {
                 workout.exercises?.forEach(exercise => {
                     const muscleGroup = exercise.muscle_group;
                     if (muscleGroup) {
@@ -371,6 +392,7 @@ class WorkoutTimingAdvisor {
             }
         });
         
+        console.log('🔄 AI Recommendations: Weekly volume calculated:', weeklyVolume);
         return weeklyVolume;
     }
     
