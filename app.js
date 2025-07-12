@@ -133,19 +133,13 @@ const HyperTrack = {
     },
     
     async loadCompleteWorkoutsFromSupabase() {
-        console.log('🔄 Loading complete workout data from Supabase...');
+        console.log('🔄 Loading workout data from Supabase (JSONB schema)...');
         
         try {
-            // Load workouts with exercises and sets in a single query using joins
+            // Load workouts with JSONB exercises column
             const { data: workouts, error: workoutsError } = await window.supabaseClient
                 .from('workouts')
-                .select(`
-                    *,
-                    workout_exercises (
-                        *,
-                        sets (*)
-                    )
-                `)
+                .select('*')
                 .order('date', { ascending: false });
                 
             if (workoutsError) {
@@ -158,77 +152,34 @@ const HyperTrack = {
                 return [];
             }
             
-            // Transform Supabase format to app format
+            // Transform Supabase JSONB format to app format
             const transformedWorkouts = workouts.map(workout => {
+                // Handle timestamps - they're stored as full ISO strings
+                const startTime = new Date(workout.start_time);
+                const endTime = new Date(workout.end_time);
+                
                 return {
                     id: workout.id,
                     date: workout.date,
-                    startTime: `${workout.date}T${workout.start_time}Z`,
-                    endTime: `${workout.date}T${workout.end_time}Z`,
-                    duration: workout.duration_minutes * 60000, // Convert to milliseconds
-                    split: workout.workout_type,
-                    tod: this.calculateTimeOfDay(workout.start_time),
+                    startTime: workout.start_time, // Already ISO string
+                    endTime: workout.end_time,     // Already ISO string
+                    duration: workout.duration,    // Already in milliseconds
+                    split: workout.split,
+                    tod: workout.time_of_day,
                     notes: workout.notes || '',
-                    exercises: (workout.workout_exercises || []).map(exercise => {
-                        return {
-                            id: exercise.id,
-                            name: exercise.exercise_name,
-                            muscle_group: this.inferMuscleGroup(exercise.exercise_name),
-                            category: this.inferCategory(exercise.exercise_name),
-                            sets: (exercise.sets || []).map(set => {
-                                return {
-                                    weight: parseFloat(set.weight),
-                                    reps: set.reps,
-                                    timestamp: set.timestamp
-                                };
-                            }).sort((a, b) => a.set_number - b.set_number)
-                        };
-                    }).sort((a, b) => a.order_in_workout - b.order_in_workout)
+                    exercises: workout.exercises || [] // JSONB column already in app format
                 };
             });
             
-            console.log(`✅ Transformed ${transformedWorkouts.length} workouts from Supabase`);
+            console.log(`✅ Loaded ${transformedWorkouts.length} workouts from Supabase (JSONB)`);
             return transformedWorkouts;
             
         } catch (error) {
-            console.error('Failed to load complete workouts from Supabase:', error);
+            console.error('Failed to load workouts from Supabase:', error);
             return [];
         }
     },
     
-    calculateTimeOfDay(timeString) {
-        if (!timeString) return 'PM';
-        const hour = parseInt(timeString.split(':')[0]);
-        return hour < 12 ? 'AM' : 'PM';
-    },
-    
-    inferMuscleGroup(exerciseName) {
-        // Simple inference based on exercise name
-        const name = exerciseName.toLowerCase();
-        if (name.includes('lat') || name.includes('pulldown')) return 'Vertical Pull';
-        if (name.includes('row')) return 'Horizontal Pull';
-        if (name.includes('bench') || name.includes('press') && !name.includes('shoulder')) return 'Horizontal Push';
-        if (name.includes('shoulder') || name.includes('lateral')) return 'Side Delts';
-        if (name.includes('face') || name.includes('rear')) return 'Rear Delts';
-        if (name.includes('curl') && name.includes('bicep')) return 'Biceps';
-        if (name.includes('curl') && name.includes('hammer')) return 'Biceps';
-        if (name.includes('tricep') || name.includes('close-grip')) return 'Triceps';
-        if (name.includes('squat') || name.includes('leg')) return 'Legs';
-        if (name.includes('abs') || name.includes('crunch') || name.includes('plank')) return 'Abs';
-        if (name.includes('dip')) return 'Horizontal Push';
-        if (name.includes('fly')) return 'Horizontal Push';
-        return 'Other';
-    },
-    
-    inferCategory(exerciseName) {
-        // Simple inference based on exercise name
-        const name = exerciseName.toLowerCase();
-        if (name.includes('press') || name.includes('row') || name.includes('pulldown') || 
-            name.includes('squat') || name.includes('deadlift') || name.includes('dip')) {
-            return 'Compound';
-        }
-        return 'Isolation';
-    },
     
     async loadHistoricalData() {
         console.log('🔄 Loading historical data from all sources...');

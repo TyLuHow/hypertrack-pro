@@ -55,6 +55,8 @@
   ],
   "dependencies": {
     "@supabase/supabase-js": "^2.50.5",
-    "jsonwebtoken": "^9.0.2"
+    "dotenv": "^17.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^3.3.2"
   }
 }
