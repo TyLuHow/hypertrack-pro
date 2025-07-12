@@ -62,8 +62,8 @@ const HyperTrack = {
         user: { name: 'Tyler', bodyWeight: 225 },
         autoSaveInterval: null,
         workoutTimer: { active: false, interval: null, startTime: null, elapsed: 0 },
-        // Rest timers removed for iOS compatibility
-        // restTimer: { active: false, interval: null, remaining: 0, exerciseName: '' }
+        // Rest timer - kept for background state compatibility
+        restTimer: { active: false, interval: null, remaining: 0, exerciseName: '' }
     },
     
     researchFacts: [], // Loaded dynamically from data/research-facts.json

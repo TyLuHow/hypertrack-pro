@@ -426,7 +426,112 @@ async function testSupabaseConnection() {
 }
 
 // Migrate all local user workouts to Supabase
-async function migrateLocalWorkoutsToSupabase() {\n    try {\n        if (!window.supabaseClient) {\n            console.warn('⚠️ Supabase not available - cannot migrate local workouts');\n            return { success: false, reason: 'No Supabase client' };\n        }\n\n        console.log('🔄 Migrating local user workouts to Supabase...');\n        \n        // Load local workouts\n        const localWorkouts = loadLocalWorkouts();\n        if (localWorkouts.length === 0) {\n            console.log('📋 No local workouts found to migrate');\n            return { success: true, migrated: 0, reason: 'No workouts to migrate' };\n        }\n        \n        console.log(`📋 Found ${localWorkouts.length} local workouts to migrate`);\n        \n        // Check which workouts already exist in Supabase\n        const { data: existingWorkouts, error: checkError } = await window.supabaseClient\n            .from('workouts')\n            .select('id')\n            .eq('user_id', currentUserId);\n            \n        if (checkError) {\n            console.error('❌ Error checking existing workouts:', checkError);\n            return { success: false, error: checkError, reason: 'Failed to check existing workouts' };\n        }\n        \n        const existingIds = new Set(existingWorkouts?.map(w => w.id) || []);\n        const newWorkouts = localWorkouts.filter(w => !existingIds.has(w.id));\n        \n        if (newWorkouts.length === 0) {\n            console.log('✅ All local workouts already exist in Supabase');\n            return { success: true, migrated: 0, reason: 'All workouts already synced' };\n        }\n        \n        console.log(`📋 Migrating ${newWorkouts.length} new workouts...`);\n        \n        // Format workouts for Supabase\n        const formattedWorkouts = newWorkouts.map(workout => ({\n            id: workout.id,\n            user_id: currentUserId,\n            date: workout.date,\n            start_time: workout.startTime,\n            end_time: workout.endTime,\n            duration: workout.duration || null,\n            split: workout.split || 'General',\n            time_of_day: formatTimeOfDay(workout.tod || workout.timeOfDay),\n            notes: workout.notes || '',\n            exercises: workout.exercises || []\n        }));\n        \n        // Insert workouts in batches to avoid timeouts\n        const batchSize = 10;\n        let totalMigrated = 0;\n        const errors = [];\n        \n        for (let i = 0; i < formattedWorkouts.length; i += batchSize) {\n            const batch = formattedWorkouts.slice(i, i + batchSize);\n            \n            try {\n                const { data, error } = await window.supabaseClient\n                    .from('workouts')\n                    .insert(batch);\n                    \n                if (error) {\n                    console.error(`❌ Error migrating batch ${i / batchSize + 1}:`, error);\n                    errors.push({ batch: i / batchSize + 1, error });\n                } else {\n                    totalMigrated += batch.length;\n                    console.log(`✅ Migrated batch ${i / batchSize + 1}: ${batch.length} workouts`);\n                }\n            } catch (err) {\n                console.error(`❌ Exception migrating batch ${i / batchSize + 1}:`, err);\n                errors.push({ batch: i / batchSize + 1, error: err });\n            }\n        }\n        \n        const result = {\n            success: errors.length === 0,\n            migrated: totalMigrated,\n            total: formattedWorkouts.length,\n            errors: errors\n        };\n        \n        if (result.success) {\n            console.log(`✅ Successfully migrated all ${totalMigrated} workouts to Supabase`);\n        } else {\n            console.warn(`⚠️ Migrated ${totalMigrated}/${formattedWorkouts.length} workouts (${errors.length} errors)`);\n        }\n        \n        return result;\n        \n    } catch (error) {\n        console.error('❌ Migration failed:', error);\n        return { success: false, error, reason: 'Migration exception' };\n    }\n}\n\n// Make functions globally available\nwindow.syncWorkoutOnCompletion = syncWorkoutOnCompletion;\nwindow.saveWorkoutLocally = saveWorkoutLocally;\nwindow.loadLocalWorkouts = loadLocalWorkouts;\nwindow.testSupabaseConnection = testSupabaseConnection;\nwindow.migrateLocalWorkoutsToSupabase = migrateLocalWorkoutsToSupabase;
+async function migrateLocalWorkoutsToSupabase() {
+    try {
+        if (!window.supabaseClient) {
+            console.warn('⚠️ Supabase not available - cannot migrate local workouts');
+            return { success: false, reason: 'No Supabase client' };
+        }
+
+        console.log('🔄 Migrating local user workouts to Supabase...');
+        
+        // Load local workouts
+        const localWorkouts = loadLocalWorkouts();
+        if (localWorkouts.length === 0) {
+            console.log('📋 No local workouts found to migrate');
+            return { success: true, migrated: 0, reason: 'No workouts to migrate' };
+        }
+        
+        console.log(`📋 Found ${localWorkouts.length} local workouts to migrate`);
+        
+        // Check which workouts already exist in Supabase
+        const { data: existingWorkouts, error: checkError } = await window.supabaseClient
+            .from('workouts')
+            .select('id')
+            .eq('user_id', currentUserId);
+            
+        if (checkError) {
+            console.error('❌ Error checking existing workouts:', checkError);
+            return { success: false, error: checkError, reason: 'Failed to check existing workouts' };
+        }
+        
+        const existingIds = new Set(existingWorkouts?.map(w => w.id) || []);
+        const newWorkouts = localWorkouts.filter(w => !existingIds.has(w.id));
+        
+        if (newWorkouts.length === 0) {
+            console.log('✅ All local workouts already exist in Supabase');
+            return { success: true, migrated: 0, reason: 'All workouts already synced' };
+        }
+        
+        console.log(`📋 Migrating ${newWorkouts.length} new workouts...`);
+        
+        // Format workouts for Supabase
+        const formattedWorkouts = newWorkouts.map(workout => ({
+            id: workout.id,
+            user_id: currentUserId,
+            date: workout.date,
+            start_time: workout.startTime,
+            end_time: workout.endTime,
+            duration: workout.duration || null,
+            split: workout.split || 'General',
+            time_of_day: formatTimeOfDay(workout.tod || workout.timeOfDay),
+            notes: workout.notes || '',
+            exercises: workout.exercises || []
+        }));
+        
+        // Insert workouts in batches to avoid timeouts
+        const batchSize = 10;
+        let totalMigrated = 0;
+        const errors = [];
+        
+        for (let i = 0; i < formattedWorkouts.length; i += batchSize) {
+            const batch = formattedWorkouts.slice(i, i + batchSize);
+            
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('workouts')
+                    .insert(batch);
+                    
+                if (error) {
+                    console.error(`❌ Error migrating batch ${i / batchSize + 1}:`, error);
+                    errors.push({ batch: i / batchSize + 1, error });
+                } else {
+                    totalMigrated += batch.length;
+                    console.log(`✅ Migrated batch ${i / batchSize + 1}: ${batch.length} workouts`);
+                }
+            } catch (err) {
+                console.error(`❌ Exception migrating batch ${i / batchSize + 1}:`, err);
+                errors.push({ batch: i / batchSize + 1, error: err });
+            }
+        }
+        
+        const result = {
+            success: errors.length === 0,
+            migrated: totalMigrated,
+            total: formattedWorkouts.length,
+            errors: errors
+        };
+        
+        if (result.success) {
+            console.log(`✅ Successfully migrated all ${totalMigrated} workouts to Supabase`);
+        } else {
+            console.warn(`⚠️ Migrated ${totalMigrated}/${formattedWorkouts.length} workouts (${errors.length} errors)`);
+        }
+        
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Migration failed:', error);
+        return { success: false, error, reason: 'Migration exception' };
+    }
+}
+
+// Make functions globally available
+window.syncWorkoutOnCompletion = syncWorkoutOnCompletion;
+window.saveWorkoutLocally = saveWorkoutLocally;
+window.loadLocalWorkouts = loadLocalWorkouts;
+window.testSupabaseConnection = testSupabaseConnection;
+window.migrateLocalWorkoutsToSupabase = migrateLocalWorkoutsToSupabase;
 
 // Manual troubleshooting helpers
 window.debugSupabase = function() {

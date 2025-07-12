@@ -681,5 +681,191 @@
                 ]
             }
         ]
+    },
+    {
+        "id": "july_8_2025",
+        "date": "2025-07-08",
+        "startTime": "2025-07-09T01:42:39.965Z",
+        "endTime": "2025-07-09T02:40:02.606Z",
+        "duration": 3462641,
+        "split": "Pull",
+        "tod": "AM",
+        "notes": "Pull day with shoulder work",
+        "exercises": [
+            {
+                "id": 1752025731506,
+                "name": "Lat Pulldowns",
+                "muscle_group": "Vertical Pull",
+                "category": "Compound",
+                "sets": [
+                    { "weight": 175, "reps": 8, "timestamp": "2025-07-09T01:42:39.965Z" },
+                    { "weight": 160, "reps": 10, "timestamp": "2025-07-09T01:45:01.265Z" },
+                    { "weight": 160, "reps": 10, "timestamp": "2025-07-09T01:48:48.457Z" }
+                ]
+            },
+            {
+                "id": 1752026427362,
+                "name": "Smith Machine Rows",
+                "muscle_group": "Horizontal Pull",
+                "category": "Compound",
+                "sets": [
+                    { "weight": 150, "reps": 10, "timestamp": "2025-07-09T01:52:38.719Z" },
+                    { "weight": 150, "reps": 10, "timestamp": "2025-07-09T02:00:27.362Z" },
+                    { "weight": 150, "reps": 8, "timestamp": "2025-07-09T02:00:27.362Z" }
+                ]
+            },
+            {
+                "id": 1752026998514,
+                "name": "Face Pulls",
+                "muscle_group": "Rear Delts",
+                "category": "Isolation",
+                "sets": [
+                    { "weight": 70, "reps": 15, "timestamp": "2025-07-09T02:04:39.247Z" },
+                    { "weight": 65, "reps": 16, "timestamp": "2025-07-09T02:09:58.513Z" },
+                    { "weight": 65, "reps": 17, "timestamp": "2025-07-09T02:09:58.514Z" }
+                ]
+            },
+            {
+                "id": 1752027704382,
+                "name": "Dumbbell Bicep Curls",
+                "muscle_group": "Biceps",
+                "category": "Isolation",
+                "sets": [
+                    { "weight": 90, "reps": 9, "timestamp": "2025-07-09T02:21:28.348Z" },
+                    { "weight": 80, "reps": 12, "timestamp": "2025-07-09T02:21:32.361Z" },
+                    { "weight": 80, "reps": 10, "timestamp": "2025-07-09T02:21:44.382Z" }
+                ]
+            },
+            {
+                "id": 1752028180178,
+                "name": "Cable Hammer Curls",
+                "muscle_group": "Biceps",
+                "category": "Isolation",
+                "sets": [
+                    { "weight": 60, "reps": 10, "timestamp": "2025-07-09T02:25:32.250Z" },
+                    { "weight": 60, "reps": 9, "timestamp": "2025-07-09T02:27:44.739Z" },
+                    { "weight": 60, "reps": 10, "timestamp": "2025-07-09T02:29:40.178Z" }
+                ]
+            },
+            {
+                "id": 1752028802606,
+                "name": "Smith Machine Shoulder Press",
+                "muscle_group": "Vertical Push",
+                "category": "Compound",
+                "sets": [
+                    { "weight": 75, "reps": 18, "timestamp": "2025-07-09T02:40:02.606Z" },
+                    { "weight": 115, "reps": 13, "timestamp": "2025-07-09T02:40:02.606Z" },
+                    { "weight": 135, "reps": 8, "timestamp": "2025-07-09T02:40:02.606Z" }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "july_9_2025",
+        "date": "2025-07-09",
+        "startTime": "2025-07-09T23:21:04.082Z",
+        "endTime": "2025-07-10T00:58:37.782Z",
+        "duration": 5853700,
+        "split": "Push",
+        "tod": "PM",
+        "notes": "Push day with abs work",
+        "exercises": [
+            {
+                "id": 1752103264082,
+                "name": "Cable Crunch Machine",
+                "muscle_group": "Abs",
+                "category": "Isolation",
+                "sets": [
+                    { "weight": 200, "reps": 8, "timestamp": "2025-07-09T23:21:04.082Z" },
+                    { "weight": 180, "reps": 15, "timestamp": "2025-07-09T23:21:04.082Z" },
+                    { "weight": 170, "reps": 17, "timestamp": "2025-07-09T23:21:04.082Z" }
+                ]
+            },
+            {
+                "id": 1752103801305,
+                "name": "Russian Twists",
+                "muscle_group": "Abs",
+                "category": "Isolation",
+                "sets": [
+                    { "weight": 25, "reps": 20, "timestamp": "2025-07-09T23:30:01.305Z" },
+                    { "weight": 25, "reps": 20, "timestamp": "2025-07-09T23:30:01.305Z" },
+                    { "weight": 25, "reps": 20, "timestamp": "2025-07-09T23:30:01.305Z" }
+                ]
+            },
+            {
+                "id": 1752104610668,
+                "name": "Planks",
+                "muscle_group": "Abs",
+                "category": "Isolation",
+                "sets": [
+                    { "weight": 225, "reps": 120, "timestamp": "2025-07-09T23:43:30.668Z" }
+                ]
+            },
+            {
+                "id": 1752105125954,
+                "name": "Incline Dumbbell Press",
+                "muscle_group": "Horizontal Push",
+                "category": "Compound",
+                "sets": [
+                    { "weight": 120, "reps": 12, "timestamp": "2025-07-09T23:52:05.954Z" },
+                    { "weight": 120, "reps": 18, "timestamp": "2025-07-09T23:52:05.954Z" }
+                ]
+            },
+            {
+                "id": 1752105725827,
+                "name": "Smith Machine Bench Press",
+                "muscle_group": "Horizontal Push",
+                "category": "Compound",
+                "sets": [
+                    { "weight": 190, "reps": 6, "timestamp": "2025-07-10T00:02:05.827Z" },
+                    { "weight": 185, "reps": 7, "timestamp": "2025-07-10T00:02:05.827Z" },
+                    { "weight": 185, "reps": 8, "timestamp": "2025-07-10T00:02:05.827Z" }
+                ]
+            },
+            {
+                "id": 1752106757476,
+                "name": "Bodyweight Dips",
+                "muscle_group": "Horizontal Push",
+                "category": "Compound",
+                "sets": [
+                    { "weight": 225, "reps": 8, "timestamp": "2025-07-10T00:19:17.476Z" },
+                    { "weight": 225, "reps": 9, "timestamp": "2025-07-10T00:19:17.476Z" },
+                    { "weight": 225, "reps": 10, "timestamp": "2025-07-10T00:19:17.476Z" }
+                ]
+            },
+            {
+                "id": 1752107743440,
+                "name": "Dumbbell Flyes",
+                "muscle_group": "Horizontal Push",
+                "category": "Isolation",
+                "sets": [
+                    { "weight": 80, "reps": 15, "timestamp": "2025-07-10T00:35:43.440Z" },
+                    { "weight": 90, "reps": 15, "timestamp": "2025-07-10T00:35:43.440Z" },
+                    { "weight": 100, "reps": 13, "timestamp": "2025-07-10T00:35:43.440Z" }
+                ]
+            },
+            {
+                "id": 1752108537141,
+                "name": "Close-Grip Smith Machine Press",
+                "muscle_group": "Triceps",
+                "category": "Compound",
+                "sets": [
+                    { "weight": 150, "reps": 10, "timestamp": "2025-07-10T00:48:57.141Z" },
+                    { "weight": 155, "reps": 8, "timestamp": "2025-07-10T00:48:57.141Z" },
+                    { "weight": 155, "reps": 11, "timestamp": "2025-07-10T00:48:57.141Z" }
+                ]
+            },
+            {
+                "id": 1752109117782,
+                "name": "Tricep Cable Rope Pulldowns",
+                "muscle_group": "Triceps",
+                "category": "Isolation",
+                "sets": [
+                    { "weight": 55, "reps": 14, "timestamp": "2025-07-10T00:58:37.782Z" },
+                    { "weight": 55, "reps": 15, "timestamp": "2025-07-10T00:58:37.782Z" },
+                    { "weight": 55, "reps": 14, "timestamp": "2025-07-10T00:58:37.782Z" }
+                ]
+            }
+        ]
     }
 ]
