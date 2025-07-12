@@ -3125,18 +3125,7 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
     // Check if we have any volume data
     const hasData = Object.values(weeklyVolumeWithTargets).some(data => data.current > 0);
     
-    let recommendationsHTML = `
-        <h4>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: text-top;">
-                <path d="M3 3v18h18"></path>
-                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
-            </svg>
-            Recent Progress
-        </h4>
-        <p style="font-size: 13px; color: #9ca3af; margin-bottom: 16px;">
-            Weekly Volume Analysis - Based on ${hasData ? 'your last 7 days' : 'complete your first workout to see'} training data
-        </p>
-    `;
+    let recommendationsHTML = ``;
     
     if (!hasData) {
         recommendationsHTML += `
@@ -3159,36 +3148,36 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
             .map(([muscle, data]) => ({ muscle, data }))
             .sort((a, b) => b.data.current - a.data.current);
         
-        // Compact weekly summary
+        // Weekly summary at the top with wider layout
         const totalSets = Object.values(weeklyVolumeWithTargets).reduce((sum, data) => sum + data.current, 0);
         const trainedMuscles = Object.values(weeklyVolumeWithTargets).filter(data => data.current > 0).length;
         
         recommendationsHTML += `
-            <div style="background: #1f2937; border-radius: 6px; padding: 12px; margin-bottom: 16px; border: 1px solid #374151;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="color: #60a5fa; font-weight: 600; font-size: 14px;">📈 Weekly Summary</span>
-                    <span style="color: #94a3b8; font-size: 12px;">Last 7 days</span>
+            <div style="background: #1f2937; border-radius: 8px; padding: 16px; margin-bottom: 20px; border: 1px solid #374151;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="color: #60a5fa; font-weight: 600; font-size: 16px;">📈 Weekly Summary</span>
+                    <span style="color: #94a3b8; font-size: 13px;">Last 7 days</span>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px;">
-                    <div style="text-align: center;">
-                        <div style="color: #e2e8f0; font-weight: 600; font-size: 18px;">${totalSets}</div>
-                        <div style="color: #94a3b8; font-size: 10px;">Total Sets</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; font-size: 14px;">
+                    <div style="text-align: center; background: #374151; border-radius: 6px; padding: 12px;">
+                        <div style="color: #e2e8f0; font-weight: 600; font-size: 24px;">${totalSets}</div>
+                        <div style="color: #94a3b8; font-size: 11px;">Total Sets</div>
                     </div>
-                    <div style="text-align: center;">
-                        <div style="color: #e2e8f0; font-weight: 600; font-size: 18px;">${trainedMuscles}</div>
-                        <div style="color: #94a3b8; font-size: 10px;">Groups Trained</div>
+                    <div style="text-align: center; background: #374151; border-radius: 6px; padding: 12px;">
+                        <div style="color: #e2e8f0; font-weight: 600; font-size: 24px;">${trainedMuscles}</div>
+                        <div style="color: #94a3b8; font-size: 11px;">Groups Trained</div>
                     </div>
-                    <div style="text-align: center;">
-                        <div style="color: #e2e8f0; font-weight: 600; font-size: 18px;">${Math.round(totalSets / 7 * 10) / 10}</div>
-                        <div style="color: #94a3b8; font-size: 10px;">Sets/Day</div>
+                    <div style="text-align: center; background: #374151; border-radius: 6px; padding: 12px;">
+                        <div style="color: #e2e8f0; font-weight: 600; font-size: 24px;">${Math.round(totalSets / 7 * 10) / 10}</div>
+                        <div style="color: #94a3b8; font-size: 11px;">Sets/Day</div>
                     </div>
                 </div>
             </div>
         `;
         
-        // Compact muscle group grid layout
+        // Wider muscle group grid layout
         recommendationsHTML += `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px;">
                 ${allMuscles.map(({ muscle, data }) => {
                     let borderColor, statusColor, statusIcon;
                     
@@ -3211,14 +3200,14 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
                     }
                     
                     return `
-                        <div style="background: #1f2937; border-radius: 6px; padding: 10px; border-left: 3px solid ${borderColor};">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                <span style="color: ${statusColor}; font-weight: 600; font-size: 13px;">${muscle}</span>
-                                <span style="color: ${statusColor}; font-size: 11px;">${statusIcon}</span>
+                        <div style="background: #1f2937; border-radius: 8px; padding: 12px; border-left: 4px solid ${borderColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="color: ${statusColor}; font-weight: 600; font-size: 14px;">${muscle}</span>
+                                <span style="color: ${statusColor}; font-size: 12px;">${statusIcon}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <span style="color: #94a3b8; font-size: 11px;">${data.current}/${data.mev} sets</span>
-                                <span style="color: #6b7280; font-size: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="color: #94a3b8; font-size: 12px;">${data.current}/${data.mev} sets</span>
+                                <span style="color: #6b7280; font-size: 11px;">
                                     ${data.recommendation.status === 'optimal' ? 'On target' :
                                       data.current === 0 ? 'Not trained' :
                                       data.recommendation.status === 'low' ? `+${data.deficit} needed` :
@@ -3226,7 +3215,7 @@ function displayVolumeRecommendations(weeklyVolumeWithTargets) {
                                 </span>
                             </div>
                             ${data.current === 0 || data.recommendation.status === 'low' ? `
-                                <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; width: 100%;">
+                                <button onclick="addMuscleToWorkout('${muscle}')" style="background: #be185d; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; width: 100%;">
                                     + Add Exercise
                                 </button>
                             ` : ''}
