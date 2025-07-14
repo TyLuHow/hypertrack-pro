@@ -315,6 +315,57 @@ window.normalizeWorkoutData = normalizeWorkoutData;
 window.normalizeExerciseData = normalizeExerciseData;
 window.normalizeSetData = normalizeSetData;
 
+// Load July 12 workout data if available
+async function loadJuly12WorkoutData() {
+    try {
+        const response = await fetch('./data/july12-workout-fallback.json');
+        if (response.ok) {
+            const july12Workouts = await response.json();
+            console.log('📅 Loading July 12 workout data...');
+            
+            july12Workouts.forEach(workout => {
+                // Add to local storage
+                const existingWorkouts = JSON.parse(localStorage.getItem('hypertrack_workouts') || '[]');
+                const workoutExists = existingWorkouts.some(w => w.id === workout.id);
+                
+                if (!workoutExists) {
+                    const normalizedWorkout = normalizeWorkoutData(workout);
+                    existingWorkouts.push(normalizedWorkout);
+                    existingWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    localStorage.setItem('hypertrack_workouts', JSON.stringify(existingWorkouts));
+                    
+                    // Try to sync to Supabase
+                    if (window.supabaseClient) {
+                        syncWorkoutOnCompletion(normalizedWorkout).then(result => {
+                            if (result.success) {
+                                console.log('✅ July 12 workout synced to Supabase');
+                            } else {
+                                console.log('📝 July 12 workout saved locally, Supabase sync will retry later');
+                            }
+                        });
+                    }
+                    
+                    console.log(`✅ Added July 12 workout: ${workout.split} (${workout.exercises.length} exercises)`);
+                }
+            });
+            
+            // Update displays if HyperTrack is available
+            if (window.HyperTrack && window.HyperTrack.loadWorkoutData) {
+                window.HyperTrack.loadWorkoutData();
+            }
+        }
+    } catch (error) {
+        console.log('📅 July 12 workout data not available or already loaded');
+    }
+}
+
+// Auto-load July 12 data on initialization
+if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+        setTimeout(loadJuly12WorkoutData, 1000); // Load after other initialization
+    });
+}
+
 // Comprehensive workout sync to Supabase with robust error handling
 async function syncWorkoutOnCompletion(workout) {
     try {

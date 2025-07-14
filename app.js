@@ -341,7 +341,7 @@ function startWorkout() {
     showWorkoutDaySelection();
 }
 
-function showWorkoutDaySelection() {
+async function showWorkoutDaySelection() {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'flex';
@@ -360,8 +360,25 @@ function showWorkoutDaySelection() {
     const recentWorkoutTypes = recentWorkouts.map(w => w.split || w.workoutDay).filter(Boolean);
     console.log('🔍 Recent workout types (last 24h):', recentWorkoutTypes);
     
-    // Research-based workout templates - ordered by recommendation priority
-    const workoutDays = {
+    // Try to get API-powered workout recommendations
+    let apiPriorities = null;
+    try {
+        if (window.recommendationService) {
+            const apiRec = await window.recommendationService.getWorkoutRecommendations(7);
+            if (apiRec && apiRec.recommendations) {
+                apiPriorities = extractWorkoutPriorities(apiRec.recommendations);
+                console.log('🤖 Using API-powered workout priorities:', apiPriorities);
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ API workout priorities failed, using defaults:', error);
+    }
+    
+    // Research-based workout templates - updated with API priorities if available
+    const workoutDays = getWorkoutDaysWithAPIPriorities(apiPriorities, recentWorkoutTypes);
+    
+    function getWorkoutDaysWithAPIPriorities(apiPriorities, recentTypes) {
+        const baseWorkoutDays = {
         'Pull': {
             description: 'Lats, Rhomboids, Rear Delts, Biceps',
             icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12l10-10 10 10"/></svg>',
@@ -441,8 +458,22 @@ function showWorkoutDaySelection() {
                 { name: 'Leg Extensions', priority: 6, type: 'Isolation', sets: '3', reps: '12-15' }
             ],
             research: 'Compound movements for maximum hormonal response - consider after upper body foundation'
+        };
+        
+        // Apply API priorities if available
+        if (apiPriorities) {
+            Object.keys(baseWorkoutDays).forEach(dayType => {
+                if (apiPriorities[dayType]) {
+                    baseWorkoutDays[dayType].priority = apiPriorities[dayType].priority;
+                    baseWorkoutDays[dayType].recommendation = apiPriorities[dayType].recommendation;
+                    baseWorkoutDays[dayType].recommendationReason = apiPriorities[dayType].reason;
+                    baseWorkoutDays[dayType].apiPowered = true;
+                }
+            });
         }
-    };
+        
+        return baseWorkoutDays;
+    }
     
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
@@ -537,6 +568,54 @@ function showWorkoutDaySelection() {
     `;
     
     document.body.appendChild(modal);
+}
+
+// Extract workout priorities from API recommendations
+function extractWorkoutPriorities(apiRecommendations) {
+    const priorities = {};
+    
+    // Look for muscle group balance and next workout recommendations
+    apiRecommendations.forEach(rec => {
+        if (rec.type === 'muscle_group_balance' || rec.type === 'next_workout') {
+            // Extract muscle group suggestions from description
+            const description = rec.description.toLowerCase();
+            
+            // Map muscle groups to workout types
+            if (description.includes('pull') || description.includes('lat') || description.includes('back') || description.includes('bicep')) {
+                priorities['Pull'] = {
+                    priority: rec.priority === 'high' ? 1 : rec.priority === 'medium' ? 2 : 3,
+                    recommendation: rec.priority === 'high' ? 'AI RECOMMENDED' : rec.priority === 'medium' ? 'GOOD OPTION' : 'ALTERNATIVE',
+                    reason: `AI: ${rec.title}`
+                };
+            }
+            
+            if (description.includes('push') || description.includes('chest') || description.includes('tricep') || description.includes('press')) {
+                priorities['Push'] = {
+                    priority: rec.priority === 'high' ? 1 : rec.priority === 'medium' ? 2 : 3,
+                    recommendation: rec.priority === 'high' ? 'AI RECOMMENDED' : rec.priority === 'medium' ? 'GOOD OPTION' : 'ALTERNATIVE',
+                    reason: `AI: ${rec.title}`
+                };
+            }
+            
+            if (description.includes('shoulder') || description.includes('delt') || description.includes('trap')) {
+                priorities['Shoulders'] = {
+                    priority: rec.priority === 'high' ? 1 : rec.priority === 'medium' ? 2 : 3,
+                    recommendation: rec.priority === 'high' ? 'AI RECOMMENDED' : rec.priority === 'medium' ? 'GOOD OPTION' : 'ALTERNATIVE',
+                    reason: `AI: ${rec.title}`
+                };
+            }
+            
+            if (description.includes('leg') || description.includes('quad') || description.includes('glute') || description.includes('squat')) {
+                priorities['Legs'] = {
+                    priority: rec.priority === 'high' ? 1 : rec.priority === 'medium' ? 2 : 3,
+                    recommendation: rec.priority === 'high' ? 'AI RECOMMENDED' : rec.priority === 'medium' ? 'GOOD OPTION' : 'ALTERNATIVE',
+                    reason: `AI: ${rec.title}`
+                };
+            }
+        }
+    });
+    
+    return Object.keys(priorities).length > 0 ? priorities : null;
 }
 
 function selectWorkoutDay(dayType) {
@@ -2028,7 +2107,7 @@ function initializeAnalyzers() {
 }
 
 // Update Intelligence Tab with frequency and performance analysis
-function updateIntelligenceTab() {
+async function updateIntelligenceTab() {
     console.log('🧠 Updating Intelligence Tab...');
     
     // Load workout history data
@@ -2039,17 +2118,171 @@ function updateIntelligenceTab() {
         return;
     }
     
+    // Try to load API-powered recommendations first
+    try {
+        if (window.recommendationService) {
+            console.log('🤖 Loading AI-powered recommendations...');
+            const apiRecommendations = await window.recommendationService.getAllRecommendations(30);
+            if (apiRecommendations) {
+                updateAIRecommendationsSection(apiRecommendations);
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ AI recommendations failed, using local analysis:', error);
+    }
+    
     // Update frequency analysis
     updateFrequencyAnalysis(workoutHistory);
     
     // Update performance vs rest analysis
     updatePerformanceRestAnalysis(workoutHistory);
     
-    // Update workout timing recommendations
-    updateWorkoutTimingAnalysis(workoutHistory);
+    // Update workout timing recommendations with API integration
+    await updateWorkoutTimingAnalysisWithAPI(workoutHistory);
     
     // Update existing AI features
     updateExistingAIFeatures(workoutHistory);
+}
+
+// Update AI Recommendations section with API data
+function updateAIRecommendationsSection(apiData) {
+    console.log('🤖 Updating AI recommendations section with API data');
+    
+    // Find or create AI recommendations container
+    let aiContainer = document.getElementById('aiRecommendationsContainer');
+    if (!aiContainer) {
+        // Create the container if it doesn't exist
+        const intelligenceTab = document.getElementById('intelligenceTab');
+        if (intelligenceTab) {
+            aiContainer = document.createElement('div');
+            aiContainer.id = 'aiRecommendationsContainer';
+            aiContainer.className = 'analysis-section';
+            intelligenceTab.insertBefore(aiContainer, intelligenceTab.firstChild);
+        }
+    }
+    
+    if (!aiContainer) return;
+    
+    let html = `
+        <div class="analysis-header">
+            <h3>🤖 AI-Powered Training Insights</h3>
+            <p class="analysis-description">Personalized recommendations based on your complete workout history</p>
+        </div>
+    `;
+    
+    // Display workout recommendations
+    if (apiData.workout && apiData.workout.recommendations) {
+        html += `<div class="ai-recommendations-grid">`;
+        
+        apiData.workout.recommendations.forEach((rec, index) => {
+            const priorityColor = rec.priority === 'high' ? '#ef4444' : rec.priority === 'medium' ? '#f59e0b' : '#10b981';
+            const confidenceBar = Math.round(rec.confidence * 100);
+            
+            html += `
+                <div class="ai-recommendation-card" style="border-left: 4px solid ${priorityColor};">
+                    <div class="rec-header">
+                        <h4>${rec.title}</h4>
+                        <span class="priority-badge" style="background: ${priorityColor};">${rec.priority.toUpperCase()}</span>
+                    </div>
+                    <p class="rec-description">${rec.description}</p>
+                    <div class="rec-footer">
+                        <div class="confidence-bar">
+                            <span>Confidence: ${confidenceBar}%</span>
+                            <div class="bar" style="width: ${confidenceBar}%; background: ${priorityColor};"></div>
+                        </div>
+                        ${rec.actionable ? '<span class="actionable">✓ Actionable</span>' : '<span class="informational">📊 Informational</span>'}
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div>`;
+    }
+    
+    // Add metadata info
+    const metadata = apiData.workout?.metadata || apiData.metadata;
+    if (metadata) {
+        html += `
+            <div class="api-metadata">
+                <small>
+                    Data Source: ${metadata.source || 'Supabase API'} • 
+                    Workouts Analyzed: ${metadata.workoutCount || 'N/A'} • 
+                    Generated: ${new Date(metadata.generatedAt).toLocaleString()}
+                </small>
+            </div>
+        `;
+    }
+    
+    aiContainer.innerHTML = html;
+}
+
+// Enhanced workout timing analysis with API integration
+async function updateWorkoutTimingAnalysisWithAPI(workoutHistory) {
+    console.log('⏰ Updating workout timing analysis with API integration');
+    
+    // Try to get next workout recommendations from API
+    try {
+        if (window.recommendationService) {
+            const nextWorkoutRec = await window.recommendationService.getWorkoutRecommendations(7);
+            if (nextWorkoutRec && nextWorkoutRec.recommendations) {
+                updateNextWorkoutRecommendationsAPI(nextWorkoutRec);
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ API next workout recommendations failed, using local:', error);
+    }
+    
+    // Fallback to existing workout timing analysis
+    updateWorkoutTimingAnalysis(workoutHistory);
+}
+
+// Display next workout recommendations from API
+function updateNextWorkoutRecommendationsAPI(apiData) {
+    const nextWorkoutContainer = document.getElementById('nextWorkoutRecommendation') || 
+                                 document.getElementById('workoutTimingAnalysis');
+    
+    if (!nextWorkoutContainer) return;
+    
+    let html = `
+        <div class="analysis-header">
+            <h3>🎯 Next Workout Recommendations</h3>
+            <p class="analysis-description">AI-powered suggestions for your next training session</p>
+        </div>
+        <div class="next-workout-recommendations">
+    `;
+    
+    // Filter for actionable next workout recommendations
+    const nextWorkoutRecs = apiData.recommendations.filter(rec => 
+        rec.actionable && (rec.type === 'next_workout' || rec.type === 'muscle_group_balance' || rec.type === 'frequency')
+    );
+    
+    if (nextWorkoutRecs.length > 0) {
+        nextWorkoutRecs.forEach(rec => {
+            const priorityColor = rec.priority === 'high' ? '#ef4444' : rec.priority === 'medium' ? '#f59e0b' : '#10b981';
+            
+            html += `
+                <div class="next-workout-card" style="border-left: 4px solid ${priorityColor};">
+                    <h4>${rec.title}</h4>
+                    <p>${rec.description}</p>
+                    <div class="confidence-indicator" style="color: ${priorityColor};">
+                        Confidence: ${Math.round(rec.confidence * 100)}%
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        html += `
+            <div class="next-workout-card">
+                <h4>No Specific Recommendations</h4>
+                <p>Continue with your regular training schedule. Your current routine appears well-balanced.</p>
+            </div>
+        `;
+    }
+    
+    html += `</div>`;
+    
+    nextWorkoutContainer.innerHTML = html;
 }
 
 function updateIntelligenceTabEmpty() {

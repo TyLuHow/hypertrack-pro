@@ -13,6 +13,164 @@
     scrollbar-color: #475569 transparent;
 }
 
+/* AI Recommendations Styles */
+.ai-recommendations-grid {
+    display: grid;
+    gap: 16px;
+    margin: 16px 0;
+}
+
+.ai-recommendation-card {
+    background: #1f2937;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #374151;
+    transition: all 0.2s ease;
+}
+
+.ai-recommendation-card:hover {
+    border-color: #60a5fa;
+    transform: translateY(-1px);
+}
+
+.rec-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.rec-header h4 {
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.priority-badge {
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+    margin-left: 12px;
+}
+
+.rec-description {
+    color: #d1d5db;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+}
+
+.rec-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.confidence-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.confidence-bar span {
+    color: #9ca3af;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.confidence-bar .bar {
+    height: 4px;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.actionable {
+    color: #10b981;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.informational {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.api-metadata {
+    background: #111827;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 16px 0;
+    border: 1px solid #374151;
+}
+
+.api-metadata small {
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+/* Next Workout Recommendations */
+.next-workout-recommendations {
+    display: grid;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.next-workout-card {
+    background: #1f2937;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #374151;
+}
+
+.next-workout-card h4 {
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.next-workout-card p {
+    color: #d1d5db;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 12px 0;
+}
+
+.confidence-indicator {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Enhanced analysis sections */
+.analysis-section {
+    margin-bottom: 24px;
+}
+
+.analysis-header {
+    margin-bottom: 16px;
+}
+
+.analysis-header h3 {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+
+.analysis-description {
+    color: #9ca3af;
+    font-size: 14px;
+    margin: 0;
+}
+
 *::-webkit-scrollbar {
     width: 8px;
     height: 8px;
