@@ -1235,19 +1235,27 @@ async function finishWorkout() {
         console.log('📊 Progress recorded for workout exercises');
     }
     
-    // Save workout using new method (localStorage + Supabase sync)
-    const result = await HyperTrack.saveWorkout(workout);
+    // Save workout with unified approach (localStorage + Supabase sync)
+    let result = { success: false };
     
-    // Also sync to Supabase to ensure unified logging
     if (typeof syncWorkoutOnCompletion === 'function') {
         const syncResult = await syncWorkoutOnCompletion(workout);
         if (syncResult.success) {
-            console.log('✅ Workout synced to Supabase for unified logging');
+            console.log('✅ Workout synced to Supabase and saved locally');
+            // Update HyperTrack state to reflect the saved workout
+            HyperTrack.state.workouts.unshift(workout);
+            HyperTrack.updateAllDisplays();
+            result = { success: true };
         } else {
-            console.warn('⚠️ Supabase sync failed but workout saved locally:', syncResult.reason);
-            // Show user notification about sync failure
+            console.warn('⚠️ Supabase sync failed, saving locally only:', syncResult.reason);
+            // Fallback to local save only
+            result = await HyperTrack.saveWorkout(workout);
             showNotification('Workout saved locally. Cloud sync will retry later.', 'warning');
         }
+    } else {
+        // No Supabase available, save locally only
+        result = await HyperTrack.saveWorkout(workout);
+        console.log('💾 Workout saved locally (no Supabase available)');
     }
     
     if (result.success) {
@@ -1275,9 +1283,23 @@ async function finishWorkout() {
     }
 }
 
-function showPostWorkoutVolumeRecommendations() {
+async function showPostWorkoutVolumeRecommendations() {
     console.log('📊 Analyzing weekly volume targets after workout...');
     
+    // Try to get API-powered recommendations first
+    try {
+        if (window.recommendationService) {
+            const apiRecommendations = await window.recommendationService.getAllRecommendations(7); // Last 7 days
+            if (apiRecommendations && apiRecommendations.workout) {
+                showApiBasedRecommendations(apiRecommendations);
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ API recommendations failed, falling back to local analysis:', error);
+    }
+    
+    // Fallback to local analysis
     const weeklyVolumeWithTargets = getWeeklyVolumeWithTargets(HyperTrack.state.workouts);
     
     // Find muscle groups that need attention
@@ -1297,6 +1319,8 @@ function showPostWorkoutVolumeRecommendations() {
         console.log('✅ All muscle groups meeting weekly targets');
         return;
     }
+    
+    showLocalVolumeRecommendations(needAttention, untrained);
     
     // Create modal for recommendations
     const modal = document.createElement('div');
@@ -1402,6 +1426,171 @@ function showPostWorkoutVolumeRecommendations() {
     document.body.appendChild(modal);
     
     console.log(`📊 Showed post-workout recommendations: ${totalDeficit} sets needed`);
+}
+
+// Show API-powered recommendations
+function showApiBasedRecommendations(apiData) {
+    console.log('🚀 Displaying API-powered recommendations:', apiData);
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.id = 'postWorkoutRecommendationsModal';
+    
+    let recommendationsHTML = `
+        <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>🤖 AI-Powered Training Insights</h3>
+                <button class="close-btn" onclick="document.getElementById('postWorkoutRecommendationsModal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #9ca3af; margin-bottom: 20px; font-size: 14px;">
+                    Based on your complete workout history in Supabase, here are personalized recommendations:
+                </p>
+    `;
+    
+    // Display workout recommendations
+    if (apiData.workout && apiData.workout.recommendations) {
+        apiData.workout.recommendations.forEach(rec => {
+            const priorityColor = rec.priority === 'high' ? '#ef4444' : rec.priority === 'medium' ? '#f59e0b' : '#10b981';
+            const confidenceBar = Math.round(rec.confidence * 100);
+            
+            recommendationsHTML += `
+                <div style="background: #1f2937; border-radius: 8px; padding: 16px; margin: 12px 0; border-left: 4px solid ${priorityColor};">
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 8px;">
+                        <h4 style="color: white; margin: 0; font-size: 16px;">${rec.title}</h4>
+                        <span style="background: ${priorityColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; text-transform: uppercase;">
+                            ${rec.priority}
+                        </span>
+                    </div>
+                    <p style="color: #d1d5db; margin: 8px 0 12px 0; font-size: 14px;">
+                        ${rec.description}
+                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="background: #374151; border-radius: 8px; padding: 4px 8px;">
+                            <span style="color: #9ca3af; font-size: 11px;">Confidence: </span>
+                            <span style="color: white; font-size: 11px; font-weight: 600;">${confidenceBar}%</span>
+                        </div>
+                        ${rec.actionable ? '<span style="color: #10b981; font-size: 12px;">✓ Actionable</span>' : '<span style="color: #6b7280; font-size: 12px;">📊 Informational</span>'}
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    // Add metadata info
+    const metadata = apiData.workout?.metadata || apiData.metadata;
+    if (metadata) {
+        recommendationsHTML += `
+            <div style="background: #111827; border-radius: 8px; padding: 12px; margin: 16px 0; border: 1px solid #374151;">
+                <p style="font-size: 11px; color: #9ca3af; margin: 0;">
+                    <strong>Data Source:</strong> ${metadata.source || 'Supabase API'} • 
+                    <strong>Workouts Analyzed:</strong> ${metadata.workoutCount || 'N/A'} • 
+                    <strong>Generated:</strong> ${new Date(metadata.generatedAt).toLocaleString()}
+                </p>
+            </div>
+        `;
+    }
+    
+    recommendationsHTML += `
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;">
+                    <button onclick="document.getElementById('postWorkoutRecommendationsModal').remove(); switchTab('workout');" 
+                            style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                        Plan Next Workout
+                    </button>
+                    <button onclick="document.getElementById('postWorkoutRecommendationsModal').remove(); switchTab('analytics');" 
+                            style="background: #374151; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                        View Analytics
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    modal.innerHTML = recommendationsHTML;
+    document.body.appendChild(modal);
+    
+    console.log('✅ API-based recommendations displayed');
+}
+
+// Original local volume recommendations (now as fallback)
+function showLocalVolumeRecommendations(needAttention, untrained) {
+    console.log('📊 Showing local volume recommendations as fallback');
+    
+    // Create modal for recommendations
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.id = 'postWorkoutRecommendationsModal';
+    
+    const totalDeficit = [...needAttention, ...untrained].reduce((sum, { data }) => 
+        sum + (data.mev - data.current), 0);
+    
+    let recommendationsHTML = `
+        <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>📊 Weekly Volume Check (Local)</h3>
+                <button class="close-btn" onclick="document.getElementById('postWorkoutRecommendationsModal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #9ca3af; margin-bottom: 20px; font-size: 14px;">
+                    Based on your local workout data, here are muscle groups that need more attention:
+                </p>
+    `;
+    
+    // Show untrained and undertrained as before
+    if (untrained.length > 0) {
+        recommendationsHTML += `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #be185d;">Untrained This Week (0 Sets)</h4>
+        `;
+        untrained.forEach(({ muscle, data }) => {
+            recommendationsHTML += `
+                <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #be185d;">
+                    <span style="font-weight: 600; color: white;">${muscle}</span>
+                    <span style="float: right; color: #be185d;">0/${data.mev} sets needed</span>
+                </div>
+            `;
+        });
+        recommendationsHTML += `</div>`;
+    }
+    
+    if (needAttention.length > 0) {
+        recommendationsHTML += `
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #f59e0b;">Below Target</h4>
+        `;
+        needAttention.forEach(({ muscle, data }) => {
+            recommendationsHTML += `
+                <div style="background: #1f2937; border-radius: 8px; padding: 12px; margin: 8px 0; border-left: 4px solid #f59e0b;">
+                    <span style="font-weight: 600; color: white;">${muscle}</span>
+                    <span style="float: right; color: #f59e0b;">${data.current}/${data.mev} sets</span>
+                </div>
+            `;
+        });
+        recommendationsHTML += `</div>`;
+    }
+    
+    recommendationsHTML += `
+                <div style="background: #111827; border-radius: 8px; padding: 12px; margin: 16px 0;">
+                    <p style="font-size: 11px; color: #9ca3af; margin: 0;">
+                        <strong>Note:</strong> API recommendations unavailable. Using local data analysis.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <button onclick="document.getElementById('postWorkoutRecommendationsModal').remove(); switchTab('workout');" 
+                            style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        Plan Next Workout
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    modal.innerHTML = recommendationsHTML;
+    document.body.appendChild(modal);
+    
+    console.log(`📊 Showed local recommendations: ${totalDeficit} sets needed`);
 }
 
 function selectExercise(exerciseName, muscleGroup, category) {

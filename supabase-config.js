@@ -253,15 +253,74 @@ async function initializeTylerData() {
 // Make function globally available
 window.initializeTylerData = initializeTylerData;
 
+// Ensure workout data matches expected schema format
+function normalizeWorkoutData(workout) {
+    // Ensure the workout has the required fields for both local and Supabase storage
+    const normalized = {
+        id: workout.id || `workout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        user_id: workout.user_id || currentUserId,
+        date: workout.date,
+        start_time: workout.startTime || workout.start_time,
+        end_time: workout.endTime || workout.end_time,
+        duration: workout.duration || null,
+        split: workout.split || 'General',
+        time_of_day: formatTimeOfDay(workout.tod || workout.timeOfDay || workout.time_of_day),
+        notes: workout.notes || '',
+        exercises: normalizeExerciseData(workout.exercises || [])
+    };
+    
+    // Add legacy fields for backwards compatibility
+    normalized.startTime = normalized.start_time;
+    normalized.endTime = normalized.end_time;
+    normalized.tod = normalized.time_of_day;
+    normalized.timeOfDay = normalized.time_of_day;
+    
+    return normalized;
+}
+
+// Normalize exercise data to ensure consistent structure
+function normalizeExerciseData(exercises) {
+    return exercises.map(exercise => {
+        return {
+            id: exercise.id || `exercise_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            name: exercise.name,
+            muscle_group: exercise.muscle_group || exercise.muscleGroup || 'General',
+            category: exercise.category || 'General',
+            equipment: exercise.equipment || 'Unknown',
+            notes: exercise.notes || '',
+            sets: normalizeSetData(exercise.sets || [])
+        };
+    });
+}
+
+// Normalize set data to ensure consistent structure
+function normalizeSetData(sets) {
+    return sets.map((set, index) => {
+        return {
+            id: set.id || `set_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
+            set_number: set.set_number || set.setNumber || (index + 1),
+            reps: parseInt(set.reps) || 0,
+            weight: parseFloat(set.weight) || 0,
+            rpe: parseFloat(set.rpe) || null,
+            rest_time_seconds: parseInt(set.rest_time_seconds) || parseInt(set.restTime) || null,
+            is_warmup: Boolean(set.is_warmup || set.isWarmup),
+            is_failure: Boolean(set.is_failure || set.isFailure),
+            notes: set.notes || ''
+        };
+    });
+}
+
+// Make normalization functions globally available
+window.normalizeWorkoutData = normalizeWorkoutData;
+window.normalizeExerciseData = normalizeExerciseData;
+window.normalizeSetData = normalizeSetData;
+
 // Comprehensive workout sync to Supabase with robust error handling
 async function syncWorkoutOnCompletion(workout) {
     try {
-        // Always save locally first as backup
-        const localSaved = saveWorkoutLocally(workout);
-        
         if (!window.supabaseClient) {
-            console.warn('⚠️ Supabase not available - workout saved locally only');
-            return { success: false, savedLocally: localSaved, reason: 'No Supabase client' };
+            console.warn('⚠️ Supabase not available - will save locally only');
+            return { success: false, savedLocally: false, reason: 'No Supabase client' };
         }
 
         console.log('🔄 Syncing completed workout to Supabase...');
@@ -274,19 +333,8 @@ async function syncWorkoutOnCompletion(workout) {
             exercises: workout.exercises?.length || 0
         });
         
-        // Format and validate data for Supabase insertion
-        const formattedWorkout = {
-            id: workout.id,
-            user_id: currentUserId,
-            date: workout.date,
-            start_time: workout.startTime,
-            end_time: workout.endTime,
-            duration: workout.duration || null,
-            split: workout.split || 'General',
-            time_of_day: formatTimeOfDay(workout.tod || workout.timeOfDay),
-            notes: workout.notes || '',
-            exercises: workout.exercises || []
-        };
+        // Normalize and format data for Supabase insertion
+        const formattedWorkout = normalizeWorkoutData(workout);
         
         // Validate required fields
         if (!formattedWorkout.id) {
@@ -308,10 +356,11 @@ async function syncWorkoutOnCompletion(workout) {
             console.error('📋 Error code:', error.code);
             console.error('📋 Error message:', error.message);
             console.error('📋 Error hint:', error.hint);
-            console.log('💾 Workout still saved locally');
-            return { success: false, savedLocally: localSaved, error: error, reason: 'Supabase insert failed' };
+            return { success: false, savedLocally: false, error: error, reason: 'Supabase insert failed' };
         }
 
+        // Save locally only after successful Supabase sync
+        const localSaved = saveWorkoutLocally(workout);
         console.log('✅ Workout synced to Supabase successfully');
         console.log('📋 Supabase response data:', data);
         return { success: true, savedLocally: localSaved, data: data };
@@ -319,8 +368,7 @@ async function syncWorkoutOnCompletion(workout) {
     } catch (error) {
         console.error('❌ Workout sync error:', error);
         console.error('📋 Error stack:', error.stack);
-        const localSaved = saveWorkoutLocally(workout);
-        return { success: false, savedLocally: localSaved, error: error, reason: 'Exception thrown' };
+        return { success: false, savedLocally: false, error: error, reason: 'Exception thrown' };
     }
 }
 
@@ -353,7 +401,22 @@ function formatTimeOfDay(tod) {
 function saveWorkoutLocally(workout) {
     try {
         const existingWorkouts = JSON.parse(localStorage.getItem('hypertrack_workouts') || '[]');
-        existingWorkouts.push(workout);
+        
+        // Normalize the workout data before saving
+        const normalizedWorkout = normalizeWorkoutData(workout);
+        
+        // Check for duplicates before adding
+        const existingIndex = existingWorkouts.findIndex(w => w.id === normalizedWorkout.id);
+        if (existingIndex >= 0) {
+            // Update existing workout
+            existingWorkouts[existingIndex] = normalizedWorkout;
+            console.log('🔄 Updated existing workout in localStorage');
+        } else {
+            // Add new workout
+            existingWorkouts.push(normalizedWorkout);
+            console.log('➕ Added new workout to localStorage');
+        }
+        
         existingWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
         localStorage.setItem('hypertrack_workouts', JSON.stringify(existingWorkouts));
         return true;
