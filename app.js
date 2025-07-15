@@ -334,11 +334,11 @@ const HyperTrack = {
 };
 
 // Core Functions
-function startWorkout() {
+async function startWorkout() {
     console.log('🏋️‍♂️ Starting new workout...');
     
     // Show workout day selection modal
-    showWorkoutDaySelection();
+    await showWorkoutDaySelection();
 }
 
 async function showWorkoutDaySelection() {
@@ -379,85 +379,86 @@ async function showWorkoutDaySelection() {
     
     function getWorkoutDaysWithAPIPriorities(apiPriorities, recentTypes) {
         const baseWorkoutDays = {
-        'Pull': {
-            description: 'Lats, Rhomboids, Rear Delts, Biceps',
-            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12l10-10 10 10"/></svg>',
-            priority: 1,
-            recommendation: 'HIGHLY RECOMMENDED',
-            recommendationReason: 'Back development priority - builds foundation',
-            exercises: [
-                { name: 'Lat Pulldowns', priority: 1, type: 'Compound', sets: '3-4', reps: '8-12' },
-                { name: 'Smith Machine Rows', priority: 2, type: 'Compound', sets: '3', reps: '6-10' },
-                { name: 'Face Pulls', priority: 3, type: 'Isolation', sets: '3', reps: '12-16' },
-                { name: 'Dumbbell Bicep Curls', priority: 4, type: 'Isolation', sets: '3', reps: '8-12' },
-                { name: 'Cable Hammer Curls', priority: 5, type: 'Isolation', sets: '3', reps: '10-14' },
-                { name: 'Reverse Grip EZ Bar Curl', priority: 6, type: 'Isolation', sets: '3', reps: '10-15' }
-            ],
-            research: 'Pull-ups activate lats 117% more than any exercise. Back strength creates training foundation'
-        },
-        'Push': {
-            description: 'Chest, Shoulders, Triceps',
-            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M22 12l-10-10-10 10"/></svg>',
-            priority: 2,
-            recommendation: 'RECOMMENDED',
-            recommendationReason: 'Balanced upper body development',
-            exercises: [
-                { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
-                { name: 'Incline Dumbbell Press', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3-4', reps: '12-20' },
-                { name: 'Bodyweight Dips', priority: 4, type: 'Compound', sets: '3', reps: '6-12' },
-                { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Tricep Cable Rope Pulldowns', priority: 6, type: 'Isolation', sets: '3', reps: '10-15' }
-            ],
-            research: 'Based on Tyler\'s historical push workouts. Compounds first for maximum strength gains'
-        },
-        'Shoulders': {
-            description: 'All Three Deltoid Heads + Traps',
-            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M12 14v8"/><path d="M8 18h8"/></svg>',
-            priority: 3,
-            recommendation: 'GOOD OPTION',
-            recommendationReason: 'Specialization for weak points',
-            exercises: [
-                { name: 'Dumbbell Lateral Raises', priority: 1, type: 'Isolation', sets: '4', reps: '12-20' },
-                { name: 'Smith Machine Barbell Shrugs', priority: 2, type: 'Isolation', sets: '4', reps: '10-18' },
-                { name: 'Cable Lateral Raises', priority: 3, type: 'Isolation', sets: '3', reps: '15-20' },
-                { name: 'Dumbbell Reverse Flyes', priority: 4, type: 'Isolation', sets: '3', reps: '12-16' },
-                { name: 'EZ Bar Upright Rows', priority: 5, type: 'Compound', sets: '3', reps: '12-15' },
-                { name: 'Cable External Rotations', priority: 6, type: 'Isolation', sets: '2-3', reps: '12-15' }
-            ],
-            research: 'Light weights (15+ reps) produce 40% more side delt growth than heavy 6-8 reps'
-        },
-        'Upper/Lower': {
-            description: 'Upper Body Focus',
-            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5L16 16"/><path d="M16 8.5L8.5 16"/></svg>',
-            priority: 4,
-            recommendation: 'ALTERNATIVE',
-            recommendationReason: 'Mixed muscle groups approach',
-            exercises: [
-                { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
-                { name: 'Lat Pulldowns', priority: 2, type: 'Compound', sets: '3-4', reps: '8-12' },
-                { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3', reps: '12-20' },
-                { name: 'Smith Machine Rows', priority: 4, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Dumbbell Bicep Curls', priority: 6, type: 'Isolation', sets: '3', reps: '10-14' }
-            ],
-            research: 'Upper/lower split allows higher frequency per muscle (2x/week optimal for hypertrophy)'
-        },
-        'Legs': {
-            description: 'Quads, Hamstrings, Glutes, Calves',
-            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v20M16 2v20M12 2v6M12 16v6M6 8h12M6 16h12"/></svg>',
-            priority: 5,
-            recommendation: 'SKIP FOR NOW',
-            recommendationReason: 'Focus on upper body development first',
-            exercises: [
-                { name: 'Back Squats', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
-                { name: 'Romanian Deadlifts', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Bulgarian Split Squats', priority: 3, type: 'Compound', sets: '3', reps: '8-12' },
-                { name: 'Leg Curls', priority: 4, type: 'Isolation', sets: '3', reps: '10-15' },
-                { name: 'Calf Raises', priority: 5, type: 'Isolation', sets: '4', reps: '15-20' },
-                { name: 'Leg Extensions', priority: 6, type: 'Isolation', sets: '3', reps: '12-15' }
-            ],
-            research: 'Compound movements for maximum hormonal response - consider after upper body foundation'
+            'Pull': {
+                description: 'Lats, Rhomboids, Rear Delts, Biceps',
+                icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12l10-10 10 10"/></svg>',
+                priority: 1,
+                recommendation: 'HIGHLY RECOMMENDED',
+                recommendationReason: 'Back development priority - builds foundation',
+                exercises: [
+                    { name: 'Lat Pulldowns', priority: 1, type: 'Compound', sets: '3-4', reps: '8-12' },
+                    { name: 'Smith Machine Rows', priority: 2, type: 'Compound', sets: '3', reps: '6-10' },
+                    { name: 'Face Pulls', priority: 3, type: 'Isolation', sets: '3', reps: '12-16' },
+                    { name: 'Dumbbell Bicep Curls', priority: 4, type: 'Isolation', sets: '3', reps: '8-12' },
+                    { name: 'Cable Hammer Curls', priority: 5, type: 'Isolation', sets: '3', reps: '10-14' },
+                    { name: 'Reverse Grip EZ Bar Curl', priority: 6, type: 'Isolation', sets: '3', reps: '10-15' }
+                ],
+                research: 'Pull-ups activate lats 117% more than any exercise. Back strength creates training foundation'
+            },
+            'Push': {
+                description: 'Chest, Shoulders, Triceps',
+                icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M22 12l-10-10-10 10"/></svg>',
+                priority: 2,
+                recommendation: 'RECOMMENDED',
+                recommendationReason: 'Balanced upper body development',
+                exercises: [
+                    { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
+                    { name: 'Incline Dumbbell Press', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
+                    { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3-4', reps: '12-20' },
+                    { name: 'Bodyweight Dips', priority: 4, type: 'Compound', sets: '3', reps: '6-12' },
+                    { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12' },
+                    { name: 'Tricep Cable Rope Pulldowns', priority: 6, type: 'Isolation', sets: '3', reps: '10-15' }
+                ],
+                research: 'Based on Tyler\'s historical push workouts. Compounds first for maximum strength gains'
+            },
+            'Shoulders': {
+                description: 'All Three Deltoid Heads + Traps',
+                icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M12 14v8"/><path d="M8 18h8"/></svg>',
+                priority: 3,
+                recommendation: 'GOOD OPTION',
+                recommendationReason: 'Specialization for weak points',
+                exercises: [
+                    { name: 'Dumbbell Lateral Raises', priority: 1, type: 'Isolation', sets: '4', reps: '12-20' },
+                    { name: 'Smith Machine Barbell Shrugs', priority: 2, type: 'Isolation', sets: '4', reps: '10-18' },
+                    { name: 'Cable Lateral Raises', priority: 3, type: 'Isolation', sets: '3', reps: '15-20' },
+                    { name: 'Dumbbell Reverse Flyes', priority: 4, type: 'Isolation', sets: '3', reps: '12-16' },
+                    { name: 'EZ Bar Upright Rows', priority: 5, type: 'Compound', sets: '3', reps: '12-15' },
+                    { name: 'Cable External Rotations', priority: 6, type: 'Isolation', sets: '2-3', reps: '12-15' }
+                ],
+                research: 'Light weights (15+ reps) produce 40% more side delt growth than heavy 6-8 reps'
+            },
+            'Upper/Lower': {
+                description: 'Upper Body Focus',
+                icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5L16 16"/><path d="M16 8.5L8.5 16"/></svg>',
+                priority: 4,
+                recommendation: 'ALTERNATIVE',
+                recommendationReason: 'Mixed muscle groups approach',
+                exercises: [
+                    { name: 'Smith Machine Bench Press', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
+                    { name: 'Lat Pulldowns', priority: 2, type: 'Compound', sets: '3-4', reps: '8-12' },
+                    { name: 'Dumbbell Lateral Raises', priority: 3, type: 'Isolation', sets: '3', reps: '12-20' },
+                    { name: 'Smith Machine Rows', priority: 4, type: 'Compound', sets: '3', reps: '8-12' },
+                    { name: 'Close-Grip Smith Machine Press', priority: 5, type: 'Compound', sets: '3', reps: '8-12' },
+                    { name: 'Dumbbell Bicep Curls', priority: 6, type: 'Isolation', sets: '3', reps: '10-14' }
+                ],
+                research: 'Upper/lower split allows higher frequency per muscle (2x/week optimal for hypertrophy)'
+            },
+            'Legs': {
+                description: 'Quads, Hamstrings, Glutes, Calves',
+                icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v20M16 2v20M12 2v6M12 16v6M6 8h12M6 16h12"/></svg>',
+                priority: 5,
+                recommendation: 'SKIP FOR NOW',
+                recommendationReason: 'Focus on upper body development first',
+                exercises: [
+                    { name: 'Back Squats', priority: 1, type: 'Compound', sets: '3-4', reps: '6-10' },
+                    { name: 'Romanian Deadlifts', priority: 2, type: 'Compound', sets: '3', reps: '8-12' },
+                    { name: 'Bulgarian Split Squats', priority: 3, type: 'Compound', sets: '3', reps: '8-12' },
+                    { name: 'Leg Curls', priority: 4, type: 'Isolation', sets: '3', reps: '10-15' },
+                    { name: 'Calf Raises', priority: 5, type: 'Isolation', sets: '4', reps: '15-20' },
+                    { name: 'Leg Extensions', priority: 6, type: 'Isolation', sets: '3', reps: '12-15' }
+                ],
+                research: 'Compound movements for maximum hormonal response - consider after upper body foundation'
+            }
         };
         
         // Apply API priorities if available
