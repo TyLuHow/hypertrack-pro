@@ -88,6 +88,12 @@ class TylerDataManager {
                 return await this.loadFromLocalFallback();
             }
             
+            // Skip Supabase operations in development mode to avoid auth errors
+            if (currentUserId.startsWith('user_')) {
+                console.log('🛠️ Development mode detected - using local data only');
+                return await this.loadFromLocalFallback();
+            }
+            
             console.log('🔄 Migrating Tyler historical data to Supabase...');
             
                     // Test if we can access the workouts table
@@ -603,6 +609,12 @@ async function migrateLocalWorkoutsToSupabase() {
             return { success: false, reason: 'No Supabase client' };
         }
 
+        // Skip Supabase operations in development mode
+        if (currentUserId.startsWith('user_')) {
+            console.log('🛠️ Development mode detected - skipping local workout migration to Supabase');
+            return { success: true, migrated: 0, reason: 'Development mode - local only' };
+        }
+        
         console.log('🔄 Migrating local user workouts to Supabase...');
         
         // Load local workouts
