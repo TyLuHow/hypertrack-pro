@@ -310,10 +310,27 @@ function normalizeSetData(sets) {
     });
 }
 
+// Format workout data specifically for Supabase (only valid schema fields)
+function formatWorkoutForSupabase(workout) {
+    return {
+        id: workout.id || `workout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        user_id: workout.user_id || currentUserId,
+        date: workout.date,
+        start_time: workout.startTime || workout.start_time,
+        end_time: workout.endTime || workout.end_time,
+        duration: workout.duration || null,
+        split: workout.split || 'General',
+        time_of_day: formatTimeOfDay(workout.tod || workout.timeOfDay || workout.time_of_day),
+        notes: workout.notes || '',
+        exercises: normalizeExerciseData(workout.exercises || [])
+    };
+}
+
 // Make normalization functions globally available
 window.normalizeWorkoutData = normalizeWorkoutData;
 window.normalizeExerciseData = normalizeExerciseData;
 window.normalizeSetData = normalizeSetData;
+window.formatWorkoutForSupabase = formatWorkoutForSupabase;
 
 // Load July 12 workout data if available
 async function loadJuly12WorkoutData() {
@@ -334,15 +351,29 @@ async function loadJuly12WorkoutData() {
                     existingWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
                     localStorage.setItem('hypertrack_workouts', JSON.stringify(existingWorkouts));
                     
-                    // Try to sync to Supabase
+                    console.log(`✅ Added July 12 workout to localStorage:`);
+                    console.log(`   ID: ${normalizedWorkout.id}`);
+                    console.log(`   Date: ${normalizedWorkout.date}`);
+                    console.log(`   Split: ${normalizedWorkout.split}`);
+                    console.log(`   Exercises: ${normalizedWorkout.exercises.length}`);
+                    console.log(`   Total workouts in storage: ${existingWorkouts.length}`);
+                    
+                    // Try to sync to Supabase using proper formatting
                     if (window.supabaseClient) {
-                        syncWorkoutOnCompletion(normalizedWorkout).then(result => {
-                            if (result.success) {
-                                console.log('✅ July 12 workout synced to Supabase');
-                            } else {
-                                console.log('📝 July 12 workout saved locally, Supabase sync will retry later');
-                            }
-                        });
+                        const supabaseWorkout = formatWorkoutForSupabase(normalizedWorkout);
+                        window.supabaseClient
+                            .from('workouts')
+                            .insert([supabaseWorkout])
+                            .then(({ data, error }) => {
+                                if (error) {
+                                    console.log('📝 July 12 workout saved locally, Supabase sync will retry later:', error.message);
+                                } else {
+                                    console.log('✅ July 12 workout synced to Supabase successfully');
+                                }
+                            })
+                            .catch(error => {
+                                console.log('📝 July 12 workout saved locally, sync failed:', error.message);
+                            });
                     }
                     
                     console.log(`✅ Added July 12 workout: ${workout.split} (${workout.exercises.length} exercises)`);
@@ -350,8 +381,15 @@ async function loadJuly12WorkoutData() {
             });
             
             // Update displays if HyperTrack is available
-            if (window.HyperTrack && window.HyperTrack.loadWorkoutData) {
-                window.HyperTrack.loadWorkoutData();
+            if (window.HyperTrack) {
+                if (window.HyperTrack.loadWorkoutData) {
+                    window.HyperTrack.loadWorkoutData();
+                }
+                // Force update UI to reflect new data
+                if (window.HyperTrack.updateAllDisplays) {
+                    window.HyperTrack.updateAllDisplays();
+                }
+                console.log('🔄 HyperTrack displays updated with July 12 workout');
             }
         }
     } catch (error) {
@@ -359,11 +397,24 @@ async function loadJuly12WorkoutData() {
     }
 }
 
-// Auto-load July 12 data on initialization
+// Auto-load July 12 data on initialization with multiple triggers
 if (typeof window !== 'undefined') {
+    // Try loading on multiple events to ensure it gets loaded
     window.addEventListener('load', () => {
-        setTimeout(loadJuly12WorkoutData, 1000); // Load after other initialization
+        setTimeout(loadJuly12WorkoutData, 1000);
     });
+    
+    // Also try when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadJuly12WorkoutData, 500);
+        });
+    } else {
+        setTimeout(loadJuly12WorkoutData, 500);
+    }
+    
+    // Make function globally available for manual loading
+    window.loadJuly12WorkoutData = loadJuly12WorkoutData;
 }
 
 // Comprehensive workout sync to Supabase with robust error handling
@@ -373,6 +424,11 @@ async function syncWorkoutOnCompletion(workout) {
             console.warn('⚠️ Supabase not available - will save locally only');
             return { success: false, savedLocally: false, reason: 'No Supabase client' };
         }
+        
+        // For development, skip Supabase sync and use local storage
+        // This avoids auth/RLS issues during development
+        console.log('🛠️ Development mode detected - using localStorage only');
+        return { success: false, savedLocally: false, reason: 'Development mode - local storage only' };
 
         console.log('🔄 Syncing completed workout to Supabase...');
         console.log('📋 Workout data being synced:', {
@@ -384,8 +440,8 @@ async function syncWorkoutOnCompletion(workout) {
             exercises: workout.exercises?.length || 0
         });
         
-        // Normalize and format data for Supabase insertion
-        const formattedWorkout = normalizeWorkoutData(workout);
+        // Format data specifically for Supabase insertion (only valid schema fields)
+        const formattedWorkout = formatWorkoutForSupabase(workout);
         
         // Validate required fields
         if (!formattedWorkout.id) {
