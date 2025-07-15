@@ -1,15 +1,15 @@
 // Direct July 12 workout loader - adds workout immediately to localStorage
 console.log('📅 Loading July 12 workout directly...');
 
-// July 12, 2024 workout data
+// July 12, 2025 workout data (current year)
 const july12Workout = {
-    "id": "workout_july12_2024_shoulders_triceps",
+    "id": "workout_july12_2025_shoulders_triceps",
     "user_id": "tyler_historical", 
-    "date": "2024-07-12",
-    "startTime": "2024-07-12T15:30:00.000Z",
-    "endTime": "2024-07-12T16:45:00.000Z",
-    "start_time": "15:30:00",
-    "end_time": "16:45:00", 
+    "date": "2025-07-12",
+    "startTime": "2025-07-12T15:30:00.000Z",
+    "endTime": "2025-07-12T16:45:00.000Z",
+    "start_time": "2025-07-12T15:30:00.000Z",
+    "end_time": "2025-07-12T16:45:00.000Z", 
     "duration": 75,
     "split": "Shoulders/Triceps",
     "time_of_day": "PM",
@@ -149,26 +149,26 @@ function addJuly12WorkoutToLocalStorage() {
     try {
         const existingWorkouts = JSON.parse(localStorage.getItem('hypertrack_workouts') || '[]');
         
-        // Check if workout already exists
-        const workoutExists = existingWorkouts.some(w => w.id === july12Workout.id);
+        // Remove any existing July 12 workouts (both 2024 and 2025 versions)
+        const filteredWorkouts = existingWorkouts.filter(w => 
+            !w.id.includes('july12') && !w.date.includes('2024-07-12') && !w.date.includes('2025-07-12')
+        );
         
-        if (!workoutExists) {
-            existingWorkouts.push(july12Workout);
-            existingWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
-            localStorage.setItem('hypertrack_workouts', JSON.stringify(existingWorkouts));
-            
-            console.log('✅ July 12 workout added to localStorage');
-            console.log(`📊 Total workouts: ${existingWorkouts.length}`);
-            console.log(`📅 July 12 workout details:`);
-            console.log(`   Split: ${july12Workout.split}`);
-            console.log(`   Exercises: ${july12Workout.exercises.length}`);
-            console.log(`   Total sets: ${july12Workout.exercises.reduce((total, ex) => total + ex.sets.length, 0)}`);
-            
-            return true;
-        } else {
-            console.log('📅 July 12 workout already exists in localStorage');
-            return false;
-        }
+        // Add the new 2025 July 12 workout
+        filteredWorkouts.push(july12Workout);
+        filteredWorkouts.sort((a, b) => new Date(b.date) - new Date(a.date));
+        localStorage.setItem('hypertrack_workouts', JSON.stringify(filteredWorkouts));
+        
+        console.log('✅ July 12, 2025 workout added to localStorage');
+        console.log(`📊 Total workouts: ${filteredWorkouts.length}`);
+        console.log(`📅 July 12 workout details:`);
+        console.log(`   Date: ${july12Workout.date}`);
+        console.log(`   Split: ${july12Workout.split}`);
+        console.log(`   Exercises: ${july12Workout.exercises.length}`);
+        console.log(`   Total sets: ${july12Workout.exercises.reduce((total, ex) => total + ex.sets.length, 0)}`);
+        console.log(`   Position in list: ${filteredWorkouts.findIndex(w => w.id === july12Workout.id) + 1}`);
+        
+        return true;
     } catch (error) {
         console.error('❌ Failed to add July 12 workout:', error);
         return false;
@@ -208,5 +208,21 @@ if (added) {
     }
 }
 
-// Make function globally available
+// Function to force reload July 12 workout (for debugging)
+function forceReloadJuly12Workout() {
+    console.log('🔄 Force reloading July 12 workout...');
+    addJuly12WorkoutToLocalStorage();
+    
+    // Update HyperTrack if available
+    if (window.HyperTrack && window.HyperTrack.loadWorkoutData) {
+        window.HyperTrack.loadWorkoutData();
+        if (window.HyperTrack.updateAllDisplays) {
+            window.HyperTrack.updateAllDisplays();
+        }
+        console.log('✅ HyperTrack refreshed with updated July 12 workout');
+    }
+}
+
+// Make functions globally available
 window.addJuly12WorkoutToLocalStorage = addJuly12WorkoutToLocalStorage;
+window.forceReloadJuly12Workout = forceReloadJuly12Workout;
