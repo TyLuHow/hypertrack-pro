@@ -92,7 +92,7 @@ export const RestTimerOverlay: React.FC<RestTimerOverlayProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
       <div
-        className="text-center p-6"
+        className="text-center p-6 card"
         onTouchStart={(e) => setTouchStartY(e.changedTouches[0].clientY)}
         onTouchEnd={(e) => {
           if (touchStartY !== null) {
@@ -110,14 +110,14 @@ export const RestTimerOverlay: React.FC<RestTimerOverlayProps> = ({
         <div className="flex justify-center space-x-4 mb-4">
           <button
             onClick={() => setPaused((p) => !p)}
-            className="h-12 w-12 bg-blue-600 rounded-full"
+            className="h-12 w-12 bg-focus rounded-full active:scale-95"
             aria-label={paused ? 'Resume' : 'Pause'}
           >
             {paused ? '▶' : '⏸'}
           </button>
           <button
             onClick={onDismiss}
-            className="h-12 w-12 bg-gray-600 rounded-full"
+            className="h-12 w-12 bg-gray-600 rounded-full active:scale-95"
             aria-label="Dismiss"
           >
             ✕
@@ -127,7 +127,7 @@ export const RestTimerOverlay: React.FC<RestTimerOverlayProps> = ({
           {[60, 90, 120, 180].map((d) => (
             <button
               key={d}
-              className="px-3 py-2 bg-gray-700 rounded"
+              className="px-3 py-2 bg-gray-700 rounded active:scale-95"
               onClick={() => setTimeLeft(d)}
             >
               {d}s

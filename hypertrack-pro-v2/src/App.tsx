@@ -12,7 +12,7 @@ function App() {
   const selectExercise = useWorkoutStore((s) => s.selectExercise);
 
   return (
-    <div className="bg-gray-900 min-h-screen">
+    <div className="bg-background min-h-screen">
       <WorkoutLogger
         onExerciseSelect={() => setSelectorOpen(true)}
         onStartRestTimer={(d) => { setTimerDuration(d); setTimerVisible(true); }}

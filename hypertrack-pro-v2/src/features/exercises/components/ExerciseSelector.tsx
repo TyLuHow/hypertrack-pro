@@ -67,24 +67,24 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ isOpen, onCl
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-gray-900 text-gray-100 rounded-t-2xl p-4">
+      <div className="relative w-full max-w-md bg-background text-textPrimary rounded-t-2xl p-4 card">
         <div className="h-1 w-12 bg-gray-700 rounded mx-auto mb-4" />
         <input
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search exercises"
-          className="w-full h-12 bg-gray-800 rounded-lg px-4 mb-3"
+          className="w-full h-12 bg-surface rounded-lg px-4 mb-3"
         />
         {recent.length > 0 && (
           <div className="mb-3">
-            <div className="text-sm text-gray-400 mb-2">Recent</div>
+            <div className="text-sm text-textMuted mb-2">Recent</div>
             <div className="flex space-x-2 overflow-x-auto pb-1">
               {recent.map((r) => (
                 <button
                   key={`recent-${r.id}`}
                   onClick={() => onSelect(String(r.id), r.name)}
-                  className="px-3 h-9 rounded-full whitespace-nowrap bg-gray-800"
+                  className="px-3 h-9 rounded-full whitespace-nowrap bg-surface"
                 >
                   {r.name}
                 </button>
@@ -97,7 +97,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ isOpen, onCl
             <button
               key={c}
               onClick={() => setCat(c)}
-              className={`px-3 h-9 rounded-full whitespace-nowrap ${cat === c ? 'bg-blue-600' : 'bg-gray-800'}`}
+              className={`px-3 h-9 rounded-full whitespace-nowrap ${cat === c ? 'bg-focus' : 'bg-surface'}`}
             >
               {c}
             </button>
@@ -108,14 +108,14 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ isOpen, onCl
             <button
               key={r.id}
               onClick={() => onSelect(String(r.id), r.name)}
-              className="w-full text-left bg-gray-800 rounded-lg p-3"
+              className="w-full text-left bg-surface rounded-lg p-3"
             >
               <div className="font-semibold">{r.name}</div>
-              <div className="text-sm text-gray-400">{r.muscle_group} • {r.category}</div>
+              <div className="text-sm text-textMuted">{r.muscle_group} • {r.category}</div>
             </button>
           ))}
           {filtered.length === 0 && (
-            <div className="text-center text-gray-500 py-6">No results</div>
+            <div className="text-center text-textMuted py-6">No results</div>
           )}
         </div>
       </div>
