@@ -22,6 +22,8 @@ Copy `.env.example` to `.env` and set Supabase credentials.
 - `npm run type-check` - TypeScript check
 - `npm test` - tests
 
+Deployment trigger note: updated README to force Vercel redeploy.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
