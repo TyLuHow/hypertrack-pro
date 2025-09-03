@@ -85,7 +85,7 @@ export const RestTimerOverlay: React.FC<RestTimerOverlayProps> = ({
     return () => {
       if (intervalRef.current) window.clearInterval(intervalRef.current);
     };
-  }, [isVisible, paused, onComplete]);
+  }, [isVisible, paused, onComplete, stopRestTimer]);
 
   if (!isVisible) return null;
 
