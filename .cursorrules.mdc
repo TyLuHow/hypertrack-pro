@@ -1,0 +1,28 @@
+## Push Protocol (for all agents)
+
+- Always push to branch: `main`.
+- App is in `hypertrack-pro-v2` (Create React App). Only stage that directory unless you intentionally changed root files.
+- Vercel builds from Root Directory: `hypertrack-pro-v2`. Do not add a root `vercel.json`.
+- Use PowerShell-friendly commands (no `&&`/`||`).
+
+Standard push:
+```powershell
+# From repo root
+git status;
+git fetch --all;
+# Stage app changes only (preferred)
+git add -A .\hypertrack-pro-v2;
+# Or stage all if you changed docs/scripts:
+# git add -A;
+$MSG = "Update: <describe change>";
+if (-not (git diff --cached --quiet)) { git commit -m $MSG };
+# Rebase to keep history clean
+git pull --rebase origin main;
+# Push
+git push origin main;
+```
+
+Common fixes:
+- If `build` not found on Vercel: Root Directory must be `hypertrack-pro-v2`.
+- If warnings break CI: fix ESLint warnings locally (CRA treats warnings as errors in CI).
+- If files were accidentally deleted (e.g., `api/*.js`): `git restore path\\to\\file` then re-commit.
