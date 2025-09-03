@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { ExerciseProgressionCalculator, type ProgressionRecommendation } from '../../../lib/algorithms/progressionRecommendations';
 import { getSupabase } from '../../../lib/supabase/client';
 import { useWorkoutStore } from '../../../shared/stores/workoutStore';
 
@@ -25,7 +26,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ isOpen, onCl
 
   useEffect(() => {
     if (!isOpen) return;
-    const supabase = getSupabase() as any;
+    const supabase = getSupabase();
     (supabase as any)
       .from('exercises')
       .select('id,name,muscle_group,category')
@@ -112,6 +113,7 @@ export const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({ isOpen, onCl
             >
               <div className="font-semibold">{r.name}</div>
               <div className="text-sm text-textMuted">{r.muscle_group} • {r.category}</div>
+              <div className="mt-1 text-xs text-textSecondary">Smart recommendations available</div>
             </button>
           ))}
           {filtered.length === 0 && (

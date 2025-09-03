@@ -47,7 +47,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         <div className="card p-5 mb-4">
           <div className="text-lg font-semibold mb-2">Ready to train?</div>
           <button
-            onClick={startWorkout}
+            onClick={() => startWorkout()}
             className="w-full btn-primary"
           >
             Start Workout

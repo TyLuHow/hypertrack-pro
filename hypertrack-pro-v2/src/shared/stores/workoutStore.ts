@@ -19,10 +19,12 @@ export interface ExerciseInWorkout {
 
 export interface WorkoutSession {
   id: string;
+  name?: string;
   date: string; // YYYY-MM-DD
   startTime: string; // ISO
   endTime?: string;
   exercises: ExerciseInWorkout[];
+  duration?: number;
 }
 
 export type SyncStatus = 'online' | 'offline' | 'syncing';
@@ -33,7 +35,7 @@ interface WorkoutState {
   restTimerActive: boolean;
   syncStatus: SyncStatus;
 
-  startWorkout: () => void;
+  startWorkout: (name?: string) => void;
   selectExercise: (exerciseId: string) => void;
   addSet: (
     exerciseId: string,
@@ -44,6 +46,7 @@ interface WorkoutState {
   startRestTimer: (duration: number) => void;
   stopRestTimer: () => void;
   completeWorkout: () => void;
+  setWorkoutName: (name: string) => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -53,14 +56,16 @@ export const useWorkoutStore = create<WorkoutState>()(
     restTimerActive: false,
     syncStatus: 'online',
 
-    startWorkout: () => {
+    startWorkout: (name?: string) => {
       const now = new Date();
       set((s) => {
         s.currentWorkout = {
           id: `${now.getTime()}`,
+          name: name || `Workout - ${now.toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric' })}`,
           date: now.toISOString().slice(0, 10),
           startTime: now.toISOString(),
-          exercises: []
+          exercises: [],
+          duration: 0
         };
       });
     },
@@ -125,6 +130,14 @@ export const useWorkoutStore = create<WorkoutState>()(
       set((s) => {
         if (!s.currentWorkout) return;
         s.currentWorkout.endTime = new Date().toISOString();
+      });
+    },
+
+    setWorkoutName: (name: string) => {
+      set((s) => {
+        if (s.currentWorkout) {
+          s.currentWorkout.name = name;
+        }
       });
     }
   }))

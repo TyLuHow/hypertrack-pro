@@ -58,8 +58,10 @@ export class OfflineDatabase {
     const tx = db.transaction('queue', 'readwrite');
     const items = await tx.store.getAll();
     for (const item of items) {
-      await handler(item as any);
-      await tx.store.delete((item as any).id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (handler as (x: any) => Promise<void>)(item as unknown as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await tx.store.delete((item as unknown as any).id);
     }
     await tx.done;
   }

@@ -1,3 +1,27 @@
+# HyperTrack Pro
+
+Evidence-Based Hypertrophy Optimization for Individual Deployment
+
+## Overview
+Open-source resistance training tracker with research-validated progression algorithms and offline-first mobile experience for serious lifters.
+
+## Key Features
+- Evidence-based progression recommendations (APRE/RPE + percentage bands)
+- Plateau detection with research-backed deload suggestions
+- Mobile-first interface optimized for gym environments
+- Complete offline functionality with background sync
+- Individual data isolation - no shared accounts or social features
+- CSV import/export for data portability
+
+## Environment
+Copy `.env.example` to `.env` and set Supabase credentials.
+
+## Scripts
+- `npm start` - dev server
+- `npm run build` - production build
+- `npm run type-check` - TypeScript check
+- `npm test` - tests
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

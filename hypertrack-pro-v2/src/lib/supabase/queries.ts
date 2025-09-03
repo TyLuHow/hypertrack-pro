@@ -15,11 +15,11 @@ type WorkoutInsert = {
 export const workoutQueries = {
   async getAll() {
     const supabase = getSupabase();
-    return supabase.from('workouts' as any).select('*').order('workout_date', { ascending: false });
+    return (supabase as any).from('workouts').select('*').order('workout_date', { ascending: false });
   },
   async create(workout: WorkoutInsert) {
     const supabase = getSupabase();
-    return supabase.from('workouts' as any).insert(workout as any).select('*').single();
+    return (supabase as any).from('workouts').insert(workout as any).select('*').single();
   }
 };
 

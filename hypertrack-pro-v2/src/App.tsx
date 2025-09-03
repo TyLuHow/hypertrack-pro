@@ -5,6 +5,10 @@ import { RestTimerOverlay } from './features/workout/components/RestTimerOverlay
 import { BottomTabs, TabKey } from './features/shared/components/BottomTabs';
 import { HistoryView } from './features/history/components/HistoryView';
 import { AnalyticsView } from './features/progress/components/AnalyticsView';
+import { SettingsView } from './features/settings/components/SettingsView';
+import { WorkoutHeader } from './features/workout/components/WorkoutHeader';
+import { ResearchFactsBanner } from './features/research/components/ResearchFactsBanner';
+import { InstallPrompt } from './features/pwa/components/InstallPrompt';
 import React from 'react';
 import { useWorkoutStore } from './shared/stores/workoutStore';
 
@@ -17,20 +21,19 @@ function App() {
 
   return (
     <div className="bg-background min-h-screen pb-16">
+      <ResearchFactsBanner />
       {tab === 'workout' && (
-        <WorkoutLogger
-          onExerciseSelect={() => setSelectorOpen(true)}
-          onStartRestTimer={(d) => { setTimerDuration(d); setTimerVisible(true); }}
-        />
+        <>
+          <WorkoutHeader />
+          <WorkoutLogger
+            onExerciseSelect={() => setSelectorOpen(true)}
+            onStartRestTimer={(d) => { setTimerDuration(d); setTimerVisible(true); }}
+          />
+        </>
       )}
       {tab === 'history' && <HistoryView />}
       {tab === 'progress' && <AnalyticsView />}
-      {tab === 'settings' && (
-        <div className="p-4 text-textPrimary">
-          <div className="text-xl font-semibold mb-3">Settings</div>
-          <div className="card p-4">Settings coming soon.</div>
-        </div>
-      )}
+      {tab === 'settings' && <SettingsView />}
       <ExerciseSelector
         isOpen={selectorOpen}
         onClose={() => setSelectorOpen(false)}
@@ -46,6 +49,7 @@ function App() {
         onComplete={() => setTimerVisible(false)}
       />
       <BottomTabs active={tab} onChange={setTab} />
+      <InstallPrompt />
     </div>
   );
 }
