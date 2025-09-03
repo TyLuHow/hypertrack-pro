@@ -2,10 +2,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "installCommand": "npm install",
-  "env": {
-    "REACT_APP_SUPABASE_URL": "@supabase-url",
-    "REACT_APP_SUPABASE_ANON_KEY": "@supabase-anon-key"
-  },
   "headers": [
     {
       "source": "/service-worker.js",
