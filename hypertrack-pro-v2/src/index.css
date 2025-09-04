@@ -11,21 +11,15 @@ body {
   @apply bg-background text-textPrimary antialiased;
 }
 
-.card {
-  @apply bg-surface rounded-xl shadow-card;
-}
+.card { @apply bg-surface rounded-xl shadow-card border border-slate-600/60; }
 
 .touch-target {
   @apply h-12 min-w-12 rounded-lg flex items-center justify-center;
 }
 
-.btn-primary {
-  @apply touch-target bg-focus text-white font-semibold active:scale-95 transition-transform;
-}
+.btn-primary { @apply touch-target bg-primaryTeal text-white font-semibold active:scale-95 transition-colors duration-200 hover:bg-primaryTealHover; }
 
-.btn-muted {
-  @apply touch-target bg-gray-700 text-gray-100 active:scale-95 transition-transform;
-}
+.btn-muted { @apply touch-target bg-slate-500 text-slate-100 active:scale-95 transition-colors duration-200 hover:bg-slate-400; }
 
 .number-xl {
   @apply font-mono text-3xl font-bold tracking-wide;

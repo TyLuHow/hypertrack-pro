@@ -7,12 +7,25 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Core backgrounds
         background: '#0F172A',
         surface: '#1E293B',
-        focus: '#3B82F6',
-        success: '#10B981',
-        warning: '#F59E0B',
+        surfaceLight: '#334155',
+
+        // Brand & accents
+        primaryTeal: '#0891B2',
+        primaryTealHover: '#0E7490',
+        progressBlue: '#2563EB',
+        success: '#059669',
+        warning: '#D97706',
+        energyOrange: '#EA580C',
+        recoveryPurple: '#7C3AED',
+        textAccent: '#06B6D4',
+
+        // Legacy/danger
         danger: '#EF4444',
+
+        // Text
         textPrimary: '#F8FAFC',
         textSecondary: '#CBD5E1',
         textMuted: '#64748B'

@@ -40,7 +40,7 @@ export const WeightInput: React.FC<WeightInputProps> = ({ value, onChange, incre
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2">
           {increments.map((inc) => (
-            <button key={`dec-${inc}`} className="h-10 w-10 rounded-full bg-gray-700 text-xl active:scale-95" onClick={() => applyDelta(-inc)}>-</button>
+            <button key={`dec-${inc}`} className="h-10 w-10 rounded-full bg-slate-500 text-white text-xl active:scale-95 hover:bg-slate-400" onClick={() => applyDelta(-inc)}>-</button>
           ))}
         </div>
         <input
@@ -55,11 +55,11 @@ export const WeightInput: React.FC<WeightInputProps> = ({ value, onChange, incre
             setText(t);
             onChange(parse(t));
           }}
-          className="flex-1 h-11 bg-background rounded-lg px-3 text-xl number-xl"
+          className="flex-1 h-11 bg-slate-600 rounded-lg px-3 text-xl number-xl focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
         <div className="flex items-center space-x-2">
           {increments.map((inc) => (
-            <button key={`inc-${inc}`} className="h-10 w-10 rounded-full bg-gray-700 text-xl active:scale-95" onClick={() => applyDelta(inc)}>+</button>
+            <button key={`inc-${inc}`} className="h-10 w-10 rounded-full bg-slate-500 text-white text-xl active:scale-95 hover:bg-slate-400" onClick={() => applyDelta(inc)}>+</button>
           ))}
         </div>
       </div>
