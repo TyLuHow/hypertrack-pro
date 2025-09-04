@@ -15,6 +15,7 @@ export interface ExerciseInWorkout {
   muscleGroup: string;
   category: 'Compound' | 'Isolation';
   sets: SetData[];
+  completed?: boolean;
 }
 
 export interface WorkoutSession {
@@ -36,15 +37,17 @@ interface WorkoutState {
   syncStatus: SyncStatus;
 
   startWorkout: (name?: string) => void;
-  selectExercise: (exerciseId: string) => void;
+  selectExercise: (exerciseId: string, force?: boolean) => void;
   addSet: (
     exerciseId: string,
     set: SetData,
     meta?: { name?: string; muscleGroup?: string; category?: 'Compound' | 'Isolation' }
   ) => void;
   updateSetOptimistic: (setId: string, data: Partial<SetData>) => void;
+  completeExercise: (exerciseId: string) => void;
   completeWorkout: () => void;
   setWorkoutName: (name: string) => void;
+  queueForPersist?: () => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -68,8 +71,15 @@ export const useWorkoutStore = create<WorkoutState>()(
       });
     },
 
-    selectExercise: (exerciseId) => {
+    selectExercise: (exerciseId, force) => {
       set((s) => {
+        // Prevent switching away if current active exercise has uncompleted sets
+        if (!force && s.activeExercise) {
+          const current = s.currentWorkout?.exercises.find(e => e.id === s.activeExercise);
+          if (current && current.sets.length > 0 && !current.completed) {
+            return; // block switch
+          }
+        }
         s.activeExercise = exerciseId;
       });
     },
@@ -108,6 +118,14 @@ export const useWorkoutStore = create<WorkoutState>()(
             break;
           }
         }
+      });
+    },
+
+    completeExercise: (exerciseId) => {
+      set((s) => {
+        const ex = s.currentWorkout?.exercises.find(e => e.id === exerciseId);
+        if (ex) ex.completed = true;
+        s.activeExercise = null;
       });
     },
 

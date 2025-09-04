@@ -20,6 +20,25 @@ export const workoutQueries = {
   async create(workout: WorkoutInsert) {
     const supabase = getSupabase();
     return (supabase as any).from('workouts').insert(workout as any).select('*').single();
+  },
+  async completeWorkoutMetrics(workoutId: number) {
+    const supabase = getSupabase() as any;
+    // Aggregate totals from sets for this workout
+    const { data, error } = await (supabase
+      .from('sets')
+      .select('weight,reps, workout_exercises!inner(workout_id)')
+      .eq('workout_exercises.workout_id', workoutId));
+    if (error) throw error;
+    const rows = (data || []) as any[];
+    const totals = rows.reduce((acc, r) => {
+      acc.total_sets += 1;
+      acc.total_volume += (Number(r.weight) || 0) * (Number(r.reps) || 0);
+      return acc;
+    }, { total_sets: 0, total_volume: 0 });
+    await (supabase
+      .from('workouts')
+      .update({ total_sets: totals.total_sets, total_volume: Math.round(totals.total_volume) })
+      .eq('id', workoutId));
   }
 };
 
@@ -117,6 +136,81 @@ export async function getWorkoutsLastNDays(days: number, userId?: string): Promi
   if (error) throw error;
   const rows = (data || []) as Array<{ workout_date: string }>; 
   return rows.map((r) => ({ date: r.workout_date }));
+}
+
+export async function getLastExerciseSetsByName(exerciseName: string, userId?: string): Promise<Array<{ weight: number; reps: number }>> {
+  const supabase = getSupabase() as any;
+  const uid = userId || (await getCurrentUserId());
+  const { data, error } = await (supabase
+    .from('sets')
+    .select('weight,reps, workout_exercises!inner(exercises(name)), workout_exercises!inner(workouts!inner(user_id,workout_date))')
+    .order('workout_exercises(workouts!inner.workout_date)', { ascending: false })
+    .limit(200));
+  if (error) throw error;
+  const rows = (data || []) as any[];
+  const filtered = rows.filter(r => r.workout_exercises?.exercises?.name === exerciseName && (!uid || r.workout_exercises?.workouts?.user_id === uid));
+  // Group by workout_date and take the most recent workout
+  const byDate = new Map<string, Array<{ weight: number; reps: number }>>();
+  for (const r of filtered) {
+    const d = r.workout_exercises?.workouts?.workout_date || '1970-01-01';
+    const list = byDate.get(d) || [];
+    list.push({ weight: Number(r.weight) || 0, reps: Number(r.reps) || 0 });
+    byDate.set(d, list);
+  }
+  const dates = Array.from(byDate.keys()).sort((a, b) => (a < b ? 1 : -1));
+  const recent = dates[0];
+  return recent ? byDate.get(recent)! : [];
+}
+
+// -------- Persist a full workout session in one flow --------
+export async function persistWorkoutSession(session: {
+  name?: string;
+  date: string;
+  startTime: string;
+  endTime?: string;
+  exercises: Array<{ id: string; name: string; sets: Array<{ id: string; weight: number; reps: number }> }>;
+}): Promise<number> {
+  const supabase = getSupabase() as any;
+  const uid = await getCurrentUserId();
+  if (!uid) throw new Error('Not authenticated');
+
+  // 1) Create workout row
+  const { data: workoutRow, error: wErr } = await (supabase
+    .from('workouts')
+    .insert({
+      user_id: uid,
+      name: session.name || null,
+      workout_date: session.date,
+      start_time: session.startTime,
+      end_time: session.endTime || new Date().toISOString()
+    })
+    .select('id')
+    .single());
+  if (wErr) throw wErr;
+  const workoutId = workoutRow.id as number;
+
+  // 2) For each exercise, create workout_exercises and sets
+  for (let i = 0; i < session.exercises.length; i++) {
+    const ex = session.exercises[i];
+    const order = i;
+    const exId = Number(ex.id);
+    const { data: weRow, error: weErr } = await (supabase
+      .from('workout_exercises')
+      .insert({ workout_id: workoutId, exercise_id: isFinite(exId) ? exId : null, exercise_order: order + 1 })
+      .select('id')
+      .single());
+    if (weErr) throw weErr;
+    const weId = weRow.id as number;
+    const setRows = ex.sets.map((s, idx) => ({ workout_exercise_id: weId, set_number: idx + 1, weight: s.weight, reps: s.reps }));
+    if (setRows.length > 0) {
+      const { error: sErr } = await (supabase.from('sets').insert(setRows));
+      if (sErr) throw sErr;
+    }
+  }
+
+  // 3) Aggregate totals
+  await workoutQueries.completeWorkoutMetrics(workoutId);
+  return workoutId;
 }
 
 

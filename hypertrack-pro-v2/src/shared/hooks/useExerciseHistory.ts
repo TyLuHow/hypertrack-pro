@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { getSupabase, getCurrentUserId } from '../../lib/supabase/client';
+import { getLastExerciseSetsByName } from '../../lib/supabase/queries';
 
 export interface ExerciseHistorySuggestion {
   lastWeight: number | null;
   suggestedWeight: number | null;
   label: string | null;
+  lastSets?: Array<{ weight: number; reps: number }>;
 }
 
 export const useExerciseHistory = (exerciseName?: string | null): ExerciseHistorySuggestion => {
-  const [state, setState] = useState<ExerciseHistorySuggestion>({ lastWeight: null, suggestedWeight: null, label: null });
+  const [state, setState] = useState<ExerciseHistorySuggestion>({ lastWeight: null, suggestedWeight: null, label: null, lastSets: [] });
 
   useEffect(() => {
     if (!exerciseName) {
@@ -29,10 +31,12 @@ export const useExerciseHistory = (exerciseName?: string | null): ExerciseHistor
         const rows = (data || []) as any[];
         const filtered = rows.filter(r => r.workout_exercises?.exercises?.name === exerciseName && (!uid || r.workout_exercises?.workouts?.user_id === uid));
         const last = filtered.length ? Math.max(...filtered.slice(0, 10).map(r => Number(r.weight) || 0)) : null;
+        // Strictly prefill with sets from the most recent workout only
+        const lastSets = await getLastExerciseSetsByName(exerciseName);
         const suggested = last == null ? null : Math.ceil((last * 1.02) / 2.5) * 2.5; // +2% rounded to 2.5
-        setState({ lastWeight: last, suggestedWeight: suggested, label: last == null ? null : `Last: ${last}lbs` });
+        setState({ lastWeight: last, suggestedWeight: suggested, label: last == null ? null : `Last: ${last}lbs`, lastSets });
       } catch {
-        setState({ lastWeight: null, suggestedWeight: null, label: null });
+        setState({ lastWeight: null, suggestedWeight: null, label: null, lastSets: [] });
       }
     };
     run();

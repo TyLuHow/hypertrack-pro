@@ -3,6 +3,7 @@ import { useWorkoutStore } from '../../../shared/stores/workoutStore';
 import { WeightInput } from './WeightInput';
 import { useExerciseHistory } from '../../../shared/hooks/useExerciseHistory';
 import { SetTable, type SetRow } from './SetTable';
+import { persistWorkoutSession } from '../../../lib/supabase/queries';
 import { useRecommendations } from '../../../shared/hooks/useRecommendations';
 
 interface WorkoutLoggerProps {
@@ -18,7 +19,9 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
     activeExercise,
     addSet,
     startWorkout,
-    completeWorkout
+    completeWorkout,
+    completeExercise,
+    selectExercise,
   } = useWorkoutStore();
   const [weight, setWeight] = useState<number>(0);
   const [reps, setReps] = useState<number>(8);
@@ -32,6 +35,14 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
   useEffect(() => {
     if (history.lastWeight != null && weight === 0) {
       setWeight(history.lastWeight);
+    }
+    if (history.lastSets && history.lastSets.length > 0 && rows.length === 0) {
+      const prefilled = history.lastSets.map((s, idx) => ({ id: `${Date.now()}-${idx}`, weight: s.weight, reps: s.reps }));
+      setRows(prefilled);
+      if (prefilled[0]) {
+        setWeight(prefilled[0].weight);
+        setReps(prefilled[0].reps);
+      }
     }
   }, [history.lastWeight]);
 
@@ -71,10 +82,11 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         </div>
       )}
       <button
-        onClick={onExerciseSelect}
-        className="w-full h-12 bg-surface rounded-lg text-left px-4 mb-4"
+        onClick={() => { selectExercise('', true); onExerciseSelect(); }}
+        disabled={!!(currentWorkout && activeExercise && currentWorkout.exercises.find(e => e.id === activeExercise && e.sets.length > 0 && !e.completed))}
+        className="w-full h-12 bg-surface rounded-lg text-left px-4 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {activeExercise || 'Select Exercise'}
+        {activeExerciseName || 'Select Exercise'}
       </button>
 
       {currentWorkout && activeExercise && (
@@ -83,6 +95,9 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
             <div className="mb-3 text-sm text-textSecondary">
               Recommended: <span className="font-semibold">{recommendation.recommendedWeight} lbs</span>
             </div>
+          )}
+          {activeExerciseName && (
+            <div className="text-lg font-semibold mb-2 text-textPrimary">{activeExerciseName}</div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
@@ -121,8 +136,9 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 space-y-3">
             <SetTable rows={rows} onChange={handleRowChange} onAdd={handleAddSet} />
+            <button onClick={() => activeExercise && completeExercise(activeExercise)} className="btn-muted w-full">Complete Exercise</button>
           </div>
         </div>
       )}
@@ -149,8 +165,18 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         </div>
         {currentWorkout && (
           <button
-            onClick={completeWorkout}
-            className="mt-3 w-full btn-muted"
+            onClick={async () => {
+              completeWorkout();
+              const session = {
+                name: currentWorkout.name,
+                date: currentWorkout.date,
+                startTime: currentWorkout.startTime,
+                endTime: currentWorkout.endTime,
+                exercises: currentWorkout.exercises.map((e) => ({ id: e.id, name: e.name, sets: e.sets.map(s => ({ id: s.id, weight: s.weight, reps: s.reps })) }))
+              };
+              try { await persistWorkoutSession(session as any); } catch { /* surface toast later */ }
+            }}
+            className="mt-3 w-full btn-primary"
           >
             Finish Workout
           </button>
