@@ -1,26 +1,36 @@
 import React, { useMemo, useState } from 'react';
 import { useWorkoutStore } from '../../../shared/stores/workoutStore';
+import { WeightInput } from './WeightInput';
+import { useExerciseHistory } from '../../../shared/hooks/useExerciseHistory';
 import { useRecommendations } from '../../../shared/hooks/useRecommendations';
 
 interface WorkoutLoggerProps {
   onExerciseSelect: () => void;
-  onStartRestTimer: (duration: number) => void;
 }
 
 export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
-  onExerciseSelect,
-  onStartRestTimer
+  onExerciseSelect
 }) => {
   const {
     currentWorkout,
     activeExercise,
     addSet,
     startWorkout,
-    completeWorkout,
-    startRestTimer
+    completeWorkout
   } = useWorkoutStore();
   const [weight, setWeight] = useState<number>(0);
   const [reps, setReps] = useState<number>(8);
+  const activeExerciseName = useMemo(() => {
+    const ex = currentWorkout?.exercises.find((e) => e.id === activeExercise);
+    return ex?.name || undefined;
+  }, [currentWorkout, activeExercise]);
+  const history = useExerciseHistory(activeExerciseName);
+
+  useEffect(() => {
+    if (history.lastWeight != null && weight === 0) {
+      setWeight(history.lastWeight);
+    }
+  }, [history.lastWeight]);
 
   const { recommendation } = useRecommendations(activeExercise ?? undefined);
 
@@ -34,9 +44,6 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
   const handleAddSet = () => {
     if (!activeExercise || !canAdd) return;
     addSet(activeExercise, { id: `${Date.now()}`, weight, reps });
-    // Start rest timer (React overlay) with default 90s; store flag optional
-    startRestTimer(90);
-    onStartRestTimer(90);
     // Reset inputs for fast logging flow
     setReps(8);
   };
@@ -72,26 +79,12 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="text-sm text-textMuted mb-1">Weight</div>
-              <div className="flex items-center space-x-3">
-                <button
-                  className="h-11 w-11 rounded-full bg-gray-700 text-xl active:scale-95"
-                  onClick={() => handleQuickAdjust('weight', -2.5)}
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  className="flex-1 h-11 bg-background rounded-lg px-3 text-xl number-xl"
-                  value={weight}
-                  onChange={(e) => setWeight(Number(e.target.value))}
-                />
-                <button
-                  className="h-11 w-11 rounded-full bg-gray-700 text-xl active:scale-95"
-                  onClick={() => handleQuickAdjust('weight', 2.5)}
-                >
-                  +
-                </button>
-              </div>
+              <WeightInput
+                value={weight}
+                onChange={(n) => setWeight(n ?? 0)}
+                increments={[2.5, 5, 10]}
+                autoLabel={history.label || undefined}
+              />
             </div>
 
             <div>
@@ -127,12 +120,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
             >
               Add Set
             </button>
-            <button
-              onClick={() => onStartRestTimer(90)}
-              className="btn-muted px-4"
-            >
-              Rest
-            </button>
+            
           </div>
         </div>
       )}

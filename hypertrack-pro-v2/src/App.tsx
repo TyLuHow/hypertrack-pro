@@ -1,7 +1,6 @@
 import './index.css';
 import { WorkoutLogger } from './features/workout/components/WorkoutLogger';
 import { ExerciseSelector } from './features/exercises/components/ExerciseSelector';
-import { RestTimerOverlay } from './features/workout/components/RestTimerOverlay';
 import { BottomTabs, TabKey } from './features/shared/components/BottomTabs';
 import { HistoryView } from './features/history/components/HistoryView';
 import { AnalyticsView } from './features/progress/components/AnalyticsView';
@@ -14,8 +13,7 @@ import { useWorkoutStore } from './shared/stores/workoutStore';
 
 function App() {
   const [selectorOpen, setSelectorOpen] = React.useState(false);
-  const [timerVisible, setTimerVisible] = React.useState(false);
-  const [timerDuration, setTimerDuration] = React.useState(90);
+  
   const [tab, setTab] = React.useState<TabKey>('workout');
   const selectExercise = useWorkoutStore((s) => s.selectExercise);
 
@@ -25,10 +23,7 @@ function App() {
       {tab === 'workout' && (
         <>
           <WorkoutHeader />
-          <WorkoutLogger
-            onExerciseSelect={() => setSelectorOpen(true)}
-            onStartRestTimer={(d) => { setTimerDuration(d); setTimerVisible(true); }}
-          />
+          <WorkoutLogger onExerciseSelect={() => setSelectorOpen(true)} />
         </>
       )}
       {tab === 'history' && <HistoryView />}
@@ -42,12 +37,7 @@ function App() {
           setSelectorOpen(false);
         }}
       />
-      <RestTimerOverlay
-        isVisible={timerVisible}
-        duration={timerDuration}
-        onDismiss={() => setTimerVisible(false)}
-        onComplete={() => setTimerVisible(false)}
-      />
+      
       <BottomTabs active={tab} onChange={setTab} />
       <InstallPrompt />
     </div>

@@ -32,7 +32,7 @@ export type SyncStatus = 'online' | 'offline' | 'syncing';
 interface WorkoutState {
   currentWorkout: WorkoutSession | null;
   activeExercise: string | null;
-  restTimerActive: boolean;
+  
   syncStatus: SyncStatus;
 
   startWorkout: (name?: string) => void;
@@ -43,8 +43,6 @@ interface WorkoutState {
     meta?: { name?: string; muscleGroup?: string; category?: 'Compound' | 'Isolation' }
   ) => void;
   updateSetOptimistic: (setId: string, data: Partial<SetData>) => void;
-  startRestTimer: (duration: number) => void;
-  stopRestTimer: () => void;
   completeWorkout: () => void;
   setWorkoutName: (name: string) => void;
 }
@@ -53,7 +51,7 @@ export const useWorkoutStore = create<WorkoutState>()(
   immer((set, get) => ({
     currentWorkout: null,
     activeExercise: null,
-    restTimerActive: false,
+    
     syncStatus: 'online',
 
     startWorkout: (name?: string) => {
@@ -113,18 +111,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       });
     },
 
-    startRestTimer: (_duration) => {
-      set((s) => {
-        s.restTimerActive = true;
-      });
-      // UI overlay and countdown handled at component level
-    },
-
-    stopRestTimer: () => {
-      set((s) => {
-        s.restTimerActive = false;
-      });
-    },
+    
 
     completeWorkout: () => {
       set((s) => {
