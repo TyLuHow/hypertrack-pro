@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useWorkoutStore } from '../../../shared/stores/workoutStore';
 import { WeightInput } from './WeightInput';
 import { useExerciseHistory } from '../../../shared/hooks/useExerciseHistory';
+import { SetTable, type SetRow } from './SetTable';
 import { useRecommendations } from '../../../shared/hooks/useRecommendations';
 
 interface WorkoutLoggerProps {
@@ -21,6 +22,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
   } = useWorkoutStore();
   const [weight, setWeight] = useState<number>(0);
   const [reps, setReps] = useState<number>(8);
+  const [rows, setRows] = useState<SetRow[]>([]);
   const activeExerciseName = useMemo(() => {
     const ex = currentWorkout?.exercises.find((e) => e.id === activeExercise);
     return ex?.name || undefined;
@@ -44,9 +46,15 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
 
   const handleAddSet = () => {
     if (!activeExercise || !canAdd) return;
-    addSet(activeExercise, { id: `${Date.now()}`, weight, reps });
+    const id = `${Date.now()}`;
+    addSet(activeExercise, { id, weight, reps });
+    setRows((r) => [...r, { id, weight, reps }]);
     // Reset inputs for fast logging flow
     setReps(8);
+  };
+  const handleRowChange = (id: string, next: Partial<SetRow>) => {
+    setRows((r) => r.map((row) => (row.id === id ? { ...row, ...next } : row)));
+    // Optionally also update the store optimistic set here if needed
   };
 
   return (
@@ -113,15 +121,8 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
             </div>
           </div>
 
-          <div className="mt-4 flex items-center space-x-3">
-            <button
-              onClick={handleAddSet}
-              disabled={!canAdd}
-              className="flex-1 btn-primary disabled:bg-blue-900 text-center text-lg"
-            >
-              Add Set
-            </button>
-            
+          <div className="mt-4">
+            <SetTable rows={rows} onChange={handleRowChange} onAdd={handleAddSet} />
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getSupabase } from '../../lib/supabase/client';
+import { getSupabase, getCurrentUserId } from '../../lib/supabase/client';
 
 export interface ExerciseHistorySuggestion {
   lastWeight: number | null;
@@ -18,14 +18,17 @@ export const useExerciseHistory = (exerciseName?: string | null): ExerciseHistor
     const run = async () => {
       try {
         const supabase = getSupabase() as any;
+        const uid = await getCurrentUserId();
+        // Join sets -> workout_exercises -> exercises -> workouts to compute recent max weight
         const { data, error } = await (supabase
-          .from('exercise_performance' as any)
-          .select('exercise_name,max_weight,workout_date')
-          .eq('exercise_name', exerciseName)
-          .order('workout_date', { ascending: false })
-          .limit(5));
+          .from('sets')
+          .select('weight, workout_exercises!inner(exercise_id, exercises(name)), workout_exercises!inner(workouts!inner(user_id,workout_date))')
+          .order('workout_exercises(workouts!inner.workout_date)', { ascending: false })
+          .limit(50));
         if (error) throw error;
-        const last = data?.[0]?.max_weight ?? null;
+        const rows = (data || []) as any[];
+        const filtered = rows.filter(r => r.workout_exercises?.exercises?.name === exerciseName && (!uid || r.workout_exercises?.workouts?.user_id === uid));
+        const last = filtered.length ? Math.max(...filtered.slice(0, 10).map(r => Number(r.weight) || 0)) : null;
         const suggested = last == null ? null : Math.ceil((last * 1.02) / 2.5) * 2.5; // +2% rounded to 2.5
         setState({ lastWeight: last, suggestedWeight: suggested, label: last == null ? null : `Last: ${last}lbs` });
       } catch {

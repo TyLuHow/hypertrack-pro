@@ -1,4 +1,4 @@
-import { getSupabase } from './client';
+import { getSupabase, getCurrentUserId } from './client';
 
 type WorkoutInsert = {
   workout_date: string;
@@ -37,12 +37,13 @@ export type ProgressSummary = {
   durationTrend?: number;
 };
 
-export async function getProgressSummary(userId: string): Promise<ProgressSummary> {
+export async function getProgressSummary(userId?: string): Promise<ProgressSummary> {
   const supabase = getSupabase() as any;
+  const uid = userId || (await getCurrentUserId());
   const { data, error } = await (supabase
     .from('workouts')
     .select('id,start_time,end_time,total_volume,total_sets')
-    .eq('user_id', userId)
+    .eq('user_id', uid)
     .order('workout_date', { ascending: false }));
   if (error) throw error;
   const rows = (data || []) as Array<{ id: number; start_time: string; end_time: string | null; total_volume: number | null; total_sets: number | null }>;
@@ -69,28 +70,29 @@ export type PersonalRecord = {
 
 export async function getPersonalRecords(userId?: string): Promise<PersonalRecord[]> {
   const supabase = getSupabase() as any;
-  // Use exercise_performance view to derive maxes
+  const uid = userId || (await getCurrentUserId());
+  // Pull last 500 set rows with exercise name and workout date for user
   const { data, error } = await (supabase
-    .from('exercise_performance')
-    .select('exercise_name,max_weight,total_volume,workout_date,user_id')
-    .order('workout_date', { ascending: false }));
+    .from('sets')
+    .select('weight,reps,workout_exercises!inner(exercises(name)),workout_exercises!inner(workouts!inner(user_id,workout_date))')
+    .order('workout_exercises(workouts!inner.workout_date)', { ascending: false })
+    .limit(500));
   if (error) throw error;
-  const rows = (data || []) as Array<{ exercise_name: string | null; max_weight: number | null; total_volume: number | null; workout_date: string | null; user_id: string | null }>;
-  const filtered = userId ? rows.filter((r) => r.user_id === userId) : rows;
+  const rows = (data || []) as any[];
+  const filtered = rows.filter(r => (!uid || r.workout_exercises?.workouts?.user_id === uid));
   const byName = new Map<string, PersonalRecord>();
   for (const r of filtered) {
-    const name = r.exercise_name || 'Unknown';
-    const existing = byName.get(name);
-    const maxWeight = Math.round((r.max_weight || 0) * 10) / 10;
-    const maxVolume = Math.round((r.total_volume || 0));
-    const lastDate = r.workout_date || new Date().toISOString();
-    if (!existing) {
-      byName.set(name, { exerciseName: name, maxWeight, maxVolume, maxReps: 0, lastAchieved: lastDate });
-    } else {
-      if (maxWeight > existing.maxWeight) existing.maxWeight = maxWeight;
-      if (maxVolume > existing.maxVolume) existing.maxVolume = maxVolume;
-      if (new Date(lastDate) > new Date(existing.lastAchieved)) existing.lastAchieved = lastDate;
-    }
+    const name = r.workout_exercises?.exercises?.name || 'Unknown';
+    const weight = Number(r.weight) || 0;
+    const reps = Number(r.reps) || 0;
+    const vol = weight * reps;
+    const date = r.workout_exercises?.workouts?.workout_date || new Date().toISOString();
+    const rec = byName.get(name) || { exerciseName: name, maxWeight: 0, maxVolume: 0, maxReps: 0, lastAchieved: date };
+    if (weight > rec.maxWeight) rec.maxWeight = weight;
+    if (vol > rec.maxVolume) rec.maxVolume = vol;
+    if (reps > rec.maxReps) rec.maxReps = reps;
+    if (new Date(date) > new Date(rec.lastAchieved)) rec.lastAchieved = date;
+    byName.set(name, rec);
   }
   return Array.from(byName.values());
 }
