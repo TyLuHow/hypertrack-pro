@@ -1,15 +1,10 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-
-type PR = { exerciseName: string; weight: number; reps: number; date: string };
-type AllTime = { exerciseName: string; maxWeight: number; maxVolume: number; maxReps: number; lastAchieved: string };
-
-async function getPersonalRecords(): Promise<AllTime[]> { return []; }
-async function getRecentPersonalRecords(_days: number): Promise<PR[]> { return []; }
+import { getPersonalRecords, getRecentPersonalRecords, type PersonalRecord } from '../../../lib/supabase/queries';
 
 export const PersonalRecordsTracker: React.FC = () => {
-  const { data: personalRecords } = useQuery({ queryKey: ['personal-records'], queryFn: getPersonalRecords });
-  const { data: recentPRs } = useQuery({ queryKey: ['recent-prs'], queryFn: () => getRecentPersonalRecords(30) });
+  const { data: personalRecords } = useQuery<PersonalRecord[]>({ queryKey: ['personal-records'], queryFn: () => getPersonalRecords() });
+  const { data: recentPRs } = useQuery<{ exerciseName: string; weight: number; reps: number; date: string }[]>({ queryKey: ['recent-prs'], queryFn: () => getRecentPersonalRecords(30) });
 
   return (
     <div className="bg-slate-700/50 rounded-2xl p-6">

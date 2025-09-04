@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { getWorkoutsLastNDays } from '../../../lib/supabase/queries';
 
 interface RecoveryMetrics {
   score: number;
@@ -14,12 +15,22 @@ interface RecoveryMetrics {
 }
 
 async function calculateRecoveryScore(): Promise<RecoveryMetrics> {
-  // Placeholder until wired to real data
+  const recent = await getWorkoutsLastNDays(14);
+  const restDays = Math.max(0, 14 - recent.length);
+  const trainingLoad = recent.length * 1000; // simple proxy; replace with real volume load
+  const weeklyIncrease = 0.05; // placeholder until wired to volume
+  let score = 100;
+  if (recent.length > 8) score -= 15;
+  if (recent.length < 4) score -= 10;
+  if (restDays < 1) score -= 20;
+  if (weeklyIncrease > 0.15) score -= 25;
+  score = Math.max(0, Math.min(100, score));
+  const status = score >= 85 ? 'Excellent' : score >= 70 ? 'Good' : score >= 50 ? 'Fair' : 'Poor';
   return {
-    score: 75,
-    status: 'Good',
-    recommendation: 'Keep up your current recovery routine!',
-    factors: { sleepQuality: 80, trainingLoad: 10000, restDays: 2, volumeProgression: 5 },
+    score,
+    status,
+    recommendation: status === 'Poor' ? 'Prioritize rest and reduce volume' : 'Maintain current recovery routine',
+    factors: { sleepQuality: 80, trainingLoad, restDays, volumeProgression: weeklyIncrease * 100 },
   };
 }
 

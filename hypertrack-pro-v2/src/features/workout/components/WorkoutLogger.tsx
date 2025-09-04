@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useWorkoutStore } from '../../../shared/stores/workoutStore';
 import { WeightInput } from './WeightInput';
 import { useExerciseHistory } from '../../../shared/hooks/useExerciseHistory';
@@ -6,6 +6,7 @@ import { useRecommendations } from '../../../shared/hooks/useRecommendations';
 
 interface WorkoutLoggerProps {
   onExerciseSelect: () => void;
+  onStartRestTimer?: (duration: number) => void; // legacy optional for test compatibility
 }
 
 export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({

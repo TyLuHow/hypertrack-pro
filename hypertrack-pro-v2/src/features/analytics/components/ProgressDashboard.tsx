@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { getProgressSummary } from '../../../lib/supabase/queries';
 
 type ProgressSummary = {
   totalWorkouts: number;
@@ -14,15 +15,7 @@ type ProgressSummary = {
 
 // Reserved for future exercise-level metrics
 
-async function getProgressSummary(_userId: string): Promise<ProgressSummary> {
-  // Placeholder: wire to Supabase RPC or client aggregation
-  return {
-    totalWorkouts: 0,
-    totalSets: 0,
-    totalVolume: 0,
-    avgDuration: 0,
-  };
-}
+// Supplied by queries
 
 interface ProgressDashboardProps {
   userId: string;
