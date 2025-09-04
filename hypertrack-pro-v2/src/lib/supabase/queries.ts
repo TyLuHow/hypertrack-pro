@@ -138,6 +138,40 @@ export async function getWorkoutsLastNDays(days: number, userId?: string): Promi
   return rows.map((r) => ({ date: r.workout_date }));
 }
 
+export type WeeklyVolumePoint = { week: string; volume: number };
+export async function getWeeklyVolumeSeries(weeks: number = 12, userId?: string): Promise<WeeklyVolumePoint[]> {
+  const supabase = getSupabase() as any;
+  const uid = userId || (await getCurrentUserId());
+  const since = new Date(Date.now() - weeks * 7 * 86400000).toISOString().slice(0, 10);
+  const { data, error } = await (supabase
+    .from('workouts')
+    .select('workout_date,total_volume,user_id')
+    .gte('workout_date', since)
+    .order('workout_date', { ascending: false }));
+  if (error) throw error;
+  const rows = (data || []) as Array<{ workout_date: string; total_volume: number | null; user_id: string | null }>;
+  const filtered = uid ? rows.filter(r => r.user_id === uid) : rows;
+  const byWeek = new Map<string, number>();
+  for (const r of filtered) {
+    const d = new Date(r.workout_date);
+    const week = getISOWeekKey(d);
+    const v = (r.total_volume || 0);
+    byWeek.set(week, (byWeek.get(week) || 0) + v);
+  }
+  // Return weeks in chronological order
+  return Array.from(byWeek.entries())
+    .sort((a,b) => (a[0] < b[0] ? -1 : 1))
+    .map(([week, volume]) => ({ week, volume: Math.round(volume) }));
+}
+
+function getISOWeekKey(date: Date): string {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d as any) - (yearStart as any)) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2,'0')}`;
+}
+
 export async function getLastExerciseSetsByName(exerciseName: string, userId?: string): Promise<Array<{ weight: number; reps: number }>> {
   const supabase = getSupabase() as any;
   const uid = userId || (await getCurrentUserId());

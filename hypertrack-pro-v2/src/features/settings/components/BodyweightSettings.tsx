@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 type BodyweightExercise = { name: string; weight?: number };
 
 export const BodyweightSettings: React.FC = () => {
-  const [bodyWeight, setBodyWeight] = useState<number>(180);
+  const [bodyWeight, setBodyWeight] = useState<number>(225);
   const [bodyweightExercises, setBodyweightExercises] = useState<BodyweightExercise[]>([
     { name: 'Pull-ups' },
     { name: 'Chin-ups' },

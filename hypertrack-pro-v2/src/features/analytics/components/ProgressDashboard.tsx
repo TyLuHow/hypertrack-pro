@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getProgressSummary } from '../../../lib/supabase/queries';
+import { getProgressSummary, getWeeklyVolumeSeries } from '../../../lib/supabase/queries';
 
 type ProgressSummary = {
   totalWorkouts: number;
@@ -28,7 +28,10 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
     refetchInterval: 30000,
   });
 
-  // Exercise-specific progress wiring can be added later when available
+  const { data: volumeSeries } = useQuery({
+    queryKey: ['weekly-volume', userId],
+    queryFn: () => getWeeklyVolumeSeries(12, userId)
+  });
 
   if (isLoading) {
     return <div className="p-6 text-textPrimary">Loading...</div>;
@@ -49,8 +52,21 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
           <MetricCard value={progressSummary?.avgDuration || 0} label="Avg Duration (min)" trend={progressSummary?.durationTrend} suffix="min" />
         </div>
 
-        {/* TODO: RecentProgressChart and ExerciseProgressList once implemented */}
-        <div className="bg-slate-700/40 rounded-2xl p-8 text-center text-gray-400">Charts coming soon</div>
+        <div className="bg-slate-700/40 rounded-2xl p-6">
+          <div className="text-white font-semibold mb-3">Weekly Volume</div>
+          {volumeSeries && volumeSeries.length > 0 ? (
+            <div className="text-sm text-textSecondary">
+              {volumeSeries.map(p => (
+                <div key={p.week} className="flex justify-between py-1 border-b border-slate-600/40">
+                  <span>{p.week}</span>
+                  <span className="text-textPrimary">{p.volume.toLocaleString()} lbs</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-400">No volume data yet</div>
+          )}
+        </div>
       </div>
     </div>
   );
