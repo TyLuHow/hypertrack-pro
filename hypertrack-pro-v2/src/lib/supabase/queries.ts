@@ -59,11 +59,12 @@ export type ProgressSummary = {
 export async function getProgressSummary(userId?: string): Promise<ProgressSummary> {
   const supabase = getSupabase() as any;
   const uid = userId || (await getCurrentUserId());
-  const { data, error } = await (supabase
+  let q = (supabase
     .from('workouts')
     .select('id,start_time,end_time,total_volume,total_sets')
-    .eq('user_id', uid)
     .order('workout_date', { ascending: false }));
+  if (uid) q = q.eq('user_id', uid);
+  const { data, error } = await q;
   if (error) throw error;
   const rows = (data || []) as Array<{ id: number; start_time: string; end_time: string | null; total_volume: number | null; total_sets: number | null }>;
   const totalWorkouts = rows.length;
@@ -94,8 +95,7 @@ export async function getPersonalRecords(userId?: string): Promise<PersonalRecor
   const { data, error } = await (supabase
     .from('sets')
     .select('weight,reps,workout_exercises!inner(exercises(name)),workout_exercises!inner(workouts!inner(user_id,workout_date))')
-    .order('workout_exercises(workouts!inner.workout_date)', { ascending: false })
-    .limit(500));
+    .limit(1000));
   if (error) throw error;
   const rows = (data || []) as any[];
   const filtered = rows.filter(r => (!uid || r.workout_exercises?.workouts?.user_id === uid));
@@ -113,7 +113,8 @@ export async function getPersonalRecords(userId?: string): Promise<PersonalRecor
     if (new Date(date) > new Date(rec.lastAchieved)) rec.lastAchieved = date;
     byName.set(name, rec);
   }
-  return Array.from(byName.values());
+  // Sort by lastAchieved desc for deterministic order
+  return Array.from(byName.values()).sort((a,b) => (a.lastAchieved < b.lastAchieved ? 1 : -1));
 }
 
 export async function getRecentPersonalRecords(days: number, userId?: string): Promise<Array<{ exerciseName: string; weight: number; reps: number; date: string }>> {
@@ -127,12 +128,14 @@ export async function getRecentPersonalRecords(days: number, userId?: string): P
 export async function getWorkoutsLastNDays(days: number, userId?: string): Promise<Array<{ date: string }>> {
   const supabase = getSupabase() as any;
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
-  const q = (supabase
+  let q = (supabase
     .from('workouts')
     .select('workout_date,user_id')
     .gte('workout_date', since)
     .order('workout_date', { ascending: false }));
-  const { data, error } = await (userId ? q.eq('user_id', userId) : q);
+  const uid = userId || (await getCurrentUserId());
+  if (uid) q = q.eq('user_id', uid);
+  const { data, error } = await q;
   if (error) throw error;
   const rows = (data || []) as Array<{ workout_date: string }>; 
   return rows.map((r) => ({ date: r.workout_date }));
@@ -141,13 +144,15 @@ export async function getWorkoutsLastNDays(days: number, userId?: string): Promi
 export type WeeklyVolumePoint = { week: string; volume: number };
 export async function getWeeklyVolumeSeries(weeks: number = 12, userId?: string): Promise<WeeklyVolumePoint[]> {
   const supabase = getSupabase() as any;
-  const uid = userId || (await getCurrentUserId());
   const since = new Date(Date.now() - weeks * 7 * 86400000).toISOString().slice(0, 10);
-  const { data, error } = await (supabase
+  let q = (supabase
     .from('workouts')
     .select('workout_date,total_volume,user_id')
     .gte('workout_date', since)
     .order('workout_date', { ascending: false }));
+  const uid = userId || (await getCurrentUserId());
+  if (uid) q = q.eq('user_id', uid);
+  const { data, error } = await q;
   if (error) throw error;
   const rows = (data || []) as Array<{ workout_date: string; total_volume: number | null; user_id: string | null }>;
   const filtered = uid ? rows.filter(r => r.user_id === uid) : rows;

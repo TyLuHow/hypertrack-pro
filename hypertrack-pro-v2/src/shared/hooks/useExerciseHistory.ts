@@ -25,7 +25,6 @@ export const useExerciseHistory = (exerciseName?: string | null): ExerciseHistor
         const { data, error } = await (supabase
           .from('sets')
           .select('weight, workout_exercises!inner(exercise_id, exercises(name)), workout_exercises!inner(workouts!inner(user_id,workout_date))')
-          .order('workout_exercises(workouts!inner.workout_date)', { ascending: false })
           .limit(50));
         if (error) throw error;
         const rows = (data || []) as any[];
