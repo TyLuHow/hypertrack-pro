@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 type ProgressSummary = {
   totalWorkouts: number;
@@ -12,16 +12,7 @@ type ProgressSummary = {
   durationTrend?: number;
 };
 
-type ExerciseProgress = {
-  exerciseName: string;
-  maxWeight: number;
-  maxVolume: number;
-  weightTrend: number;
-  volumeTrend: number;
-  plateauRisk: boolean;
-  lastPR: string | null;
-  sessionsCount: number;
-};
+// Reserved for future exercise-level metrics
 
 async function getProgressSummary(_userId: string): Promise<ProgressSummary> {
   // Placeholder: wire to Supabase RPC or client aggregation
@@ -31,10 +22,6 @@ async function getProgressSummary(_userId: string): Promise<ProgressSummary> {
     totalVolume: 0,
     avgDuration: 0,
   };
-}
-
-async function getExerciseProgress(_userId: string): Promise<ExerciseProgress[]> {
-  return [];
 }
 
 interface ProgressDashboardProps {
@@ -48,10 +35,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
     refetchInterval: 30000,
   });
 
-  const { data: exerciseProgress } = useQuery({
-    queryKey: ['exercise-progress', userId],
-    queryFn: () => getExerciseProgress(userId),
-  });
+  // Exercise-specific progress wiring can be added later when available
 
   if (isLoading) {
     return <div className="p-6 text-textPrimary">Loading...</div>;

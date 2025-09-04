@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 type SetData = { weight: number; reps: number; rpe?: number };
 type Exercise = { name: string; muscle_group: string; category: string; sets: SetData[]; notes?: string };
@@ -12,7 +12,6 @@ interface WorkoutDetailsModalProps {
 }
 
 export const WorkoutDetailsModal: React.FC<WorkoutDetailsModalProps> = ({ workout, isOpen, onClose, onEditWorkout }) => {
-  const [_selectedExercise, setSelectedExercise] = useState<string | null>(null);
   if (!isOpen) return null;
 
   const totalVolume = calculateWorkoutVolume(workout);

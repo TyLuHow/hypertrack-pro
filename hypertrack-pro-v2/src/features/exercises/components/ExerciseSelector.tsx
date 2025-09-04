@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ExerciseProgressionCalculator, type ProgressionRecommendation } from '../../../lib/algorithms/progressionRecommendations';
 import { getSupabase } from '../../../lib/supabase/client';
 import { useWorkoutStore } from '../../../shared/stores/workoutStore';
 

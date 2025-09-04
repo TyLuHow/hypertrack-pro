@@ -25,6 +25,7 @@ export const ResearchFactsBanner: React.FC = () => {
     }, 30000);
     setCurrentFact(researchFacts[0]);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!currentFact || !isVisible) return null;
