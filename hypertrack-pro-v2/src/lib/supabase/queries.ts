@@ -94,7 +94,7 @@ export async function getPersonalRecords(userId?: string): Promise<PersonalRecor
   // Pull last 500 set rows with exercise name and workout date for user
   const { data, error } = await (supabase
     .from('sets')
-    .select('weight,reps,workout_exercises!inner(exercises(name)),workout_exercises!inner(workouts!inner(user_id,workout_date))')
+    .select('weight,reps,workout_exercises!inner(exercises(name),workouts!inner(user_id,workout_date))')
     .limit(1000));
   if (error) throw error;
   const rows = (data || []) as any[];
@@ -182,8 +182,7 @@ export async function getLastExerciseSetsByName(exerciseName: string, userId?: s
   const uid = userId || (await getCurrentUserId());
   const { data, error } = await (supabase
     .from('sets')
-    .select('weight,reps, workout_exercises!inner(exercises(name)), workout_exercises!inner(workouts!inner(user_id,workout_date))')
-    .order('workout_exercises(workouts!inner.workout_date)', { ascending: false })
+    .select('weight,reps, workout_exercises!inner(exercises(name),workouts!inner(user_id,workout_date))')
     .limit(200));
   if (error) throw error;
   const rows = (data || []) as any[];

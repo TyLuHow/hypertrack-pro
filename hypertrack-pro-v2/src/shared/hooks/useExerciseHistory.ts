@@ -24,7 +24,7 @@ export const useExerciseHistory = (exerciseName?: string | null): ExerciseHistor
         // Join sets -> workout_exercises -> exercises -> workouts to compute recent max weight
         const { data, error } = await (supabase
           .from('sets')
-          .select('weight, workout_exercises!inner(exercise_id, exercises(name)), workout_exercises!inner(workouts!inner(user_id,workout_date))')
+          .select('weight, workout_exercises!inner(exercise_id, exercises(name), workouts!inner(user_id,workout_date))')
           .limit(50));
         if (error) throw error;
         const rows = (data || []) as any[];
