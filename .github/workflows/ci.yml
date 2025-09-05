@@ -1,0 +1,67 @@
+name: CI - HyperTrack Pro v2
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  test:
+    name: Run Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: hypertrack-pro-v2/package-lock.json
+
+      - name: Install deps
+        run: |
+          cd hypertrack-pro-v2
+          npm ci
+
+      - name: Run tests
+        env:
+          CI: true
+        run: |
+          cd hypertrack-pro-v2
+          npm test -- --watch=false
+
+  build:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: hypertrack-pro-v2/package-lock.json
+
+      - name: Install and build
+        run: |
+          cd hypertrack-pro-v2
+          npm ci
+          npm run build
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: hypertrack-pro-v2/build
+          retention-days: 1
+
+
