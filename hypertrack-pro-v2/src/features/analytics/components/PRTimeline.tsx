@@ -6,13 +6,13 @@ import { getPRTimelines } from '../../../lib/supabase/queries';
 export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
   const [days, setDays] = useState<number>(180);
   const { data } = useQuery({ queryKey: ['pr-timelines', userId, days], queryFn: () => getPRTimelines(days, userId) });
-  const [metric, setMetric] = useState<'weight' | 'reps' | 'volume' | 'onerm'>('weight');
+  const [metric, setMetric] = useState<'weight' | 'reps' | 'volume' | 'onerm' | 'avgLoad'>('weight');
   const [exerciseFilter, setExerciseFilter] = useState<string>('');
   const [muscleFilter, setMuscleFilter] = useState<string>('');
 
   const series = useMemo(() => {
     if (!data || data.length === 0) return { keys: [] as string[], rows: [] as any[], exercises: [] as string[] };
-    const metricFiltered = data.filter(d => d.type === metric && (!muscleFilter || (d as any).muscle === muscleFilter));
+    const metricFiltered = data.filter(d => d.type === metric && (!muscleFilter || (d as any).muscle?.toLowerCase().includes(muscleFilter)));
     // rank exercises by total sets (number of entries) within window
     const counts = new Map<string, number>();
     metricFiltered.forEach((d) => counts.set(d.exercise, (counts.get(d.exercise) || 0) + 1));
@@ -47,7 +47,7 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
   return (
     <div>
       <div className="flex gap-2 mb-3">
-        {(['weight','reps','volume','onerm'] as const).map((m) => (
+        {(['weight','reps','volume','onerm','avgLoad'] as const).map((m) => (
           <button key={m} onClick={() => setMetric(m)} className={`px-3 py-1 rounded ${metric===m? 'bg-teal-600 text-white':'bg-slate-700 text-gray-300'}`}>{m}</button>
         ))}
       </div>
@@ -59,9 +59,15 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
       <div className="flex gap-2 mb-3">
         <select value={muscleFilter} onChange={(e) => setMuscleFilter(e.target.value)} className="bg-slate-700 text-gray-200 px-3 py-2 rounded">
           <option value="">All muscle groups</option>
-          {Array.from(new Set((data||[]).map(d => (d as any).muscle).filter(Boolean))).map((m) => (
-            <option key={m as string} value={m as string}>{m as string}</option>
-          ))}
+          <option value="chest">Chest</option>
+          <option value="back">Back</option>
+          <option value="legs">Legs</option>
+          <option value="bicep">Biceps</option>
+          <option value="tricep">Triceps</option>
+          <option value="shoulder">Shoulders</option>
+          <option value="push">Push (Chest+Triceps+Shoulders)</option>
+          <option value="pull">Pull (Back+Biceps)</option>
+          <option value="core">Core</option>
         </select>
         <select value={exerciseFilter} onChange={(e) => setExerciseFilter(e.target.value)} className="bg-slate-700 text-gray-200 px-3 py-2 rounded">
           <option value="">All exercises</option>
