@@ -12,7 +12,23 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
 
   const series = useMemo(() => {
     if (!data || data.length === 0) return { keys: [] as string[], rows: [] as any[], exercises: [] as string[] };
-    const metricFiltered = data.filter(d => d.type === metric && (!muscleFilter || (d as any).muscle?.toLowerCase().includes(muscleFilter)));
+    const isInGroup = (muscleName?: string, filter?: string) => {
+      if (!filter) return true;
+      const m = (muscleName || '').toLowerCase();
+      switch (filter) {
+        case 'push':
+          return m.includes('chest') || m.includes('tricep') || m.includes('shoulder') || m.includes('deltoid');
+        case 'pull':
+          return m.includes('back') || m.includes('bicep') || m.includes('lat');
+        case 'core':
+          return m.includes('ab') || m.includes('core') || m.includes('oblique') || m.includes('trunk');
+        case 'legs':
+          return m.includes('quad') || m.includes('hamstring') || m.includes('glute') || m.includes('calf') || m.includes('leg');
+        default:
+          return m.includes(filter);
+      }
+    };
+    const metricFiltered = data.filter(d => d.type === metric && isInGroup((d as any).muscle, muscleFilter));
     // rank exercises by total sets (number of entries) within window
     const counts = new Map<string, number>();
     metricFiltered.forEach((d) => counts.set(d.exercise, (counts.get(d.exercise) || 0) + 1));
@@ -88,6 +104,10 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
                 const p = props && props.payload;
                 const trend = (p && typeof p.trend === 'number') ? p.trend : undefined;
                 const pct = trend ? ` (+${(((value - trend) / trend) * 100).toFixed(1)}%)` : '';
+                if (metric === 'avgLoad') {
+                  const eq10 = Math.round((Number(value) || 0) / 10);
+                  return [`${value}${pct} • ≈ ${eq10} lbs @10 reps`, name];
+                }
                 return [`${value}${pct}`, name];
               }}
               labelFormatter={(t) => new Date(Number(t)).toISOString().slice(0,10)}

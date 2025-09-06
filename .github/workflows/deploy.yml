@@ -10,6 +10,29 @@ env:
   NODE_VERSION: '18'
 
 jobs:
+  audit-dependencies:
+    name: Audit Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            hypertrack-pro-v2/package-lock.json
+      - name: Install root
+        run: npm ci
+      - name: Install frontend
+        working-directory: hypertrack-pro-v2
+        run: npm ci
+      - name: Run audit (info only)
+        run: |
+          npm audit --audit-level=high || true
+          cd hypertrack-pro-v2 && npm audit --audit-level=high || true
   test-frontend:
     name: Run Frontend Tests
     runs-on: ubuntu-latest

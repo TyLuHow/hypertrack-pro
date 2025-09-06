@@ -10,9 +10,13 @@ const supabase = createClient(
 const JWT_SECRET = process.env.JWT_SECRET || 'hypertrack-pro-secret-key';
 
 export default async function handler(req, res) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Enable CORS with optional allowlist
+  const allowlist = (process.env.CORS_ALLOWLIST || '').split(',').map(s => s.trim()).filter(Boolean);
+  const origin = req.headers.origin;
+  const allowOrigin = allowlist.length > 0 ? (allowlist.includes(origin) ? origin : allowlist[0] || '*') : '*';
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
 
