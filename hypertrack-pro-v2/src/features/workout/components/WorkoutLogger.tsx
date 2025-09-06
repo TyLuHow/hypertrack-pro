@@ -86,11 +86,11 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         </div>
       )}
       <button
-        onClick={() => { selectExercise('', true); onExerciseSelect(); }}
-        disabled={!!(currentWorkout && activeExercise && currentWorkout.exercises.find(e => e.id === activeExercise && e.sets.length > 0 && !e.completed))}
+        onClick={() => { if (currentWorkout) { selectExercise('', true); onExerciseSelect(); } }}
+        disabled={!currentWorkout || !!(currentWorkout && activeExercise && currentWorkout.exercises.find(e => e.id === activeExercise && e.sets.length > 0 && !e.completed))}
         className="w-full h-12 bg-surface rounded-lg text-left px-4 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {activeExerciseName || 'Select Exercise'}
+        {currentWorkout ? (activeExerciseName || 'Select Exercise') : 'Start Workout to Select Exercise'}
       </button>
 
       {currentWorkout && activeExercise && (
@@ -152,14 +152,17 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         <div className="max-h-40 overflow-y-auto space-y-2">
           {currentWorkout ? (
             currentWorkout.exercises.length > 0 ? (
-              currentWorkout.exercises.map((ex) => (
+              currentWorkout.exercises.map((ex) => {
+                const totalVolume = ex.sets.reduce((acc, s) => acc + s.weight * s.reps, 0);
+                return (
                 <div key={ex.id} className="card p-3">
                   <div className="font-semibold mb-1">{ex.name}</div>
                   <div className="text-sm text-textSecondary">
                     {ex.sets.map((s) => `${s.weight}×${s.reps}`).join('  •  ')}
                   </div>
+                  <div className="text-xs text-textMuted mt-1">Sets: {ex.sets.length} • Volume: {Math.round(totalVolume)} lbs</div>
                 </div>
-              ))
+              )})
             ) : (
               <div className="text-textMuted">No sets yet</div>
             )

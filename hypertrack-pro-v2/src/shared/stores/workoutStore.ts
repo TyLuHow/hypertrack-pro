@@ -38,6 +38,7 @@ interface WorkoutState {
 
   startWorkout: (name?: string) => void;
   selectExercise: (exerciseId: string, force?: boolean) => void;
+  upsertExerciseMeta: (exerciseId: string, meta: { name?: string; muscleGroup?: string; category?: 'Compound' | 'Isolation' }) => void;
   addSet: (
     exerciseId: string,
     set: SetData,
@@ -81,6 +82,26 @@ export const useWorkoutStore = create<WorkoutState>()(
           }
         }
         s.activeExercise = exerciseId;
+      });
+    },
+
+    upsertExerciseMeta: (exerciseId, meta) => {
+      set((s) => {
+        if (!s.currentWorkout) return;
+        const ex = s.currentWorkout.exercises.find((e) => e.id === exerciseId);
+        if (!ex) {
+          s.currentWorkout.exercises.push({
+            id: exerciseId,
+            name: meta.name || 'Exercise',
+            muscleGroup: meta.muscleGroup || 'Unknown',
+            category: meta.category || 'Isolation',
+            sets: []
+          });
+        } else {
+          if (meta.name) ex.name = meta.name;
+          if (meta.muscleGroup) ex.muscleGroup = meta.muscleGroup;
+          if (meta.category) ex.category = meta.category;
+        }
       });
     },
 

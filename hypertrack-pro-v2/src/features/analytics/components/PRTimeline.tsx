@@ -4,14 +4,18 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianG
 import { getPRTimelines } from '../../../lib/supabase/queries';
 
 export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
-  const { data } = useQuery({ queryKey: ['pr-timelines', userId], queryFn: () => getPRTimelines(180, userId) });
-  const [metric, setMetric] = useState<'weight' | 'reps' | 'volume'>('weight');
+  const [days, setDays] = useState<number>(180);
+  const { data } = useQuery({ queryKey: ['pr-timelines', userId, days], queryFn: () => getPRTimelines(days, userId) });
+  const [metric, setMetric] = useState<'weight' | 'reps' | 'volume' | 'onerm'>('weight');
   const [exerciseFilter, setExerciseFilter] = useState<string>('');
 
   const series = useMemo(() => {
     if (!data || data.length === 0) return { keys: [] as string[], rows: [] as any[], exercises: [] as string[] };
     const metricFiltered = data.filter(d => d.type === metric);
-    const exercises = Array.from(new Set(metricFiltered.map(d => d.exercise)));
+    // rank exercises by total sets (number of entries) within window
+    const counts = new Map<string, number>();
+    metricFiltered.forEach((d) => counts.set(d.exercise, (counts.get(d.exercise) || 0) + 1));
+    const exercises = Array.from(new Set(metricFiltered.map(d => d.exercise))).sort((a,b) => (counts.get(b)! - counts.get(a)!));
     const focusExercises = exerciseFilter ? [exerciseFilter] : exercises;
     const byDate = new Map<string, any>();
     for (const d of metricFiltered) {
@@ -33,8 +37,13 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
   return (
     <div>
       <div className="flex gap-2 mb-3">
-        {(['weight','reps','volume'] as const).map((m) => (
+        {(['weight','reps','volume','onerm'] as const).map((m) => (
           <button key={m} onClick={() => setMetric(m)} className={`px-3 py-1 rounded ${metric===m? 'bg-teal-600 text-white':'bg-slate-700 text-gray-300'}`}>{m}</button>
+        ))}
+      </div>
+      <div className="flex gap-2 mb-3">
+        {[30, 90, 180, 365].map((d) => (
+          <button key={d} onClick={() => setDays(d)} className={`px-3 py-1 rounded ${days===d? 'bg-teal-600 text-white':'bg-slate-700 text-gray-300'}`}>{d}d</button>
         ))}
       </div>
       <div className="mb-3">
@@ -54,7 +63,7 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
             <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }} />
             {/* Legend removed to avoid clutter */}
             {series.keys.map((k, i) => (
-              <Line key={k} type="monotone" dataKey={k} stroke={colors[i % colors.length]} dot={false} />
+              <Line key={k} type="monotone" dataKey={k} stroke={colors[i % colors.length]} dot={false} connectNulls />
             ))}
           </LineChart>
         </ResponsiveContainer>

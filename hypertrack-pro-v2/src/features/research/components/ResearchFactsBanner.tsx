@@ -1,34 +1,22 @@
-import React, { useEffect, useState } from 'react';
-
-interface ResearchFact {
-  id: string;
-  fact: string;
-  source: string;
-  category: 'progression' | 'recovery' | 'volume' | 'frequency';
-}
+import React, { useEffect, useMemo, useState } from 'react';
+import { researchFacts } from '../../../data/researchFacts';
 
 export const ResearchFactsBanner: React.FC = () => {
-  const [currentFact, setCurrentFact] = useState<ResearchFact | null>(null);
+  const [idx, setIdx] = useState<number>(0);
   const [isVisible, setIsVisible] = useState(true);
 
-  const researchFacts: ResearchFact[] = [
-    { id: '1', fact: 'Studies show 48-72 hours rest between training same muscle groups optimizes growth', source: 'Schoenfeld et al., 2016', category: 'recovery' },
-    { id: '2', fact: 'Progressive overload of 0.5-2% weekly maximizes strength gains while minimizing injury risk', source: 'ACSM Guidelines, 2018', category: 'progression' },
-    { id: '3', fact: '10-20 sets per muscle group per week appears optimal for hypertrophy in trained individuals', source: 'Schoenfeld et al., 2017', category: 'volume' },
-    { id: '4', fact: 'Training frequency of 2-3x per week per muscle group shows superior outcomes vs once weekly', source: 'Ralston et al., 2017', category: 'frequency' },
-  ];
+  const items = researchFacts;
+  const current = items.length ? items[idx % items.length] : undefined;
+  const text = useMemo(() => (current?.text || '').replace(/:contentReference\[[^\]]+\]\{[^}]+\}/g, ''), [current]);
+  const source = current ? `${current.citation.authors}, ${current.citation.year} • ${current.citation.journal}` : '';
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const randomFact = researchFacts[Math.floor(Math.random() * researchFacts.length)];
-      setCurrentFact(randomFact);
-    }, 30000);
-    setCurrentFact(researchFacts[0]);
+    const interval = setInterval(() => setIdx((i) => i + 1), 30000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!currentFact || !isVisible) return null;
+  if (!current || !isVisible) return null;
 
   return (
     <div className="bg-slate-700/50 backdrop-blur-sm border-b border-slate-600 px-4 py-3">
@@ -37,8 +25,8 @@ export const ResearchFactsBanner: React.FC = () => {
           <span className="text-teal-400 text-xs">🔬</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-300 leading-relaxed">{currentFact.fact}</p>
-          <p className="text-xs text-gray-500 mt-1">Source: {currentFact.source}</p>
+          <p className="text-sm text-gray-300 leading-relaxed">{text}</p>
+          <p className="text-xs text-gray-500 mt-1">Source: {source}</p>
         </div>
         <button onClick={() => setIsVisible(false)} className="text-gray-400 hover:text-gray-300 flex-shrink-0 p-1">✕</button>
       </div>

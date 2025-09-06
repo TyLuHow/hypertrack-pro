@@ -268,7 +268,7 @@ export async function getPerMuscleWeeklyTrends(weeks: number = 12, userId?: stri
   return result;
 }
 
-export async function getPRTimelines(days: number = 180, userId?: string): Promise<Array<{ date: string; exercise: string; type: 'weight' | 'reps' | 'volume'; value: number }>> {
+export async function getPRTimelines(days: number = 180, userId?: string): Promise<Array<{ date: string; exercise: string; type: 'weight' | 'reps' | 'volume' | 'onerm'; value: number }>> {
   const supabase = getSupabase() as any;
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
   const { data, error } = await (supabase
@@ -277,34 +277,30 @@ export async function getPRTimelines(days: number = 180, userId?: string): Promi
     .gte('workout_exercises.workouts.workout_date', since));
   if (error) throw error;
   const rows = (data || []) as any[];
-  const timeline = new Map<string, { weight: number; reps: number; volume: number; date: string }>();
+  // Track best metrics per exercise per date, then reduce to most recent changes
+  const byDateExercise = new Map<string, { weight: number; reps: number; volume: number; onerm: number }>();
   for (const r of rows) {
     const exercise = r.workout_exercises?.exercises?.name || 'Unknown';
     const date = r.workout_exercises?.workouts?.workout_date || '1970-01-01';
-    const key = `${exercise}`;
+    const key = `${date}__${exercise}`;
     const weight = Number(r.weight) || 0;
     const reps = Number(r.reps) || 0;
     const volume = weight * reps;
-    const cur = timeline.get(key) || { weight: 0, reps: 0, volume: 0, date };
-    if (weight > cur.weight) {
-      cur.weight = weight;
-      cur.date = date;
-    }
-    if (reps > cur.reps) {
-      cur.reps = reps;
-      cur.date = date;
-    }
-    if (volume > cur.volume) {
-      cur.volume = volume;
-      cur.date = date;
-    }
-    timeline.set(key, cur);
+    const onerm = weight > 0 && reps > 0 ? Math.round(weight * (1 + reps / 30)) : 0; // Epley
+    const cur = byDateExercise.get(key) || { weight: 0, reps: 0, volume: 0, onerm: 0 };
+    if (weight > cur.weight) cur.weight = weight;
+    if (reps > cur.reps) cur.reps = reps;
+    if (volume > cur.volume) cur.volume = volume;
+    if (onerm > cur.onerm) cur.onerm = onerm;
+    byDateExercise.set(key, cur);
   }
-  const out: Array<{ date: string; exercise: string; type: 'weight' | 'reps' | 'volume'; value: number }> = [];
-  Array.from(timeline.entries()).forEach(([exercise, pr]) => {
-    out.push({ date: pr.date, exercise, type: 'weight', value: pr.weight });
-    out.push({ date: pr.date, exercise, type: 'reps', value: pr.reps });
-    out.push({ date: pr.date, exercise, type: 'volume', value: pr.volume });
+  const out: Array<{ date: string; exercise: string; type: 'weight' | 'reps' | 'volume' | 'onerm'; value: number }> = [];
+  Array.from(byDateExercise.entries()).forEach(([key, pr]) => {
+    const [date, exercise] = key.split('__');
+    out.push({ date, exercise, type: 'weight', value: pr.weight });
+    out.push({ date, exercise, type: 'reps', value: pr.reps });
+    out.push({ date, exercise, type: 'volume', value: pr.volume });
+    out.push({ date, exercise, type: 'onerm', value: pr.onerm });
   });
   return out.sort((a,b) => (a.date < b.date ? -1 : 1));
 }

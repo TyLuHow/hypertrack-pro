@@ -16,6 +16,8 @@ function App() {
   
   const [tab, setTab] = React.useState<TabKey>('workout');
   const selectExercise = useWorkoutStore((s) => s.selectExercise);
+  const upsertExerciseMeta = useWorkoutStore((s) => s.upsertExerciseMeta);
+  const currentWorkout = useWorkoutStore((s) => s.currentWorkout);
 
   return (
     <div className="bg-background min-h-screen pb-16">
@@ -33,6 +35,8 @@ function App() {
         isOpen={selectorOpen}
         onClose={() => setSelectorOpen(false)}
         onSelect={(exerciseId, _name) => {
+          if (!currentWorkout) return; // guard: cannot select before workout started
+          upsertExerciseMeta(exerciseId, { name: _name });
           selectExercise(exerciseId);
           setSelectorOpen(false);
         }}
