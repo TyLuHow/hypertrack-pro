@@ -1,35 +1,22 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { getWeeklyWorkoutFrequency } from '../../../lib/supabase/queries';
 
-type FrequencyAnalysis = {
-  weeklyPattern: { day: string; workouts: number }[];
-  averagePerWeek: number;
-  consistency: number; // percent
-  optimalFrequency: boolean;
-};
-
-export const TrainingFrequencyChart: React.FC<{ data: FrequencyAnalysis }> = ({ data }) => {
+export const TrainingFrequencyChart: React.FC<{ userId?: string }> = ({ userId }) => {
+  const { data } = useQuery({ queryKey: ['weekly-frequency', userId], queryFn: () => getWeeklyWorkoutFrequency(12, userId) });
+  if (!data || data.length === 0) return <div className="text-gray-400">No frequency data</div>;
   return (
-    <div className="bg-slate-700/40 rounded-2xl p-6">
-      <h3 className="text-xl font-semibold text-white mb-4">Weekly Training Pattern</h3>
-      <div className="h-64 mb-6 flex items-center justify-center text-gray-400">Bar chart coming soon</div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-800/50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-teal-400 mb-1">{data.averagePerWeek.toFixed(1)}</div>
-          <div className="text-sm text-gray-400">Avg workouts/week</div>
-        </div>
-        <div className="bg-slate-800/50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-400 mb-1">{data.consistency}%</div>
-          <div className="text-sm text-gray-400">Weekly consistency</div>
-        </div>
-        <div className="bg-slate-800/50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-green-400 mb-1">{data.optimalFrequency ? 'Yes' : 'Adjust'}</div>
-          <div className="text-sm text-gray-400">Optimal frequency</div>
-        </div>
-      </div>
-      <div className="mt-6 p-4 bg-slate-800/30 rounded-lg">
-        <h4 className="font-medium text-white mb-2">Research-Based Insights</h4>
-        <p className="text-sm text-gray-300">Aim for 3-4 sessions/week; balance intensity and recovery for progress.</p>
-      </div>
+    <div className="h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+          <XAxis dataKey="week" tick={{ fill: '#94a3b8', fontSize: 12 }} interval={Math.max(0, Math.floor(data.length / 6) - 1)} />
+          <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+          <Tooltip labelFormatter={(l) => `Week ${l}`} contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }} />
+          <Bar dataKey="count" fill="#22c55e" />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { getProgressSummary, getWeeklyVolumeSeries } from '../../../lib/supabase/queries';
+import { getProgressSummary, getWeeklyVolumeSeries, getMuscleGroupVolumeDistribution } from '../../../lib/supabase/queries';
 
 // Reserved for future exercise-level metrics
 
@@ -19,6 +19,11 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
   const { data: volumeSeries } = useQuery({
     queryKey: ['weekly-volume', userId],
     queryFn: () => getWeeklyVolumeSeries(12, userId)
+  });
+
+  const { data: muscleDistribution } = useQuery({
+    queryKey: ['muscle-distribution', userId],
+    queryFn: () => getMuscleGroupVolumeDistribution(28, userId)
   });
 
   if (isLoading) {
@@ -57,6 +62,28 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
           ) : (
             <div className="text-center text-gray-400">No volume data yet</div>
           )}
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 mt-6">
+          <div className="bg-slate-700/40 rounded-2xl p-6">
+            <div className="text-white font-semibold mb-3">Muscle Group Volume (28d)</div>
+            {muscleDistribution && muscleDistribution.length > 0 ? (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={muscleDistribution} dataKey="volume" nameKey="muscle" outerRadius={90} label={(e) => e.muscle}>
+                      {muscleDistribution.map((_, i) => (
+                        <Cell key={i} fill={["#38bdf8","#22c55e","#f43f5e","#f59e0b","#a78bfa","#10b981"][i % 6]} />
+                      ))}
+                    </Pie>
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center text-gray-400">No distribution data</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

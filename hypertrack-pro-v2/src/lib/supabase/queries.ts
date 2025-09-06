@@ -182,6 +182,55 @@ function getISOWeekKey(date: Date): string {
   return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2,'0')}`;
 }
 
+export async function getMuscleGroupVolumeDistribution(days: number = 28, userId?: string): Promise<Array<{ muscle: string; volume: number }>> {
+  const supabase = getSupabase() as any;
+  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const uid = userId || (await getCurrentUserId());
+  let q = (supabase
+    .from('sets')
+    .select('weight,reps, workout_exercises!inner(exercises!inner(muscle_group), workouts!inner(user_id,workout_date))')
+    .gte('workout_exercises.workouts.workout_date', since));
+  const { data, error } = await q;
+  if (error) throw error;
+  const rows = (data || []) as any[];
+  const filtered = rows.filter(r => (!uid || r.workout_exercises?.workouts?.user_id === uid));
+  const map = new Map<string, number>();
+  for (const r of filtered) {
+    const mg = r.workout_exercises?.exercises?.muscle_group || 'Unknown';
+    const vol = (Number(r.weight) || 0) * (Number(r.reps) || 0);
+    map.set(mg, (map.get(mg) || 0) + vol);
+  }
+  return Array.from(map.entries()).map(([muscle, volume]) => ({ muscle, volume: Math.round(volume) }))
+    .sort((a,b) => b.volume - a.volume);
+}
+
+export async function getWeeklyWorkoutFrequency(weeks: number = 12, userId?: string): Promise<Array<{ week: string; count: number }>> {
+  const supabase = getSupabase() as any;
+  const since = new Date(Date.now() - weeks * 7 * 86400000).toISOString().slice(0, 10);
+  let q = (supabase
+    .from('workouts')
+    .select('workout_date,user_id')
+    .gte('workout_date', since));
+  const uid = userId || (await getCurrentUserId());
+  if (uid) q = q.eq('user_id', uid);
+  const { data, error } = await q;
+  if (error) throw error;
+  const rows = (data || []) as Array<{ workout_date: string; user_id: string | null }>;
+  const map = new Map<string, number>();
+  for (const r of rows) {
+    const key = getISOWeekKey(new Date(r.workout_date));
+    map.set(key, (map.get(key) || 0) + 1);
+  }
+  const now = new Date();
+  const series: Array<{ week: string; count: number }> = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 7 * 86400000);
+    const key = getISOWeekKey(d);
+    series.push({ week: key, count: map.get(key) || 0 });
+  }
+  return series;
+}
+
 export async function getLastExerciseSetsByName(exerciseName: string, userId?: string): Promise<Array<{ weight: number; reps: number }>> {
   const supabase = getSupabase() as any;
   const uid = userId || (await getCurrentUserId());
