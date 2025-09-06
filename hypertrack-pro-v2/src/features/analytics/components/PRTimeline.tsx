@@ -6,20 +6,25 @@ import { getPRTimelines } from '../../../lib/supabase/queries';
 export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
   const { data } = useQuery({ queryKey: ['pr-timelines', userId], queryFn: () => getPRTimelines(180, userId) });
   const [metric, setMetric] = useState<'weight' | 'reps' | 'volume'>('weight');
+  const [exerciseFilter, setExerciseFilter] = useState<string>('');
 
   const series = useMemo(() => {
-    if (!data || data.length === 0) return { keys: [] as string[], rows: [] as any[] };
-    const filtered = data.filter(d => d.type === metric);
-    const exercises = Array.from(new Set(filtered.map(d => d.exercise)));
+    if (!data || data.length === 0) return { keys: [] as string[], rows: [] as any[], exercises: [] as string[] };
+    const metricFiltered = data.filter(d => d.type === metric);
+    const exercises = Array.from(new Set(metricFiltered.map(d => d.exercise)));
+    const focusExercises = exerciseFilter ? [exerciseFilter] : exercises;
     const byDate = new Map<string, any>();
-    for (const d of filtered) {
+    for (const d of metricFiltered) {
+      if (exerciseFilter && d.exercise !== exerciseFilter) continue;
       const row = byDate.get(d.date) || { date: d.date };
       row[d.exercise] = d.value;
       byDate.set(d.date, row);
     }
-    const rows = Array.from(byDate.values()).sort((a,b) => (a.date < b.date ? -1 : 1));
-    return { keys: exercises, rows };
-  }, [data, metric]);
+    let rows = Array.from(byDate.values()).sort((a,b) => (a.date < b.date ? -1 : 1));
+    // keep only the most recent 3 PR points
+    if (rows.length > 3) rows = rows.slice(rows.length - 3);
+    return { keys: focusExercises, rows, exercises };
+  }, [data, metric, exerciseFilter]);
 
   if (!data || data.length === 0) return <div className="text-gray-400">No PR data</div>;
 
@@ -31,6 +36,14 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
         {(['weight','reps','volume'] as const).map((m) => (
           <button key={m} onClick={() => setMetric(m)} className={`px-3 py-1 rounded ${metric===m? 'bg-teal-600 text-white':'bg-slate-700 text-gray-300'}`}>{m}</button>
         ))}
+      </div>
+      <div className="mb-3">
+        <select value={exerciseFilter} onChange={(e) => setExerciseFilter(e.target.value)} className="bg-slate-700 text-gray-200 px-3 py-2 rounded">
+          <option value="">All exercises</option>
+          {series.exercises.map((ex) => (
+            <option key={ex} value={ex}>{ex}</option>
+          ))}
+        </select>
       </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">

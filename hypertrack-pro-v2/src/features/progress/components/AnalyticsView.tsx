@@ -7,7 +7,7 @@ export const AnalyticsView: React.FC = () => {
     <div className="p-4 pb-20 text-textPrimary">
       <div className="text-xl font-semibold mb-3">Progress</div>
       <div className="card p-0 overflow-hidden">
-        <ProgressDashboard userId={'current'} />
+        <ProgressDashboard />
       </div>
       <div className="mt-4">
         <PersonalRecordsTracker />

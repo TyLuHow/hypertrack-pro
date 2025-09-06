@@ -8,7 +8,7 @@ import { getProgressSummary, getWeeklyVolumeSeries, getMuscleGroupVolumeDistribu
 // Reserved for future exercise-level metrics
 
 interface ProgressDashboardProps {
-  userId: string;
+  userId?: string;
 }
 
 export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) => {
