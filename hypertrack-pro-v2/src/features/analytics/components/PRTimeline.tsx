@@ -8,10 +8,11 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
   const { data } = useQuery({ queryKey: ['pr-timelines', userId, days], queryFn: () => getPRTimelines(days, userId) });
   const [metric, setMetric] = useState<'weight' | 'reps' | 'volume' | 'onerm'>('weight');
   const [exerciseFilter, setExerciseFilter] = useState<string>('');
+  const [muscleFilter, setMuscleFilter] = useState<string>('');
 
   const series = useMemo(() => {
     if (!data || data.length === 0) return { keys: [] as string[], rows: [] as any[], exercises: [] as string[] };
-    const metricFiltered = data.filter(d => d.type === metric);
+    const metricFiltered = data.filter(d => d.type === metric && (!muscleFilter || (d as any).muscle === muscleFilter));
     // rank exercises by total sets (number of entries) within window
     const counts = new Map<string, number>();
     metricFiltered.forEach((d) => counts.set(d.exercise, (counts.get(d.exercise) || 0) + 1));
@@ -37,7 +38,7 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
       return { ts: p.ts, trend: ma };
     });
     return { keys: focusExercises, rows, exercises, trend: smoothed };
-  }, [data, metric, exerciseFilter]);
+  }, [data, metric, exerciseFilter, muscleFilter]);
 
   if (!data || data.length === 0) return <div className="text-gray-400">No PR data</div>;
 
@@ -55,7 +56,13 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
           <button key={d} onClick={() => setDays(d)} className={`px-3 py-1 rounded ${days===d? 'bg-teal-600 text-white':'bg-slate-700 text-gray-300'}`}>{d}d</button>
         ))}
       </div>
-      <div className="mb-3">
+      <div className="flex gap-2 mb-3">
+        <select value={muscleFilter} onChange={(e) => setMuscleFilter(e.target.value)} className="bg-slate-700 text-gray-200 px-3 py-2 rounded">
+          <option value="">All muscle groups</option>
+          {Array.from(new Set((data||[]).map(d => (d as any).muscle).filter(Boolean))).map((m) => (
+            <option key={m as string} value={m as string}>{m as string}</option>
+          ))}
+        </select>
         <select value={exerciseFilter} onChange={(e) => setExerciseFilter(e.target.value)} className="bg-slate-700 text-gray-200 px-3 py-2 rounded">
           <option value="">All exercises</option>
           {series.exercises.map((ex) => (
@@ -69,7 +76,16 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis dataKey="ts" type="number" domain={['dataMin','dataMax']} tickFormatter={(t) => new Date(t).toISOString().slice(0,10)} tick={{ fill: '#94a3b8', fontSize: 12 }} />
             <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
-            <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }} />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
+              formatter={(value: any, name: any, props: any) => {
+                const p = props && props.payload;
+                const trend = (p && typeof p.trend === 'number') ? p.trend : undefined;
+                const pct = trend ? ` (+${(((value - trend) / trend) * 100).toFixed(1)}%)` : '';
+                return [`${value}${pct}`, name];
+              }}
+              labelFormatter={(t) => new Date(Number(t)).toISOString().slice(0,10)}
+            />
             {series.keys.map((k, i) => (
               <Line key={k} type="monotone" dataKey={k} stroke={colors[i % colors.length]} dot={false} connectNulls />
             ))}

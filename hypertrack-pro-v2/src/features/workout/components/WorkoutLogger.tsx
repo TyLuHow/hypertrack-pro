@@ -67,6 +67,9 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
     // Reset inputs for fast logging flow
     setReps(8);
   };
+  const handleDeleteSet = (id: string) => {
+    setRows((r) => r.filter((row) => row.id !== id));
+  };
   const handleRowChange = (id: string, next: Partial<SetRow>) => {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...next } : row)));
     // Optionally also update the store optimistic set here if needed
@@ -141,7 +144,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
           </div>
 
           <div className="mt-4 space-y-3">
-            <SetTable rows={rows} onChange={handleRowChange} onAdd={handleAddSet} />
+            <SetTable rows={rows} onChange={handleRowChange} onAdd={handleAddSet} onDelete={handleDeleteSet} />
             <button onClick={() => activeExercise && completeExercise(activeExercise)} className="btn-muted w-full">Complete Exercise</button>
           </div>
         </div>

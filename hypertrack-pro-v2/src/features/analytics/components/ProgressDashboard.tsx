@@ -110,7 +110,30 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                   <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
+                    formatter={(value: any, name: any, props: any) => {
+                      return [value, name];
+                    }}
+                    labelFormatter={(label: string, payload: any) => {
+                      // Aggregate for tooltip
+                      const d = payload && payload[0] ? payload[0].payload : undefined;
+                      if (!d) return label;
+                      // split classification
+                      const muscles = new Set<string>();
+                      const items = (workoutSeries || []).filter(x => x.date === d.date);
+                      items.forEach(x => muscles.add(x.muscle));
+                      const has = (m: string) => Array.from(muscles).some(mm => mm.toLowerCase().includes(m));
+                      const splits: string[] = [];
+                      if (has('back') || has('bicep')) splits.push('pull');
+                      if (has('chest') || has('tricep')) splits.push('push');
+                      if (has('shoulder') || has('deltoid')) splits.push('shoulders');
+                      if (has('quad') || has('hamstring') || has('glute') || has('leg')) splits.push('legs');
+                      const totalSets = items.reduce((acc, x) => acc + x.sets, 0);
+                      const totalVolume = items.reduce((acc, x) => acc + x.volume, 0);
+                      return `${d.date} • sets: ${totalSets} • volume: ${Math.round(totalVolume)} • split: ${splits.join(' + ') || 'other'}`;
+                    }}
+                  />
                   <Line type="monotone" dataKey="weight" stroke="#38bdf8" dot={{ r: 2 }} connectNulls name="Max Weight" />
                   <Line type="monotone" dataKey="reps" stroke="#22c55e" dot={{ r: 2 }} connectNulls name="Max Reps" />
                   <Line type="monotone" dataKey="sets" stroke="#f59e0b" dot={{ r: 2 }} connectNulls name="Sets" />
