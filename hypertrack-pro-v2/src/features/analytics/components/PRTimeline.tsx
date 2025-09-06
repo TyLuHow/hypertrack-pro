@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { getPRTimelines } from '../../../lib/supabase/queries';
 
 export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
@@ -52,7 +52,7 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
             <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 12 }} />
             <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
             <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }} />
-            <Legend />
+            {/* Legend removed to avoid clutter */}
             {series.keys.map((k, i) => (
               <Line key={k} type="monotone" dataKey={k} stroke={colors[i % colors.length]} dot={false} />
             ))}
