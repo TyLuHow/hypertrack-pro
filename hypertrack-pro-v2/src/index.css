@@ -24,3 +24,21 @@ body {
 .number-xl {
   @apply font-mono text-3xl font-bold tracking-wide;
 }
+
+/* Stylized scrollbars */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  border: 2px solid rgba(15, 23, 42, 0.8);
+}
+*::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148,163,184,0.35) rgba(15,23,42,0.6);
+}

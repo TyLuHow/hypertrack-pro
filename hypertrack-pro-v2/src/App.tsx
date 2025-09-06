@@ -18,6 +18,7 @@ function App() {
   const selectExercise = useWorkoutStore((s) => s.selectExercise);
   const upsertExerciseMeta = useWorkoutStore((s) => s.upsertExerciseMeta);
   const currentWorkout = useWorkoutStore((s) => s.currentWorkout);
+  const replaceExerciseSets = useWorkoutStore((s) => s.replaceExerciseSets);
 
   return (
     <div className="bg-background min-h-screen pb-16">
@@ -37,6 +38,8 @@ function App() {
         onSelect={(exerciseId, _name) => {
           if (!currentWorkout) return; // guard: cannot select before workout started
           upsertExerciseMeta(exerciseId, { name: _name });
+          // Initialize with a single recommended first set placeholder (0 volume until edited)
+          replaceExerciseSets(exerciseId, [], { name: _name });
           selectExercise(exerciseId);
           setSelectorOpen(false);
         }}

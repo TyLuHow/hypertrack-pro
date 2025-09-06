@@ -45,6 +45,11 @@ interface WorkoutState {
     meta?: { name?: string; muscleGroup?: string; category?: 'Compound' | 'Isolation' }
   ) => void;
   updateSetOptimistic: (setId: string, data: Partial<SetData>) => void;
+  replaceExerciseSets: (
+    exerciseId: string,
+    sets: SetData[],
+    meta?: { name?: string; muscleGroup?: string; category?: 'Compound' | 'Isolation' }
+  ) => void;
   completeExercise: (exerciseId: string) => void;
   completeWorkout: () => void;
   setWorkoutName: (name: string) => void;
@@ -138,6 +143,27 @@ export const useWorkoutStore = create<WorkoutState>()(
             ex.sets[idx] = { ...ex.sets[idx], ...data };
             break;
           }
+        }
+      });
+    },
+
+    replaceExerciseSets: (exerciseId, sets, meta) => {
+      set((s) => {
+        if (!s.currentWorkout) return;
+        const ex = s.currentWorkout.exercises.find((e) => e.id === exerciseId);
+        if (!ex) {
+          s.currentWorkout.exercises.push({
+            id: exerciseId,
+            name: meta?.name || 'Exercise',
+            muscleGroup: meta?.muscleGroup || 'Unknown',
+            category: meta?.category || 'Isolation',
+            sets: sets.slice(0, 4)
+          });
+        } else {
+          if (meta?.name) ex.name = meta.name;
+          if (meta?.muscleGroup) ex.muscleGroup = meta.muscleGroup;
+          if (meta?.category) ex.category = meta.category;
+          ex.sets = sets.slice(0, 4);
         }
       });
     },
