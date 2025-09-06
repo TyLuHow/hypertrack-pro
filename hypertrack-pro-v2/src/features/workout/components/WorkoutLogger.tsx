@@ -44,7 +44,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         setReps(prefilled[0].reps);
       }
     }
-  }, [history.lastWeight]);
+  }, [history.lastWeight, history.lastSets, rows.length, weight]);
 
   const { recommendation } = useRecommendations(activeExercise ?? undefined);
 

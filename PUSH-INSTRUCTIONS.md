@@ -45,3 +45,4 @@ You can also run `./push-updates.ps1` (repo root). Ensure the script stages `hyp
 
 ---
 Authoritative copies: this file and `.cursorrules.mdc` (Push Protocol section).
+
