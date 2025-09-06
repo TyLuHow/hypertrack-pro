@@ -3,7 +3,8 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianG
 import { PerMuscleTrends } from './PerMuscleTrends';
 import { PRTimeline } from './PRTimeline';
 import { useQuery } from '@tanstack/react-query';
-import { getProgressSummary, getWeeklyVolumeSeries, getMuscleGroupVolumeDistribution } from '../../../lib/supabase/queries';
+import { getProgressSummary, getWeeklyVolumeSeries, getMuscleGroupVolumeDistribution, getWorkoutMetricsSeries } from '../../../lib/supabase/queries';
+import { useState } from 'react';
 
 // Reserved for future exercise-level metrics
 
@@ -27,6 +28,9 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
     queryKey: ['muscle-distribution', userId],
     queryFn: () => getMuscleGroupVolumeDistribution(28, userId)
   });
+
+  const [seriesDays, setSeriesDays] = useState<number>(180);
+  const { data: workoutSeries } = useQuery({ queryKey: ['workout-metrics', userId, seriesDays], queryFn: () => getWorkoutMetricsSeries(seriesDays, userId) });
 
   if (isLoading) {
     return <div className="p-6 text-textPrimary">Loading...</div>;
@@ -90,6 +94,33 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
             <div className="text-white font-semibold mb-3">Per-Muscle Weekly Trends</div>
             <PerMuscleTrends userId={userId} />
           </div>
+        </div>
+
+        <div className="bg-slate-700/40 rounded-2xl p-6 mt-6">
+          <div className="text-white font-semibold mb-3">Workout Timelines</div>
+          <div className="flex gap-2 mb-3">
+            {[30, 90, 180, 365].map((d) => (
+              <button key={d} onClick={() => setSeriesDays(d)} className={`px-3 py-1 rounded ${seriesDays===d? 'bg-teal-600 text-white':'bg-slate-700 text-gray-300'}`}>{d}d</button>
+            ))}
+          </div>
+          {workoutSeries && workoutSeries.length > 0 ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={workoutSeries} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }} />
+                  <Line type="monotone" dataKey="weight" stroke="#38bdf8" dot={{ r: 2 }} connectNulls name="Max Weight" />
+                  <Line type="monotone" dataKey="reps" stroke="#22c55e" dot={{ r: 2 }} connectNulls name="Max Reps" />
+                  <Line type="monotone" dataKey="sets" stroke="#f59e0b" dot={{ r: 2 }} connectNulls name="Sets" />
+                  <Line type="monotone" dataKey="volume" stroke="#a78bfa" dot={{ r: 2 }} connectNulls name="Volume" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="text-center text-gray-400">No workout data</div>
+          )}
         </div>
 
         <div className="bg-slate-700/40 rounded-2xl p-6 mt-6">

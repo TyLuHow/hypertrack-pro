@@ -231,6 +231,38 @@ export async function getWeeklyWorkoutFrequency(weeks: number = 12, userId?: str
   return series;
 }
 
+export async function getWorkoutMetricsSeries(days: number = 180, userId?: string): Promise<Array<{ date: string; exercise: string; weight: number; reps: number; sets: number; volume: number }>> {
+  const supabase = getSupabase() as any;
+  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const { data, error } = await (supabase
+    .from('sets')
+    .select('weight,reps, workout_exercises!inner(exercises(name), workouts!inner(user_id,workout_date))')
+    .gte('workout_exercises.workouts.workout_date', since));
+  if (error) throw error;
+  const rows = (data || []) as any[];
+  // aggregate per exercise per date
+  const map = new Map<string, { weightMax: number; repsMax: number; sets: number; volume: number }>();
+  for (const r of rows) {
+    const exercise = r.workout_exercises?.exercises?.name || 'Unknown';
+    const date = r.workout_exercises?.workouts?.workout_date || '1970-01-01';
+    const key = `${date}__${exercise}`;
+    const weight = Number(r.weight) || 0;
+    const reps = Number(r.reps) || 0;
+    const cur = map.get(key) || { weightMax: 0, repsMax: 0, sets: 0, volume: 0 };
+    cur.weightMax = Math.max(cur.weightMax, weight);
+    cur.repsMax = Math.max(cur.repsMax, reps);
+    cur.sets += 1;
+    cur.volume += weight * reps;
+    map.set(key, cur);
+  }
+  const out: Array<{ date: string; exercise: string; weight: number; reps: number; sets: number; volume: number }> = [];
+  Array.from(map.entries()).forEach(([key, v]) => {
+    const [date, exercise] = key.split('__');
+    out.push({ date, exercise, weight: v.weightMax, reps: v.repsMax, sets: v.sets, volume: Math.round(v.volume) });
+  });
+  return out.sort((a,b) => (a.date < b.date ? -1 : 1));
+}
+
 export async function getPerMuscleWeeklyTrends(weeks: number = 12, userId?: string): Promise<Array<{ week: string; muscle: string; volume: number }>> {
   const supabase = getSupabase() as any;
   const since = new Date(Date.now() - weeks * 7 * 86400000).toISOString().slice(0, 10);
