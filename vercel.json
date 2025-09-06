@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "framework": "create-react-app",
+  "buildCommand": "cd hypertrack-pro-v2 && npm ci --no-audit --no-fund && npm run build",
+  "outputDirectory": "hypertrack-pro-v2/build",
+  "env": {
+    "CI": "true"
+  }
+}
+
+
