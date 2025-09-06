@@ -5,6 +5,6 @@ import App from './App';
 
 test('renders workout logger with select exercise button', () => {
   render(<App />);
-  const btn = screen.getByRole('button');
+  const btn = screen.getByRole('button', { name: /select exercise/i });
   expect(btn).toBeInTheDocument();
 });

@@ -7,7 +7,7 @@ test('WorkoutLogger renders and opens selector', () => {
   const onExerciseSelect = jest.fn();
   const onStartRestTimer = jest.fn();
   render(<WorkoutLogger onExerciseSelect={onExerciseSelect} onStartRestTimer={onStartRestTimer} />);
-  const button = screen.getByRole('button');
+  const button = screen.getByRole('button', { name: /select exercise/i });
   fireEvent.click(button);
   expect(onExerciseSelect).toHaveBeenCalled();
 });

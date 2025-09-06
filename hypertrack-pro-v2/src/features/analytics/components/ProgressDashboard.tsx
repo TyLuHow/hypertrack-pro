@@ -1,21 +1,9 @@
 import React from 'react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { getProgressSummary, getWeeklyVolumeSeries } from '../../../lib/supabase/queries';
 
-type ProgressSummary = {
-  totalWorkouts: number;
-  totalSets: number;
-  totalVolume: number;
-  avgDuration: number;
-  weeklyWorkoutTrend?: number;
-  weeklySetTrend?: number;
-  volumeTrend?: number;
-  durationTrend?: number;
-};
-
 // Reserved for future exercise-level metrics
-
-// Supplied by queries
 
 interface ProgressDashboardProps {
   userId: string;
@@ -55,13 +43,16 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
         <div className="bg-slate-700/40 rounded-2xl p-6">
           <div className="text-white font-semibold mb-3">Weekly Volume</div>
           {volumeSeries && volumeSeries.length > 0 ? (
-            <div className="text-sm text-textSecondary">
-              {volumeSeries.map(p => (
-                <div key={p.week} className="flex justify-between py-1 border-b border-slate-600/40">
-                  <span>{p.week}</span>
-                  <span className="text-textPrimary">{p.volume.toLocaleString()} lbs</span>
-                </div>
-              ))}
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={volumeSeries} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="week" tick={{ fill: '#94a3b8', fontSize: 12 }} interval={Math.max(0, Math.floor(volumeSeries.length / 6) - 1)} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={(v) => `${v}`}/>
+                  <Tooltip formatter={(v: number) => [`${v.toLocaleString()} lbs`, 'Volume']} labelFormatter={(l: string) => `Week ${l}`} contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }} />
+                  <Line type="monotone" dataKey="volume" stroke="#38bdf8" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           ) : (
             <div className="text-center text-gray-400">No volume data yet</div>

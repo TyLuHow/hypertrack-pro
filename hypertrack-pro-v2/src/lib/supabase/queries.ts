@@ -163,10 +163,15 @@ export async function getWeeklyVolumeSeries(weeks: number = 12, userId?: string)
     const v = (r.total_volume || 0);
     byWeek.set(week, (byWeek.get(week) || 0) + v);
   }
-  // Return weeks in chronological order
-  return Array.from(byWeek.entries())
-    .sort((a,b) => (a[0] < b[0] ? -1 : 1))
-    .map(([week, volume]) => ({ week, volume: Math.round(volume) }));
+  // Fill missing weeks with zero so charts look continuous
+  const series: WeeklyVolumePoint[] = [];
+  const now = new Date();
+  for (let i = weeks - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 7 * 86400000);
+    const key = getISOWeekKey(d);
+    series.push({ week: key, volume: Math.round(byWeek.get(key) || 0) });
+  }
+  return series;
 }
 
 function getISOWeekKey(date: Date): string {
