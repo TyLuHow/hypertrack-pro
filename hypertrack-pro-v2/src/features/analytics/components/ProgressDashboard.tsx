@@ -1,5 +1,7 @@
 import React from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
+import { PerMuscleTrends } from './PerMuscleTrends';
+import { PRTimeline } from './PRTimeline';
 import { useQuery } from '@tanstack/react-query';
 import { getProgressSummary, getWeeklyVolumeSeries, getMuscleGroupVolumeDistribution } from '../../../lib/supabase/queries';
 
@@ -84,6 +86,15 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
               <div className="text-center text-gray-400">No distribution data</div>
             )}
           </div>
+          <div className="bg-slate-700/40 rounded-2xl p-6">
+            <div className="text-white font-semibold mb-3">Per-Muscle Weekly Trends</div>
+            <PerMuscleTrends userId={userId} />
+          </div>
+        </div>
+
+        <div className="bg-slate-700/40 rounded-2xl p-6 mt-6">
+          <div className="text-white font-semibold mb-3">PR Timelines</div>
+          <PRTimeline userId={userId} />
         </div>
       </div>
     </div>

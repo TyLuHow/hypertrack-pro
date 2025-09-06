@@ -6,6 +6,8 @@ export function useOfflineSync() {
   const [online, setOnline] = useState<boolean>(navigator.onLine);
   const [syncing, setSyncing] = useState(false);
   const [db] = useState(() => new OfflineDatabase());
+  const [retryCount, setRetryCount] = useState(0);
+  const [scheduled, setScheduled] = useState<number | null>(null);
 
   useEffect(() => {
     db.initialize();
@@ -63,10 +65,29 @@ export function useOfflineSync() {
           }
         }
       });
+      setRetryCount(0);
     } finally {
       setSyncing(false);
     }
   };
+
+  // Backoff scheduler: retry sync when online and queue exists; simple timer for now
+  useEffect(() => {
+    if (!online) return;
+    // schedule periodic sync with exponential backoff up to 5 minutes
+    const base = 5000; // 5s
+    const delay = Math.min(base * Math.pow(2, retryCount), 300000);
+    const id = window.setTimeout(async () => {
+      try {
+        await runSync();
+        setRetryCount(0);
+      } catch {
+        setRetryCount((c) => Math.min(c + 1, 6));
+      }
+    }, delay);
+    setScheduled(id);
+    return () => window.clearTimeout(id);
+  }, [online, retryCount]);
 
   return { online, syncing, runSync, db };
 }

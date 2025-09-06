@@ -231,6 +231,84 @@ export async function getWeeklyWorkoutFrequency(weeks: number = 12, userId?: str
   return series;
 }
 
+export async function getPerMuscleWeeklyTrends(weeks: number = 12, userId?: string): Promise<Array<{ week: string; muscle: string; volume: number }>> {
+  const supabase = getSupabase() as any;
+  const since = new Date(Date.now() - weeks * 7 * 86400000).toISOString().slice(0, 10);
+  let q = (supabase
+    .from('sets')
+    .select('weight,reps, workout_exercises!inner(exercises!inner(muscle_group), workouts!inner(user_id,workout_date))')
+    .gte('workout_exercises.workouts.workout_date', since));
+  const uid = userId || (await getCurrentUserId());
+  const { data, error } = await q;
+  if (error) throw error;
+  const rows = (data || []) as any[];
+  const filtered = rows.filter(r => (!uid || r.workout_exercises?.workouts?.user_id === uid));
+  const map = new Map<string, number>();
+  const muscles = new Set<string>();
+  for (const r of filtered) {
+    const date = r.workout_exercises?.workouts?.workout_date || '1970-01-01';
+    const week = getISOWeekKey(new Date(date));
+    const muscle = r.workout_exercises?.exercises?.muscle_group || 'Unknown';
+    muscles.add(muscle);
+    const key = `${week}__${muscle}`;
+    const vol = (Number(r.weight) || 0) * (Number(r.reps) || 0);
+    map.set(key, (map.get(key) || 0) + vol);
+  }
+  const now = new Date();
+  const result: Array<{ week: string; muscle: string; volume: number }> = [];
+  const musc = Array.from(muscles);
+  for (let i = weeks - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 7 * 86400000);
+    const week = getISOWeekKey(d);
+    for (const m of musc) {
+      const key = `${week}__${m}`;
+      result.push({ week, muscle: m, volume: Math.round(map.get(key) || 0) });
+    }
+  }
+  return result;
+}
+
+export async function getPRTimelines(days: number = 180, userId?: string): Promise<Array<{ date: string; exercise: string; type: 'weight' | 'reps' | 'volume'; value: number }>> {
+  const supabase = getSupabase() as any;
+  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const { data, error } = await (supabase
+    .from('sets')
+    .select('weight,reps, workout_exercises!inner(exercises(name), workouts!inner(user_id,workout_date))')
+    .gte('workout_exercises.workouts.workout_date', since));
+  if (error) throw error;
+  const rows = (data || []) as any[];
+  const timeline = new Map<string, { weight: number; reps: number; volume: number; date: string }>();
+  for (const r of rows) {
+    const exercise = r.workout_exercises?.exercises?.name || 'Unknown';
+    const date = r.workout_exercises?.workouts?.workout_date || '1970-01-01';
+    const key = `${exercise}`;
+    const weight = Number(r.weight) || 0;
+    const reps = Number(r.reps) || 0;
+    const volume = weight * reps;
+    const cur = timeline.get(key) || { weight: 0, reps: 0, volume: 0, date };
+    if (weight > cur.weight) {
+      cur.weight = weight;
+      cur.date = date;
+    }
+    if (reps > cur.reps) {
+      cur.reps = reps;
+      cur.date = date;
+    }
+    if (volume > cur.volume) {
+      cur.volume = volume;
+      cur.date = date;
+    }
+    timeline.set(key, cur);
+  }
+  const out: Array<{ date: string; exercise: string; type: 'weight' | 'reps' | 'volume'; value: number }> = [];
+  Array.from(timeline.entries()).forEach(([exercise, pr]) => {
+    out.push({ date: pr.date, exercise, type: 'weight', value: pr.weight });
+    out.push({ date: pr.date, exercise, type: 'reps', value: pr.reps });
+    out.push({ date: pr.date, exercise, type: 'volume', value: pr.volume });
+  });
+  return out.sort((a,b) => (a.date < b.date ? -1 : 1));
+}
+
 export async function getLastExerciseSetsByName(exerciseName: string, userId?: string): Promise<Array<{ weight: number; reps: number }>> {
   const supabase = getSupabase() as any;
   const uid = userId || (await getCurrentUserId());
