@@ -32,19 +32,23 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
   }, [currentWorkout, activeExercise]);
   const history = useExerciseHistory(activeExerciseName);
 
+  // Reset inputs and rows when switching exercises; prefill from last exercise history
   useEffect(() => {
-    if (history.lastWeight != null && weight === 0) {
-      setWeight(history.lastWeight);
-    }
-    if (history.lastSets && history.lastSets.length > 0 && rows.length === 0) {
+    // clear rows when changing active exercise
+    setRows([]);
+    setWeight(0);
+    setReps(8);
+    if (history.lastSets && history.lastSets.length > 0) {
       const prefilled = history.lastSets.map((s, idx) => ({ id: `${Date.now()}-${idx}`, weight: s.weight, reps: s.reps }));
       setRows(prefilled);
       if (prefilled[0]) {
         setWeight(prefilled[0].weight);
         setReps(prefilled[0].reps);
       }
+    } else if (history.lastWeight != null) {
+      setWeight(history.lastWeight);
     }
-  }, [history.lastWeight, history.lastSets, rows.length, weight]);
+  }, [activeExercise, history.lastWeight, history.lastSets]);
 
   const { recommendation } = useRecommendations(activeExercise ?? undefined);
 
@@ -104,7 +108,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
             <div>
               <div className="text-sm text-textMuted mb-1">Weight</div>
               <WeightInput
-                value={weight}
+                  value={weight}
                 onChange={(n) => setWeight(n ?? 0)}
                 increments={[2.5, 5, 10]}
                 autoLabel={history.label || undefined}

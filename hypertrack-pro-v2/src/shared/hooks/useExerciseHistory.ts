@@ -14,7 +14,7 @@ export const useExerciseHistory = (exerciseName?: string | null): ExerciseHistor
 
   useEffect(() => {
     if (!exerciseName) {
-      setState({ lastWeight: null, suggestedWeight: null, label: null });
+      setState({ lastWeight: null, suggestedWeight: null, label: null, lastSets: [] });
       return;
     }
     const run = async () => {

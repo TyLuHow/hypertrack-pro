@@ -19,14 +19,24 @@ export const SetTable: React.FC<{
           <input
             type="number"
             className="h-10 bg-slate-600 rounded px-3 text-white"
-            value={r.weight}
-            onChange={(e) => onChange(r.id, { weight: Number(e.target.value) })}
+            inputMode="decimal"
+            value={Number.isFinite(r.weight) ? r.weight : ''}
+            onChange={(e) => {
+              const v = e.target.value;
+              const num = v === '' ? 0 : Number(v);
+              onChange(r.id, { weight: isFinite(num) ? num : 0 });
+            }}
           />
           <input
             type="number"
             className="h-10 bg-slate-600 rounded px-3 text-white"
-            value={r.reps}
-            onChange={(e) => onChange(r.id, { reps: Number(e.target.value) })}
+            inputMode="numeric"
+            value={Number.isFinite(r.reps) ? r.reps : ''}
+            onChange={(e) => {
+              const v = e.target.value;
+              const num = v === '' ? 0 : Number(v);
+              onChange(r.id, { reps: isFinite(num) ? num : 0 });
+            }}
           />
         </div>
       ))}
