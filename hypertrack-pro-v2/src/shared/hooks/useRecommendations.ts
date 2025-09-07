@@ -5,9 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import { getPerMuscleWeeklySets } from '../../lib/supabase/queries';
 import { RESEARCH_VOLUME_TARGETS } from '../constants/researchTargets';
 import { inferExerciseType } from '../utils/exerciseClassification';
+import { usePeriodization } from '../../features/periodization/hooks/usePeriodization';
 
 export function useRecommendations(activeExerciseId?: string) {
   const { currentWorkout } = useWorkoutStore();
+  const { data: weeklySets } = useQuery({ queryKey: ['per-muscle-weekly-sets'], queryFn: () => getPerMuscleWeeklySets(8) });
+  const { currentPhase } = usePeriodization();
 
   const { currentWeight, achievedReps } = useMemo(() => {
     if (!activeExerciseId || !currentWorkout) return { currentWeight: 0, achievedReps: 0 };
@@ -21,22 +24,25 @@ export function useRecommendations(activeExerciseId?: string) {
 
   const recommendation = useMemo(() => {
     if (!activeExerciseId || currentWeight <= 0 || achievedReps <= 0) return undefined;
-    // infer type from exercise name if present
     const ex = currentWorkout?.exercises.find(e => e.id === activeExerciseId);
     const inferred = inferExerciseType(ex?.name || '');
-    return calculateProgression({
+    const base = calculateProgression({
       exerciseType: inferred.type,
       currentWeight,
       achievedReps,
       daysSinceLastSession: 7
     });
-  }, [activeExerciseId, currentWeight, achievedReps]);
+    if (currentPhase?.type === 'strength') {
+      return { ...base, rationale: base.rationale + ' Adjusted for strength phase: focus 4–8 reps, higher intensity.' };
+    }
+    if (currentPhase?.type === 'deload') {
+      return { ...base, rationale: base.rationale + ' Deload: consider -40% volume and conservative loading.' };
+    }
+    return base;
+  }, [activeExerciseId, currentWeight, achievedReps, currentWorkout, currentPhase]);
 
-  // research-backed volume recommendations per muscle
-  const { data: weeklySets } = useQuery({ queryKey: ['per-muscle-weekly-sets'], queryFn: () => getPerMuscleWeeklySets(8) });
   const researchRecommendations = useMemo(() => {
     if (!weeklySets || weeklySets.length === 0) return [] as Array<{ muscle: string; type: 'volume_increase' | 'volume_reduce' | 'maintain'; current: number; recommended: number; citation: string; reasoning: string; urgency: 'high' | 'medium' | 'low' }>;
-    // average last 4 weeks per muscle
     const byMuscle = new Map<string, number[]>();
     for (const w of weeklySets) {
       const arr = byMuscle.get(w.muscle) || [];
@@ -57,8 +63,8 @@ export function useRecommendations(activeExerciseId?: string) {
           current: avg,
           recommended: targets.min,
           citation: targets.citation,
-          reasoning: `Below minimum effective volume (~${targets.min} sets/week).`,
-          urgency: 'high'
+          reasoning: `Below minimum effective volume (~${targets.min} sets/week).` + (currentPhase?.type === 'deload' ? ' Note: Deload week – schedule increase for next block.' : ''),
+          urgency: currentPhase?.type === 'deload' ? 'medium' : 'high'
         });
       } else if (avg > targets.max) {
         out.push({
@@ -67,7 +73,7 @@ export function useRecommendations(activeExerciseId?: string) {
           current: avg,
           recommended: targets.optimal,
           citation: targets.citation,
-          reasoning: `Above likely maximum adaptive volume (>~${targets.max} sets/week).`,
+          reasoning: `Above likely maximum adaptive volume (>~${targets.max} sets/week).` + (currentPhase?.type === 'strength' ? ' Strength block: keep volume modest.' : ''),
           urgency: 'medium'
         });
       } else {
@@ -83,7 +89,7 @@ export function useRecommendations(activeExerciseId?: string) {
       }
     });
     return out.sort((a, b) => (a.type === 'volume_increase' ? -1 : a.type === 'volume_reduce' && b.type !== 'volume_increase' ? -1 : 1));
-  }, [weeklySets]);
+  }, [weeklySets, currentPhase]);
 
   return { recommendation, researchRecommendations };
 }

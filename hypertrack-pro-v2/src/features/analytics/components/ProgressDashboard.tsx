@@ -7,6 +7,7 @@ import { getProgressSummary, getWeeklyVolumeSeries, getMuscleGroupVolumeDistribu
 import { useState } from 'react';
 import { RESEARCH_CITATIONS, RESEARCH_VOLUME_TARGETS } from '../../../shared/constants/researchTargets';
 import { useRecommendations } from '../../../shared/hooks/useRecommendations';
+import { PeriodizationDashboard } from '../../periodization/components/PeriodizationDashboard';
 
 // Reserved for future exercise-level metrics
 
@@ -47,6 +48,9 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
       </div>
 
       <div className="p-6">
+        <div className="mb-6">
+          <PeriodizationDashboard />
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
           <MetricCard value={progressSummary?.totalWorkouts || 0} label="Total Workouts" trend={progressSummary?.weeklyWorkoutTrend} />
           <MetricCard value={progressSummary?.totalSets || 0} label="Total Sets" trend={progressSummary?.weeklySetTrend} />
