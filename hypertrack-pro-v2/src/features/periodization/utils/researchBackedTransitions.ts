@@ -10,7 +10,7 @@ export function calculateResearchBackedPhaseTransition(
   currentPhase: PeriodizationPhase,
   progressData: ProgressionData,
   plateauRisk: number,
-  volumeData: VolumeData[],
+  volumeData: VolumeData,
   engine?: ResearchQueryEngine
 ): {
   shouldTransition: boolean;
@@ -78,8 +78,8 @@ function getPhaseLength(phase: PeriodizationPhase): number {
   return Math.max(0, Math.ceil(ms / (7 * 86400000)));
 }
 
-function calculateVolumeProgression(volumeData: VolumeData[]): number {
-  const flat = volumeData.flatMap(w => w.volume);
+function calculateVolumeProgression(volumeData: VolumeData): number {
+  const flat = (volumeData || []).map(w => w.volume);
   if (!flat.length) return 0;
   const n = flat.length;
   const x = Array.from({ length: n }, (_, i) => i + 1);
