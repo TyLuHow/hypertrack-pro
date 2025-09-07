@@ -33,6 +33,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
   const history = useExerciseHistory(activeExerciseName);
   const { recommendation } = useRecommendations(activeExercise ?? undefined);
   const [panelOpen, setPanelOpen] = useState<boolean>(false);
+  const [showFinishModal, setShowFinishModal] = useState<boolean>(false);
 
   // Reset inputs and rows when switching exercises; prefill from last exercise history (max 3 sets)
   useEffect(() => {
@@ -205,7 +206,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
                 };
                 await persistWorkoutSession(session as any);
                 completeWorkout();
-                alert('Workout saved. You can view it in History and Analytics.');
+                setShowFinishModal(true);
               } catch (err: any) {
                 console.error('Failed to persist workout session', err);
                 alert('Could not save workout. Please sign in and ensure Supabase credentials are configured.');
@@ -217,6 +218,18 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
           </button>
         )}
       </div>
+      {showFinishModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
+          <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
+            <div className="text-white text-lg font-semibold mb-2">Workout saved</div>
+            <div className="text-slate-300 text-sm">Your session has been saved to the cloud. You can view it under History and Analytics.</div>
+            <div className="mt-4 flex gap-2 justify-end">
+              <button className="px-3 py-2 bg-slate-700 text-white rounded" onClick={() => setShowFinishModal(false)}>Close</button>
+              <a href="#/" className="px-3 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded">Return Home</a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
