@@ -38,8 +38,9 @@ export function useRecoveryReadiness() {
     // Exponentially decayed load as fatigue proxy
     const fatigueAccumulation = vols.reduce((acc, v, i) => acc + v * Math.pow(0.7, vols.length - i), 0);
     const frequencyTrend = calcTrend(freq);
-    // Simple readiness: 10 minus scaled fatigue and negative plateaus (bounded)
-    const raw = 10 - (fatigueAccumulation / 10000) - Math.max(0, -progressionRate) / 5;
+    // HRV-informed thresholds (research-guided placeholder): apply small penalty if freq trend negative or progression down
+    const hrvPenalty = Math.max(0, -frequencyTrend) * 0.05 + Math.max(0, -progressionRate) * 0.05;
+    const raw = 10 - (fatigueAccumulation / 10000) - hrvPenalty;
     const readinessScore = Math.max(1, Math.min(10, Math.round(raw)));
     const recommendation: RecoveryMetrics['recommendation'] = readinessScore < 4 ? 'deload' : readinessScore < 6 ? 'reduce' : 'proceed';
     return {
