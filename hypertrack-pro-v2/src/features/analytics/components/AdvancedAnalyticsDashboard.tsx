@@ -30,6 +30,7 @@ export function AdvancedAnalyticsDashboard() {
     Array.from(byExercise.entries()).forEach(([name, series]) => {
       const inferred = inferExerciseType(name);
       if (inferred.type !== 'compound') return;
+      if (inferred.primaryMuscle === 'core') return; // exclude ab/core work
       const sorted = series.sort((a,b)=>a.ts-b.ts);
       // Filter: require at least 2 workouts in last 21 days
       const since = Date.now() - 21 * 86400000;
@@ -142,7 +143,8 @@ function PerformanceForecastTable({ rows }: { rows: Array<{ exercise: string; cu
   const [query, setQuery] = useState('');
   const enriched = (rows || []).map(r => ({
     ...r,
-    pctIncrease: r.currentMax > 0 ? (r.predictedMax - r.currentMax) / r.currentMax : 0
+    pctIncrease: r.currentMax > 0 ? (r.predictedMax - r.currentMax) / r.currentMax : 0,
+    predictedDate: new Date(Date.now() + r.timeframe * 7 * 86400000).toISOString().slice(0,10)
   })).filter(r => r.exercise.toLowerCase().includes(query.toLowerCase()))
     .sort((a,b)=> b.pctIncrease - a.pctIncrease);
   return (
@@ -158,6 +160,7 @@ function PerformanceForecastTable({ rows }: { rows: Array<{ exercise: string; cu
                 <th className="py-2">One-Rep Max</th>
                 <th className="py-2">Predicted</th>
                 <th className="py-2">Increase</th>
+                <th className="py-2">By Date</th>
                 <th className="py-2">Confidence</th>
               </tr>
             </thead>
@@ -168,6 +171,7 @@ function PerformanceForecastTable({ rows }: { rows: Array<{ exercise: string; cu
                   <td className="py-2">{r.currentMax} lbs</td>
                   <td className="py-2">{r.predictedMax} lbs</td>
                   <td className="py-2">{Math.round(r.pctIncrease*100)}%</td>
+                  <td className="py-2">{r.predictedDate}</td>
                   <td className="py-2">{Math.round(r.confidence*100)}%</td>
                 </tr>
               ))}
