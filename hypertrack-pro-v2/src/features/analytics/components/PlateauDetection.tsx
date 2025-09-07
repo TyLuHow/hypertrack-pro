@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getExercisePerformanceSeries, type ExerciseSessionSeries } from '../../../lib/supabase/queries';
+import { usePlateauDetection } from '../../../shared/hooks/usePlateauDetection';
 
 type ExercisePlateauData = {
   exerciseName: string;
@@ -10,13 +13,43 @@ type ExercisePlateauData = {
 };
 
 export const PlateauDetection: React.FC = () => {
-  const plateauAnalysis: ExercisePlateauData[] = [];
+  const { data } = useQuery<ExerciseSessionSeries>({ queryKey: ['exercise-performance-series'], queryFn: () => getExercisePerformanceSeries(90) });
+
+  const analysisRows: ExercisePlateauData[] = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    // Group sessions by exercise
+    const byExercise = new Map<string, Array<{ date: string; sets: { weight: number; reps: number }[] }>>();
+    for (const s of data) {
+      const list = byExercise.get(s.exercise) || [];
+      list.push({ date: s.date, sets: s.sets });
+      byExercise.set(s.exercise, list);
+    }
+    const rows: ExercisePlateauData[] = [];
+    Array.from(byExercise.entries()).forEach(([exerciseName, sessions]) => {
+      // sort most recent first as expected by algorithm hook
+      const sorted = sessions.sort((a, b) => (a.date < b.date ? 1 : -1));
+      const hookInput = sorted.map(s => ({ date: s.date, sets: s.sets }));
+      const { analysis } = usePlateauDetection(hookInput as any);
+      const bestSet = sBest(sorted[0]?.sets || []);
+      const trendSlope = typeof analysis.slopeValue === 'number' ? analysis.slopeValue : 0;
+      rows.push({
+        exerciseName,
+        sessionsAnalyzed: analysis.consideredCount ?? sorted.length,
+        currentMax: bestSet?.weight || 0,
+        trendSlope,
+        plateauRisk: !!analysis.isPlateau,
+        stagnationRisk: !analysis.isPlateau && Math.abs(trendSlope) < 0.01
+      });
+    });
+    // prioritize risks first
+    return rows.sort((a, b) => (Number(b.plateauRisk) - Number(a.plateauRisk)) || (b.sessionsAnalyzed - a.sessionsAnalyzed)).slice(0, 12);
+  }, [data]);
   return (
     <div className="space-y-6">
-      {plateauAnalysis.map((exercise) => (
+      {analysisRows.map((exercise) => (
         <PlateauCard key={exercise.exerciseName} exercise={exercise} onViewDetails={() => {}} />
       ))}
-      {plateauAnalysis.length === 0 && (
+      {(!analysisRows || analysisRows.length === 0) && (
         <div className="bg-slate-700/40 rounded-2xl p-8 text-center text-gray-400">No plateau risks detected</div>
       )}
     </div>
@@ -81,5 +114,14 @@ const getDeloadRecommendation = (exercise: ExercisePlateauData): string => {
   ];
   return recommendations.join(' • ');
 };
+
+function sBest(sets: Array<{ weight: number; reps: number }>): { weight: number; reps: number } | undefined {
+  if (!sets || sets.length === 0) return undefined;
+  return sets.reduce((best, s) => {
+    const vol = (s.weight || 0) * (s.reps || 0);
+    const bvol = (best.weight || 0) * (best.reps || 0);
+    return vol > bvol ? s : best;
+  }, sets[0]);
+}
 
 

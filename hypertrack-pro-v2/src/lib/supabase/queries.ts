@@ -317,6 +317,42 @@ export async function getPerMuscleWeeklyTrends(weeks: number = 12, userId?: stri
   return result;
 }
 
+// Weekly set counts per muscle to compare against research targets
+export async function getPerMuscleWeeklySets(weeks: number = 12, userId?: string): Promise<Array<{ week: string; muscle: string; sets: number }>> {
+  const supabase = getSupabase() as any;
+  const since = new Date(Date.now() - weeks * 7 * 86400000).toISOString().slice(0, 10);
+  const { data, error } = await (supabase
+    .from('sets')
+    .select('workout_exercises!inner(exercises!inner(muscle_group), workouts!inner(user_id,workout_date))')
+    .gte('workout_exercises.workouts.workout_date', since));
+  if (error) throw error;
+  const rows = (data || []) as any[];
+  const uid = userId || (await getCurrentUserId());
+  const filtered = rows.filter(r => (!uid || r.workout_exercises?.workouts?.user_id === uid));
+  const map = new Map<string, number>();
+  const muscles = new Set<string>();
+  for (const r of filtered) {
+    const date = r.workout_exercises?.workouts?.workout_date || '1970-01-01';
+    const week = getISOWeekKey(new Date(date));
+    const muscle = r.workout_exercises?.exercises?.muscle_group || 'Unknown';
+    muscles.add(muscle);
+    const key = `${week}__${muscle}`;
+    map.set(key, (map.get(key) || 0) + 1);
+  }
+  const now = new Date();
+  const result: Array<{ week: string; muscle: string; sets: number }> = [];
+  const musc = Array.from(muscles);
+  for (let i = weeks - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 7 * 86400000);
+    const week = getISOWeekKey(d);
+    for (const m of musc) {
+      const key = `${week}__${m}`;
+      result.push({ week, muscle: m, sets: Math.round(map.get(key) || 0) });
+    }
+  }
+  return result;
+}
+
 export async function getPRTimelines(days: number = 180, userId?: string): Promise<Array<{ date: string; exercise: string; muscle: string; type: 'weight' | 'reps' | 'volume' | 'onerm' | 'avgLoad'; value: number }>> {
   const supabase = getSupabase() as any;
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
@@ -357,6 +393,67 @@ export async function getPRTimelines(days: number = 180, userId?: string): Promi
     out.push({ date, exercise, muscle: pr.muscle, type: 'avgLoad', value: avgLoad });
   });
   return out.sort((a,b) => (a.date < b.date ? -1 : 1));
+}
+
+// -------- Exercise performance series for plateau detection --------
+export type ExerciseSessionSeries = Array<{ exercise: string; date: string; sets: Array<{ weight: number; reps: number }> }>;
+export async function getExercisePerformanceSeries(days: number = 90, userId?: string): Promise<ExerciseSessionSeries> {
+  const supabase = getSupabase() as any;
+  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const { data, error } = await (supabase
+    .from('sets')
+    .select('weight,reps, workout_exercises!inner(exercises(name), workouts!inner(user_id,workout_date))')
+    .gte('workout_exercises.workouts.workout_date', since));
+  if (error) throw error;
+  const rows = (data || []) as any[];
+  const uid = userId || (await getCurrentUserId());
+  const filtered = rows.filter(r => (!uid || r.workout_exercises?.workouts?.user_id === uid));
+  const byExerciseDate = new Map<string, Array<{ weight: number; reps: number }>>();
+  for (const r of filtered) {
+    const ex = r.workout_exercises?.exercises?.name || 'Unknown';
+    const date = r.workout_exercises?.workouts?.workout_date || '1970-01-01';
+    const key = `${ex}__${date}`;
+    const list = byExerciseDate.get(key) || [];
+    list.push({ weight: Number(r.weight) || 0, reps: Number(r.reps) || 0 });
+    byExerciseDate.set(key, list);
+  }
+  const out: ExerciseSessionSeries = [];
+  Array.from(byExerciseDate.entries()).forEach(([key, sets]) => {
+    const [exercise, date] = key.split('__');
+    out.push({ exercise, date, sets });
+  });
+  // sort by date asc for stable UI usage
+  return out.sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+// -------- Daily progress series (aggregate) for recent progress chart --------
+export type DailyProgressPoint = { date: string; totalVolume: number; estimatedRM: number };
+export async function getDailyProgressSeries(days: number = 28, userId?: string): Promise<DailyProgressPoint[]> {
+  const supabase = getSupabase() as any;
+  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const { data, error } = await (supabase
+    .from('sets')
+    .select('weight,reps, workout_exercises!inner(exercises(name), workouts!inner(user_id,workout_date))')
+    .gte('workout_exercises.workouts.workout_date', since));
+  if (error) throw error;
+  const rows = (data || []) as any[];
+  const uid = userId || (await getCurrentUserId());
+  const filtered = rows.filter(r => (!uid || r.workout_exercises?.workouts?.user_id === uid));
+  const byDate = new Map<string, { volume: number; maxOnerm: number }>();
+  for (const r of filtered) {
+    const date = r.workout_exercises?.workouts?.workout_date || '1970-01-01';
+    const weight = Number(r.weight) || 0;
+    const reps = Number(r.reps) || 0;
+    const onerm = weight > 0 && reps > 0 ? Math.round(weight * (1 + reps / 30)) : 0;
+    const cur = byDate.get(date) || { volume: 0, maxOnerm: 0 };
+    cur.volume += weight * reps;
+    if (onerm > cur.maxOnerm) cur.maxOnerm = onerm;
+    byDate.set(date, cur);
+  }
+  const out: DailyProgressPoint[] = Array.from(byDate.entries())
+    .map(([date, v]) => ({ date, totalVolume: Math.round(v.volume), estimatedRM: v.maxOnerm }))
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  return out;
 }
 
 export async function getLastExerciseSetsByName(exerciseName: string, userId?: string): Promise<Array<{ weight: number; reps: number }>> {

@@ -5,6 +5,8 @@ import { PRTimeline } from './PRTimeline';
 import { useQuery } from '@tanstack/react-query';
 import { getProgressSummary, getWeeklyVolumeSeries, getMuscleGroupVolumeDistribution, getWorkoutMetricsSeries } from '../../../lib/supabase/queries';
 import { useState } from 'react';
+import { RESEARCH_CITATIONS, RESEARCH_VOLUME_TARGETS } from '../../../shared/constants/researchTargets';
+import { useRecommendations } from '../../../shared/hooks/useRecommendations';
 
 // Reserved for future exercise-level metrics
 
@@ -31,6 +33,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
 
   const [seriesDays, setSeriesDays] = useState<number>(180);
   const { data: workoutSeries } = useQuery({ queryKey: ['workout-metrics', userId, seriesDays], queryFn: () => getWorkoutMetricsSeries(seriesDays, userId) });
+  const { researchRecommendations } = useRecommendations();
 
   if (isLoading) {
     return <div className="p-6 text-textPrimary">Loading...</div>;
@@ -53,6 +56,10 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
 
         <div className="bg-slate-700/40 rounded-2xl p-6">
           <div className="text-white font-semibold mb-3">Weekly Volume</div>
+          {/* Research insight for overall volume guidance if distribution suggests extremes */}
+          {muscleDistribution && muscleDistribution.length > 0 && (
+            <ResearchInsight metric="weeklyVolume" value={(volumeSeries||[]).reduce((a,v)=>a+v.volume,0)} muscleGroup={undefined} />
+          )}
           {volumeSeries && volumeSeries.length > 0 ? (
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -73,6 +80,10 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
         <div className="grid md:grid-cols-2 gap-6 mt-6">
           <div className="bg-slate-700/40 rounded-2xl p-6">
             <div className="text-white font-semibold mb-3">Muscle Group Volume (28d)</div>
+            {/* Show top research-backed calls to action */}
+            {researchRecommendations && researchRecommendations.slice(0,2).map((rec, idx) => (
+              <ResearchInsight key={idx} metric="weeklySets" value={rec.current} muscleGroup={rec.muscle} />
+            ))}
             {muscleDistribution && muscleDistribution.length > 0 ? (
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -169,5 +180,38 @@ const MetricCard: React.FC<{ value: number; label: string; trend?: number; suffi
     </div>
   );
 };
+
+function ResearchInsight({ metric, value, muscleGroup }: { metric: string; value: number; muscleGroup?: string }) {
+  const getResearchInsight = (m: string, v: number, mg?: string) => {
+    if (m === 'weeklySets' && mg) {
+      const key = mg.toLowerCase();
+      const tgt = (RESEARCH_VOLUME_TARGETS as any)[key];
+      if (!tgt) return null;
+      if (v < tgt.min) {
+        return { message: `Below MEV for ${mg}. Aim ≥ ${tgt.min} sets/week.`, citation: RESEARCH_CITATIONS.schoenfeld_2017 };
+      }
+      if (v > tgt.max) {
+        return { message: `Above likely MAV for ${mg}. Consider reducing toward ${tgt.optimal} sets/week.`, citation: RESEARCH_CITATIONS.baz_valle_2022 };
+      }
+      return { message: `${mg} volume is within optimal range. Maintain.`, citation: RESEARCH_CITATIONS.schoenfeld_2017 };
+    }
+    if (m === 'weeklyVolume') {
+      // Generic overall note
+      return { message: 'Distribute weekly volume across muscles 10–20 sets/week per muscle as a guide.', citation: RESEARCH_CITATIONS.schoenfeld_2017 };
+    }
+    return null;
+  };
+  const insight = getResearchInsight(metric, value, muscleGroup);
+  if (!insight) return null;
+  return (
+    <div className="bg-blue-50/10 border-l-4 border-blue-400 p-3 mb-4 rounded">
+      <div className="text-sm text-blue-200">{insight.message}
+        <button className="ml-2 text-xs text-blue-300 hover:underline" onClick={() => alert(`${insight.citation.title} (${insight.citation.year})`)}>
+          Source: {insight.citation.authors[0]} et al. ({insight.citation.year})
+        </button>
+      </div>
+    </div>
+  );
+}
 
 

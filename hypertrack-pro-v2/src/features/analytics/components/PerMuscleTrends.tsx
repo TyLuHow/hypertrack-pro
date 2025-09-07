@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { getPerMuscleWeeklyTrends } from '../../../lib/supabase/queries';
+import { RESEARCH_VOLUME_TARGETS } from '../../../shared/constants/researchTargets';
 
 export const PerMuscleTrends: React.FC<{ userId?: string }> = ({ userId }) => {
   const { data } = useQuery({ queryKey: ['per-muscle-trends', userId], queryFn: () => getPerMuscleWeeklyTrends(12, userId) });
@@ -51,6 +52,16 @@ export const PerMuscleTrends: React.FC<{ userId?: string }> = ({ userId }) => {
           </LineChart>
         </ResponsiveContainer>
       </div>
+      {muscleFilter && (() => {
+        const key = muscleFilter.toLowerCase();
+        const t = (RESEARCH_VOLUME_TARGETS as any)[key];
+        if (!t) return null;
+        return (
+          <div className="mt-2 text-xs text-blue-300">
+            Evidence-based target for {muscleFilter}: {t.min}-{t.max} sets/week (optimal ~{t.optimal}).
+          </div>
+        );
+      })()}
     </div>
   );
 };

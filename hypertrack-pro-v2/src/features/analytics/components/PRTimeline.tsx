@@ -17,7 +17,8 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
       const m = (muscleName || '').toLowerCase();
       switch (filter) {
         case 'push':
-          return m.includes('chest') || m.includes('tricep') || m.includes('shoulder') || m.includes('deltoid');
+          // Push = chest + triceps (shoulders excluded)
+          return m.includes('chest') || m.includes('tricep');
         case 'pull':
           return m.includes('back') || m.includes('bicep') || m.includes('lat');
         case 'core':
