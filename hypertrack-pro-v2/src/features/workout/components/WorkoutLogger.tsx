@@ -31,26 +31,31 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
     return ex?.name || undefined;
   }, [currentWorkout, activeExercise]);
   const history = useExerciseHistory(activeExerciseName);
+  const { recommendation } = useRecommendations(activeExercise ?? undefined);
 
-  // Reset inputs and rows when switching exercises; prefill from last exercise history
+  // Reset inputs and rows when switching exercises; prefill from last exercise history (max 3 sets)
   useEffect(() => {
     // clear rows when changing active exercise
     setRows([]);
     setWeight(0);
     setReps(8);
     if (history.lastSets && history.lastSets.length > 0) {
-      const prefilled = history.lastSets.map((s, idx) => ({ id: `${Date.now()}-${idx}`, weight: s.weight, reps: s.reps }));
+      const lastThree = history.lastSets.slice(0, 3);
+      const prefilled = lastThree.map((s, idx) => ({ id: `${Date.now()}-${idx}`, weight: s.weight, reps: s.reps }));
       setRows(prefilled);
       if (prefilled[0]) {
         setWeight(prefilled[0].weight);
         setReps(prefilled[0].reps);
       }
+    } else if (recommendation?.recommendedWeight) {
+      const first = { id: `${Date.now()}-0`, weight: recommendation.recommendedWeight, reps: 10 };
+      setRows([first]);
+      setWeight(first.weight);
+      setReps(first.reps);
     } else if (history.lastWeight != null) {
       setWeight(history.lastWeight);
     }
-  }, [activeExercise, history.lastWeight, history.lastSets]);
-
-  const { recommendation } = useRecommendations(activeExercise ?? undefined);
+  }, [activeExercise, history.lastWeight, history.lastSets, recommendation?.recommendedWeight]);
 
   const canAdd = useMemo(() => !!activeExercise && weight > 0 && reps > 0, [activeExercise, weight, reps]);
 
