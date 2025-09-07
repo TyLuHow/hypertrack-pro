@@ -178,14 +178,21 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
           <section className="mt-6">
             <h3 className="text-lg font-semibold mb-3 text-red-400">Urgent Training Adjustments</h3>
             <div className="space-y-4">
-              {urgentRecommendations.map((rec: any, index: number) => (
-                <ResearchBackedRecommendationCard key={index} recommendation={{
-                  title: rec.title || 'Urgent Recommendation',
-                  description: rec.reasoning || rec.description || '',
-                  researchBasis: rec.researchBasis || [],
-                  confidence: typeof rec.confidence === 'number' ? rec.confidence : 0.8
-                }} />
-              ))}
+              {urgentRecommendations.map((rec: any, index: number) => {
+                const basis = rec.citation
+                  ? [{ title: String(rec.citation), year: Number(String(rec.citation).match(/(19|20)\d{2}/)?.[0] || new Date().getFullYear()) }]
+                  : (rec.researchBasis || []);
+                const title = rec.muscle ? `${rec.muscle}: ${rec.type === 'volume_increase' ? 'Increase' : rec.type === 'volume_reduce' ? 'Reduce' : 'Maintain'} volume` : (rec.title || 'Urgent Recommendation');
+                const desc = rec.reasoning || rec.description || (rec.recommended ? `Target ~${rec.recommended} sets/week` : '');
+                return (
+                  <ResearchBackedRecommendationCard key={index} recommendation={{
+                    title,
+                    description: desc,
+                    researchBasis: basis as any,
+                    confidence: typeof rec.confidence === 'number' ? rec.confidence : 0.8
+                  }} />
+                );
+              })}
             </div>
           </section>
         )}

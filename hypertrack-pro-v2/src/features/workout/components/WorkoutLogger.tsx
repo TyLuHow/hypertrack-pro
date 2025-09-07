@@ -81,7 +81,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
   };
 
   return (
-    <div className="bg-background text-textPrimary min-h-screen p-4 pb-28">
+    <div className="bg-background text-textPrimary min-h-screen p-4 pb-6 md:pb-6">
       {!currentWorkout && (
         <div className="card p-5 mb-4">
           <div className="text-lg font-semibold mb-2">Ready to train?</div>
@@ -155,9 +155,12 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         </div>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 bg-background/80 backdrop-blur-md p-4 border-t border-gray-800">
-        <div className="text-sm text-textMuted mb-2">Current Workout</div>
-        <div className="max-h-40 overflow-y-auto space-y-2">
+      <div className="fixed right-0 top-24 bottom-0 w-full md:w-96 bg-background/90 backdrop-blur-md p-4 border-l border-gray-800 overflow-y-auto">
+        <div className="text-sm text-textMuted mb-2 flex items-center justify-between">
+          <span>Current Workout</span>
+          <button className="text-xs px-2 py-1 rounded bg-slate-700 hover:bg-slate-600" onClick={() => window.dispatchEvent(new CustomEvent('toggle-workout-panel'))}>Toggle</button>
+        </div>
+        <div className="space-y-2">
           {currentWorkout ? (
             currentWorkout.exercises.length > 0 ? (
               currentWorkout.exercises.map((ex) => {

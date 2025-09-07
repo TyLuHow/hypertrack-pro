@@ -98,10 +98,11 @@ export async function getProgressSummary(userId?: string): Promise<ProgressSumma
 
 export type PersonalRecord = {
   exerciseName: string;
-  maxWeight: number;
-  maxVolume: number;
-  maxReps: number;
-  lastAchieved: string;
+  maxWeight: number; // best single-set weight PR (legacy)
+  maxVolume: number; // max total volume in a single workout for this exercise
+  maxReps: number;   // best single-set reps PR (legacy)
+  maxAvgLoad: number; // max average set load (volume/sets) in a single workout
+  lastAchieved: string; // latest date any PR metric achieved
 };
 
 export async function getPersonalRecords(userId?: string): Promise<PersonalRecord[]> {
@@ -115,21 +116,38 @@ export async function getPersonalRecords(userId?: string): Promise<PersonalRecor
   if (error) throw error;
   const rows = (data || []) as any[];
   const filtered = rows.filter(r => (!uid || r.workout_exercises?.workouts?.user_id === uid));
-  const byName = new Map<string, PersonalRecord>();
+  // First aggregate by exercise + workout date to compute per-workout totals
+  const byExerciseDate = new Map<string, { volume: number; sets: number; maxSetWeight: number; maxSetReps: number }>();
+  const lastByExercise = new Map<string, string>();
   for (const r of filtered) {
     const name = r.workout_exercises?.exercises?.name || 'Unknown';
+    const date = r.workout_exercises?.workouts?.workout_date || new Date().toISOString();
+    const key = `${name}__${date}`;
     const weight = Number(r.weight) || 0;
     const reps = Number(r.reps) || 0;
     const vol = weight * reps;
-    const date = r.workout_exercises?.workouts?.workout_date || new Date().toISOString();
-    const rec = byName.get(name) || { exerciseName: name, maxWeight: 0, maxVolume: 0, maxReps: 0, lastAchieved: date };
-    if (weight > rec.maxWeight) rec.maxWeight = weight;
-    if (vol > rec.maxVolume) rec.maxVolume = vol;
-    if (reps > rec.maxReps) rec.maxReps = reps;
-    if (new Date(date) > new Date(rec.lastAchieved)) rec.lastAchieved = date;
-    byName.set(name, rec);
+    const cur = byExerciseDate.get(key) || { volume: 0, sets: 0, maxSetWeight: 0, maxSetReps: 0 };
+    cur.volume += vol;
+    cur.sets += 1;
+    cur.maxSetWeight = Math.max(cur.maxSetWeight, weight);
+    cur.maxSetReps = Math.max(cur.maxSetReps, reps);
+    byExerciseDate.set(key, cur);
+    const prevDate = lastByExercise.get(name);
+    if (!prevDate || new Date(date) > new Date(prevDate)) lastByExercise.set(name, date);
   }
-  // Sort by lastAchieved desc for deterministic order
+  // Reduce to per-exercise records
+  const byName = new Map<string, PersonalRecord>();
+  Array.from(byExerciseDate.entries()).forEach(([key, v]) => {
+    const [name, date] = key.split('__');
+    const avgLoad = v.sets > 0 ? Math.round(v.volume / v.sets) : 0;
+    const existing = byName.get(name) || { exerciseName: name, maxWeight: 0, maxVolume: 0, maxReps: 0, maxAvgLoad: 0, lastAchieved: date };
+    existing.maxWeight = Math.max(existing.maxWeight, v.maxSetWeight);
+    existing.maxReps = Math.max(existing.maxReps, v.maxSetReps);
+    if (v.volume > existing.maxVolume) existing.maxVolume = v.volume;
+    if (avgLoad > existing.maxAvgLoad) existing.maxAvgLoad = avgLoad;
+    existing.lastAchieved = lastByExercise.get(name) || existing.lastAchieved;
+    byName.set(name, existing);
+  });
   return Array.from(byName.values()).sort((a,b) => (a.lastAchieved < b.lastAchieved ? 1 : -1));
 }
 
