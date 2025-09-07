@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePeriodization } from '../hooks/usePeriodization';
 import { calculateResearchBackedPhaseTransition } from '../utils/researchBackedTransitions';
+import type { ProgressionData } from '../utils/researchBackedTransitions';
 import { ResearchBackedRecommendationCard } from '../../analytics/components/ResearchBackedRecommendationCard';
 
 function formatDistanceToNow(date: Date): string {
