@@ -32,7 +32,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
   }, [currentWorkout, activeExercise]);
   const history = useExerciseHistory(activeExerciseName);
   const { recommendation } = useRecommendations(activeExercise ?? undefined);
-  const [panelOpen, setPanelOpen] = useState<boolean>(true);
+  const [panelOpen, setPanelOpen] = useState<boolean>(false);
 
   // Reset inputs and rows when switching exercises; prefill from last exercise history (max 3 sets)
   useEffect(() => {
@@ -162,7 +162,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-slate-800 text-slate-200 px-2 py-3 rounded-l shadow hover:bg-slate-700"
         onClick={() => setPanelOpen((v) => !v)}
       >
-        {panelOpen ? 'Hide' : 'Show'}
+        {panelOpen ? 'Hide' : 'Current Workout'}
       </button>
 
       <div className={`fixed right-0 top-24 bottom-0 w-full md:w-96 bg-background/90 backdrop-blur-md p-4 border-l border-gray-800 overflow-y-auto transform transition-transform duration-200 ${panelOpen ? 'translate-x-0' : 'translate-x-full'}`}>

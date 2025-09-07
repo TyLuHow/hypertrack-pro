@@ -29,13 +29,17 @@ export const PersonalRecordsTracker: React.FC = () => {
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {personalRecords?.map((record) => {
-          const maxAvgLoad10 = record.maxReps > 0 ? Math.round((record.maxVolume / record.maxReps) * (10 / 1)) : 0;
+          // weight per set normalized to 10 reps (same metric as PR timeline tooltip)
+          const avgLoadPerSet = record.maxAvgLoad || 0;
+          const normalizedTo10 = avgLoadPerSet > 0 ? Math.round(avgLoadPerSet) : 0;
+          const est1RM = record.maxWeight > 0 ? Math.round(record.maxWeight * (1 + 10/30)) : 0;
           return (
           <div key={record.exerciseName} className="bg-slate-600/30 rounded-lg p-4">
             <h5 className="font-semibold text-white mb-2">{record.exerciseName}</h5>
             <div className="space-y-1">
               <div className="flex justify-between"><span className="text-gray-400 text-sm">Max Volume (single workout):</span><span className="text-teal-400 font-medium">{record.maxVolume}lbs</span></div>
-              <div className="flex justify-between"><span className="text-gray-400 text-sm">Max Avg Load @10 reps:</span><span className="text-teal-400 font-medium">{maxAvgLoad10}lbs</span></div>
+              <div className="flex justify-between"><span className="text-gray-400 text-sm">Max Avg Load @10 reps (per set):</span><span className="text-teal-400 font-medium">{normalizedTo10}lbs</span></div>
+              <div className="flex justify-between"><span className="text-gray-400 text-sm">Estimated 1RM:</span><span className="text-teal-400 font-medium">{est1RM}lbs</span></div>
             </div>
             <p className="text-xs text-gray-500 mt-2">Last achieved: {new Date(record.lastAchieved).toLocaleDateString()}</p>
           </div>

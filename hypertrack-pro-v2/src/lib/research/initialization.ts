@@ -22,9 +22,15 @@ async function loadResearchReports(): Promise<string[]> {
   // Placeholder: load embedded text snippets or local files
   try {
     const localFacts = await import('../../data/researchFacts');
-    const texts: string[] = localFacts.researchFacts.map((f: any) => `${f.text} (${f.citation.authors} ${f.citation.year} ${f.citation.journal})`);
-    return texts;
+    const texts: string[] = (localFacts as any).researchFacts?.map((f: any) => {
+      const cite = f?.citation || {};
+      return `${f.text} [${cite.authors || ''}, ${cite.year || ''}, ${cite.journal || ''}]`;
+    }) || [];
+    if (texts.length > 0) return texts;
   } catch {
+    // ignore, fall back below
+  }
+  {
     return [
       'Heart Rate Variability (HRV) readiness threshold ~0.5 SD lnRMSSD; recovery 24–72 hours; 7-day rolling average',
       'EMG activation: Bench press high pec EMG; Hip thrust very high glute activation; Pull-ups, Rows top for lats',

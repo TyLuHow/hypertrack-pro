@@ -33,7 +33,15 @@ export const SettingsView: React.FC = () => {
           {activeSection === 'bodyweight' && <BodyweightSettings />}
           {activeSection === 'units' && <div className="card p-4 text-textPrimary">Units settings coming soon.</div>}
           {activeSection === 'data' && <DataManagementSettings />}
-          {activeSection === 'research' && <div className="card p-4 text-textPrimary">Research preferences coming soon.</div>}
+          {activeSection === 'research' && (
+            <div className="card p-4 text-textPrimary">
+              <h3 className="text-lg font-semibold mb-3">References</h3>
+              <p className="text-sm text-gray-300 mb-4">A consolidated list of studies used across the app with quick links.</p>
+              <div className="space-y-3">
+                <ReferenceList />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -41,5 +49,28 @@ export const SettingsView: React.FC = () => {
 };
 
 // Removed inline BodyweightSettings component; using dedicated component file instead.
+
+function ReferenceList() {
+  const refs = [
+    { title: 'Dose-response relationship between weekly resistance training volume and increases in muscle mass', authors: 'Schoenfeld et al.', year: 2017, url: 'https://doi.org/10.1080/02640414.2016.1210197', keywords: ['volume', 'hypertrophy'] },
+    { title: 'The effects of training volume on muscle hypertrophy', authors: 'Baz-Valle et al.', year: 2022, url: 'https://doi.org/10.1007/s40279-021-01615-8', keywords: ['volume', 'dose-response'] }
+  ];
+  return (
+    <div className="space-y-3">
+      {refs.map((r, i) => (
+        <div key={i} className="bg-slate-700/40 rounded p-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-white font-medium text-sm">{r.title}</div>
+              <div className="text-xs text-gray-300">{r.authors} • {r.year}</div>
+              <div className="text-[11px] text-gray-400 mt-1">{r.keywords.join(' • ')}</div>
+            </div>
+            <a className="text-xs text-teal-300 hover:underline" href={r.url} target="_blank" rel="noreferrer">Open</a>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 

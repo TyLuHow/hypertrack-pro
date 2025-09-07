@@ -10,7 +10,7 @@ export function ConfidenceIndicator({ score }: { score: number }) {
   return <div className="text-xs text-slate-300">Confidence: {Math.round(score * 100)}%</div>;
 }
 
-export function ResearchBackedRecommendationCard({ recommendation }: { recommendation: { title: string; description: string; confidence: number; researchBasis: Array<{ title: string; year: number }> } }) {
+export function ResearchBackedRecommendationCard({ recommendation }: { recommendation: { title: string; description: string; confidence: number; researchBasis: Array<{ title: string; year: number; quote?: string; url?: string; keywords?: string[] }> } }) {
   const evidence = recommendation.researchBasis || [];
   const strength = Math.min(1, evidence.length / 10);
   return (
@@ -22,7 +22,11 @@ export function ResearchBackedRecommendationCard({ recommendation }: { recommend
           <div className="mt-3 flex items-center gap-2">
             <span className="text-sm text-slate-300">Evidence Strength:</span>
             <EvidenceStrengthBadge level={strength} />
-            <button className="text-xs text-blue-300 hover:underline" onClick={() => alert(evidence.map(e => `${e.title} (${e.year})`).join('\n'))}>View {evidence.length} supporting studies</button>
+            <button className="text-xs text-blue-300 hover:underline" onClick={() => {
+              const modal = document.getElementById('research-modal-root');
+              if (!modal) return alert(evidence.map(e => `${e.title} (${e.year})`).join('\n'));
+              (modal as any).dispatchEvent(new CustomEvent('open-research-modal', { detail: { evidence } }));
+            }}>View {evidence.length} supporting studies</button>
           </div>
         </div>
         <ConfidenceIndicator score={recommendation.confidence} />
