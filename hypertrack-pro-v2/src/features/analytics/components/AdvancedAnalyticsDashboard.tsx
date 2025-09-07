@@ -6,7 +6,18 @@ import { calculatePlateauRisk } from '../utils/plateauRiskModel';
 import { exportToCSV, generateComprehensiveReport, type DateRange, type AnalyticsReport } from '../utils/analyticsExport';
 
 async function getComprehensiveAnalytics(_timeframe: string): Promise<{ exercises: ExercisePerformanceData[]; volumeAnalysis: any; strengthTrends: any; plateauRisks: any[]; recommendations: any[]; researchBacking: any[] }> {
-  return { exercises: [], volumeAnalysis: {}, strengthTrends: {}, plateauRisks: [], recommendations: [], researchBacking: [] };
+  // Placeholder: synthesize minimal mock data so UI shows content until wired to live queries
+  return {
+    exercises: [
+      { name: 'Bench Press', currentMax: 225, data: Array.from({ length: 8 }, (_, i) => ({ ts: Date.now() - (8 - i) * 7 * 86400000, value: 200 + i * 3 })) },
+      { name: 'Squat', currentMax: 315, data: Array.from({ length: 8 }, (_, i) => ({ ts: Date.now() - (8 - i) * 7 * 86400000, value: 280 + i * 4 })) }
+    ],
+    volumeAnalysis: {},
+    strengthTrends: {},
+    plateauRisks: [],
+    recommendations: [],
+    researchBacking: []
+  };
 }
 
 export function AdvancedAnalyticsDashboard() {
@@ -53,7 +64,15 @@ export function AdvancedAnalyticsDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="bg-slate-800/60 rounded p-4">
           <h3 className="font-medium mb-3">Plateau Risk</h3>
-          <div className="text-sm text-slate-300">No high risks detected.</div>
+          {comprehensiveData?.exercises?.length ? (
+            <ul className="text-sm text-slate-300 space-y-1">
+              {comprehensiveData.exercises.map(ex => (
+                <li key={ex.name}>{ex.name}: trend {(ex.data?.length||0)} pts, current {ex.currentMax} lbs</li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-sm text-slate-300">No high risks detected.</div>
+          )}
         </div>
         <div className="bg-slate-800/60 rounded p-4">
           <h3 className="font-medium mb-3">Performance Forecast</h3>

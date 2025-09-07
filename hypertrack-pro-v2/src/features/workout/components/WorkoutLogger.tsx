@@ -32,6 +32,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
   }, [currentWorkout, activeExercise]);
   const history = useExerciseHistory(activeExerciseName);
   const { recommendation } = useRecommendations(activeExercise ?? undefined);
+  const [panelOpen, setPanelOpen] = useState<boolean>(true);
 
   // Reset inputs and rows when switching exercises; prefill from last exercise history (max 3 sets)
   useEffect(() => {
@@ -155,11 +156,17 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         </div>
       )}
 
-      <div className="fixed right-0 top-24 bottom-0 w-full md:w-96 bg-background/90 backdrop-blur-md p-4 border-l border-gray-800 overflow-y-auto">
-        <div className="text-sm text-textMuted mb-2 flex items-center justify-between">
-          <span>Current Workout</span>
-          <button className="text-xs px-2 py-1 rounded bg-slate-700 hover:bg-slate-600" onClick={() => window.dispatchEvent(new CustomEvent('toggle-workout-panel'))}>Toggle</button>
-        </div>
+      {/* Side panel toggle handle */}
+      <button
+        aria-label="Toggle current workout panel"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-slate-800 text-slate-200 px-2 py-3 rounded-l shadow hover:bg-slate-700"
+        onClick={() => setPanelOpen((v) => !v)}
+      >
+        {panelOpen ? 'Hide' : 'Show'}
+      </button>
+
+      <div className={`fixed right-0 top-24 bottom-0 w-full md:w-96 bg-background/90 backdrop-blur-md p-4 border-l border-gray-800 overflow-y-auto transform transition-transform duration-200 ${panelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="text-sm text-textMuted mb-2">Current Workout</div>
         <div className="space-y-2">
           {currentWorkout ? (
             currentWorkout.exercises.length > 0 ? (
