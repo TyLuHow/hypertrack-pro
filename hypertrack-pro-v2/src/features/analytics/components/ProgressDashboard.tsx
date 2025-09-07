@@ -3,12 +3,14 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianG
 import { PerMuscleTrends } from './PerMuscleTrends';
 import { PRTimeline } from './PRTimeline';
 import { useQuery } from '@tanstack/react-query';
-import { getProgressSummary, getWeeklyVolumeSeries, getMuscleGroupVolumeDistribution, getWorkoutMetricsSeries } from '../../../lib/supabase/queries';
+import { getProgressSummary, getWeeklyVolumeSeries, getMuscleGroupVolumeDistribution, getWorkoutMetricsSeries, getWeeklyWorkoutFrequency } from '../../../lib/supabase/queries';
 import { useState } from 'react';
 import { RESEARCH_CITATIONS, RESEARCH_VOLUME_TARGETS } from '../../../shared/constants/researchTargets';
 import { useRecommendations } from '../../../shared/hooks/useRecommendations';
 import { PeriodizationDashboard } from '../../periodization/components/PeriodizationDashboard';
 import { AdvancedAnalyticsDashboard } from './AdvancedAnalyticsDashboard';
+import { calculateHRVBasedReadiness } from '../utils/hrvReadiness';
+import { ResearchBackedRecommendationCard } from './ResearchBackedRecommendationCard';
 
 // Reserved for future exercise-level metrics
 
@@ -36,6 +38,12 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
   const [seriesDays, setSeriesDays] = useState<number>(180);
   const { data: workoutSeries } = useQuery({ queryKey: ['workout-metrics', userId, seriesDays], queryFn: () => getWorkoutMetricsSeries(seriesDays, userId) });
   const { researchRecommendations } = useRecommendations();
+  const { data: weeklyFreq } = useQuery({ queryKey: ['weekly-frequency-progress', userId], queryFn: () => getWeeklyWorkoutFrequency(12, userId) });
+  const readiness = calculateHRVBasedReadiness(
+    (volumeSeries || []).map(v => v.volume),
+    (weeklyFreq || []).map(f => f.count)
+  );
+  const urgentRecommendations = (researchRecommendations || []).filter((r: any) => r.urgency === 'high' && (typeof (r as any).confidence === 'number' ? (r as any).confidence > 0.7 : true));
 
   if (isLoading) {
     return <div className="p-6 text-textPrimary">Loading...</div>;
@@ -164,6 +172,38 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
           <div className="text-white font-semibold mb-3">PR Timelines</div>
           <PRTimeline userId={userId} />
         </div>
+
+        {/* Urgent recommendations */}
+        {urgentRecommendations && urgentRecommendations.length > 0 && (
+          <section className="mt-6">
+            <h3 className="text-lg font-semibold mb-3 text-red-400">Urgent Training Adjustments</h3>
+            <div className="space-y-4">
+              {urgentRecommendations.map((rec: any, index: number) => (
+                <ResearchBackedRecommendationCard key={index} recommendation={{
+                  title: rec.title || 'Urgent Recommendation',
+                  description: rec.reasoning || rec.description || '',
+                  researchBasis: rec.researchBasis || [],
+                  confidence: typeof rec.confidence === 'number' ? rec.confidence : 0.8
+                }} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Readiness overview */}
+        <section className="mt-6">
+          <div className="bg-blue-50/10 border border-blue-400/30 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-blue-200">Current Readiness</h4>
+                <p className="text-sm text-blue-300">{readiness.reasoning}</p>
+              </div>
+              <div className="text-2xl font-bold text-blue-300">
+                {readiness.readinessScore.toFixed(1)}/10
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div className="mt-6">
           <AdvancedAnalyticsDashboard />
