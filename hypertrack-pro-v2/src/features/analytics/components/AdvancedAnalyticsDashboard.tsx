@@ -2,23 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePeriodization } from '../../periodization/hooks/usePeriodization';
 import { generatePerformanceForecast, type ExercisePerformanceData } from '../utils/performancePrediction';
-import { calculatePlateauRisk } from '../utils/plateauRiskModel';
 import { exportToCSV, generateComprehensiveReport, type DateRange, type AnalyticsReport } from '../utils/analyticsExport';
+import { getExercisePerformanceSeries } from '../../../lib/supabase/queries';
+import { inferExerciseType } from '../../../shared/utils/exerciseClassification';
 
-async function getComprehensiveAnalytics(_timeframe: string): Promise<{ exercises: ExercisePerformanceData[]; volumeAnalysis: any; strengthTrends: any; plateauRisks: any[]; recommendations: any[]; researchBacking: any[] }> {
-  // Placeholder: synthesize minimal mock data so UI shows content until wired to live queries
-  return {
-    exercises: [
-      { name: 'Bench Press', currentMax: 225, data: Array.from({ length: 8 }, (_, i) => ({ ts: Date.now() - (8 - i) * 7 * 86400000, value: 200 + i * 3 })) },
-      { name: 'Squat', currentMax: 315, data: Array.from({ length: 8 }, (_, i) => ({ ts: Date.now() - (8 - i) * 7 * 86400000, value: 280 + i * 4 })) }
-    ],
-    volumeAnalysis: {},
-    strengthTrends: {},
-    plateauRisks: [],
-    recommendations: [],
-    researchBacking: []
-  };
-}
+function epley(weight: number, reps: number): number { return weight > 0 && reps > 0 ? weight * (1 + reps / 30) : 0; }
 
 export function AdvancedAnalyticsDashboard() {
   const [selectedTimeframe, setSelectedTimeframe] = useState('12weeks');
@@ -26,9 +14,30 @@ export function AdvancedAnalyticsDashboard() {
   const { currentPhase } = usePeriodization();
   const userProfile = { experience: 'intermediate' as const };
 
-  const { data: comprehensiveData } = useQuery({ queryKey: ['comprehensive-analytics', selectedTimeframe], queryFn: () => getComprehensiveAnalytics(selectedTimeframe) });
+  const days = selectedTimeframe === '12weeks' ? 84 : 168;
+  const { data: exerciseSessions } = useQuery({ queryKey: ['exercise-performance-series', days], queryFn: () => getExercisePerformanceSeries(days) });
 
-  const forecastData = useMemo(() => generatePerformanceForecast(comprehensiveData?.exercises || [], currentPhase, userProfile), [comprehensiveData, currentPhase]);
+  const compoundExercises: ExercisePerformanceData[] = useMemo(() => {
+    if (!exerciseSessions) return [];
+    const byExercise = new Map<string, Array<{ ts: number; value: number }>>();
+    for (const s of exerciseSessions) {
+      const maxSet = (s.sets || []).reduce((acc, set) => Math.max(acc, epley(Number(set.weight)||0, Number(set.reps)||0)), 0);
+      const ts = new Date(s.date).getTime();
+      if (!byExercise.has(s.exercise)) byExercise.set(s.exercise, []);
+      byExercise.get(s.exercise)!.push({ ts, value: Math.round(maxSet) });
+    }
+    const out: ExercisePerformanceData[] = [];
+    Array.from(byExercise.entries()).forEach(([name, series]) => {
+      const inferred = inferExerciseType(name);
+      if (inferred.type !== 'compound') return;
+      const sorted = series.sort((a,b)=>a.ts-b.ts);
+      const currentMax = sorted.reduce((m, p) => Math.max(m, p.value), 0);
+      out.push({ name, currentMax, data: sorted });
+    });
+    return out;
+  }, [exerciseSessions]);
+
+  const forecastData = useMemo(() => generatePerformanceForecast(compoundExercises, currentPhase, userProfile), [compoundExercises, currentPhase]);
 
   const handleExport = async (fmt: 'csv' | 'pdf') => {
     const range: DateRange = { start: new Date(Date.now() - 12 * 7 * 86400000).toISOString().slice(0,10), end: new Date().toISOString().slice(0,10) };
@@ -63,19 +72,36 @@ export function AdvancedAnalyticsDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="bg-slate-800/60 rounded p-4">
-          <h3 className="font-medium mb-3">Plateau Risk</h3>
-          {comprehensiveData?.exercises?.length ? (
+          <h3 className="font-medium mb-3">Plateau Risk (Compound Lifts)</h3>
+          {compoundExercises.length ? (
             <ul className="text-sm text-slate-300 space-y-1">
-              {comprehensiveData.exercises.map(ex => (
-                <li key={ex.name}>{ex.name}: trend {(ex.data?.length||0)} pts, current {ex.currentMax} lbs</li>
-              ))}
+              {compoundExercises.map(ex => {
+                const slope = (() => {
+                  const pts = ex.data;
+                  if (!pts || pts.length < 2) return 0;
+                  const xs = pts.map(p=>p.ts);
+                  const ys = pts.map(p=>p.value);
+                  const n = xs.length;
+                  const mx = xs.reduce((a,b)=>a+b,0)/n;
+                  const my = ys.reduce((a,b)=>a+b,0)/n;
+                  const num = xs.reduce((acc, x, i) => acc + (x-mx)*(ys[i]-my), 0);
+                  const den = xs.reduce((acc, x) => acc + (x-mx)*(x-mx), 0);
+                  if (den === 0 || my === 0) return 0;
+                  const slopePerMs = num / den;
+                  const weekly = slopePerMs * 7 * 86400000;
+                  return weekly / my; // fraction/week
+                })();
+                const risk = Math.max(0, Math.min(1, 0.5 - slope));
+                const label = risk > 0.7 ? 'High' : risk > 0.5 ? 'Moderate' : 'Low';
+                return (<li key={ex.name}>{ex.name}: {label} risk (current {ex.currentMax} lbs)</li>);
+              })}
             </ul>
           ) : (
-            <div className="text-sm text-slate-300">No high risks detected.</div>
+            <div className="text-sm text-slate-300">No compound-lift data yet.</div>
           )}
         </div>
         <div className="bg-slate-800/60 rounded p-4">
-          <h3 className="font-medium mb-3">Performance Forecast</h3>
+          <h3 className="font-medium mb-3">Performance Forecast (Compound Lifts)</h3>
           {forecastData.length === 0 ? <div className="text-sm text-slate-300">No forecast available</div> : (
             <ul className="text-sm text-slate-300 space-y-1">
               {forecastData.map(f => (
