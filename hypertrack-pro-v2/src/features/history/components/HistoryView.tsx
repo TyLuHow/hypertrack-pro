@@ -33,13 +33,14 @@ export const HistoryView: React.FC = () => {
     })();
   }, []);
 
-  const handleWorkoutClick = (workout: WorkoutRow) => {
+  const handleWorkoutClick = async (workout: WorkoutRow) => {
+    const exercises = await workoutQueries.getDetails(workout.id);
     setSelectedWorkout({
       id: String(workout.id),
       name: workout.name || 'Workout Session',
       date: workout.workout_date,
       duration: typeof workout.duration_minutes === 'number' ? workout.duration_minutes * 60 : 0,
-      exercises: [],
+      exercises,
     });
     setIsDetailsModalOpen(true);
   };

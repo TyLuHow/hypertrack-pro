@@ -17,6 +17,22 @@ export const workoutQueries = {
     const supabase = getSupabase();
     return (supabase as any).from('workouts').select('*').order('workout_date', { ascending: false });
   },
+  async getDetails(workoutId: number) {
+    const supabase = getSupabase() as any;
+    const { data, error } = await (supabase
+      .from('workout_exercises')
+      .select('id, exercises(name,muscle_group,category), sets(weight,reps,rpe)')
+      .eq('workout_id', workoutId)
+      .order('exercise_order', { ascending: true }));
+    if (error) throw error;
+    const exercises = (data || []).map((we: any) => ({
+      name: we.exercises?.name || 'Exercise',
+      muscle_group: we.exercises?.muscle_group || 'Unknown',
+      category: we.exercises?.category || 'Isolation',
+      sets: (we.sets || []).map((s: any) => ({ weight: Number(s.weight)||0, reps: Number(s.reps)||0, rpe: s.rpe || undefined }))
+    }));
+    return exercises;
+  },
   async create(workout: WorkoutInsert) {
     const supabase = getSupabase();
     return (supabase as any).from('workouts').insert(workout as any).select('*').single();

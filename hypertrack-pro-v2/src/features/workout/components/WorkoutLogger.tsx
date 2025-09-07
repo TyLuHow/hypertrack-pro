@@ -150,7 +150,12 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
 
           <div className="mt-4 space-y-3">
             <SetTable rows={rows} onChange={handleRowChange} onAdd={handleAddSet} onDelete={handleDeleteSet} />
-            <button onClick={() => activeExercise && completeExercise(activeExercise)} className="btn-muted w-full">Complete Exercise</button>
+            <button onClick={() => {
+              if (activeExercise) {
+                // ensure bottom summary shows counts immediately
+                completeExercise(activeExercise);
+              }
+            }} className="btn-muted w-full">Complete Exercise</button>
           </div>
         </div>
       )}
