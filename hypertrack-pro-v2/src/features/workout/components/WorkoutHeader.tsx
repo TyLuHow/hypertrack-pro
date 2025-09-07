@@ -40,9 +40,9 @@ export const WorkoutHeader: React.FC = () => {
               <button onClick={handleNameSave} className="px-3 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-sm">Save</button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-white">{currentWorkout.name || 'Workout'}</h1>
-              <button onClick={handleNameEdit} className="p-1 text-gray-400 hover:text-white transition-colors">✏️</button>
+              <button onClick={handleNameEdit} className="px-2 py-1 text-xs rounded bg-slate-600 text-white hover:bg-slate-500 transition-colors">Edit name</button>
             </div>
           )}
           <p className="text-gray-300 text-sm mt-1">

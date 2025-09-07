@@ -26,28 +26,51 @@ export function calculateResearchBackedPhaseTransition(
   const currentPhaseLength = getPhaseLength(currentPhase);
   const progressionRate = calculateProgressionSlope(progressData.recentPerformance);
   const volProg = calculateVolumeProgression(volumeData);
+  const hasProgressData = (progressData?.recentPerformance?.length || 0) >= 4;
+  const evidenceStrength = periodizationResearch.length
+    ? Math.min(1, periodizationResearch.reduce((a, e) => a + (e.weight ?? 0.5), 0) / Math.max(1, periodizationResearch.length))
+    : 0.2; // weak by default
+
+  // Helper to compute dynamic confidence based on evidence + data sufficiency + timing + plateau signal
+  const computeConfidence = (
+    minWeeks: number,
+    reasonSignal: 'time' | 'plateau' | 'stagnation'
+  ): number => {
+    const timeFactor = Math.min(1, currentPhaseLength / Math.max(1, minWeeks));
+    const dataFactor = hasProgressData ? 1 : 0.6;
+    const plateauFactor = plateauRisk; // already [0,1]
+    const stagnationFactor = Math.max(0, Math.min(1, Math.abs(progressionRate))); // tiny positive when nearly flat
+    const reasonFactor = reasonSignal === 'time' ? timeFactor : reasonSignal === 'plateau' ? plateauFactor : stagnationFactor;
+    const raw = 0.35 * evidenceStrength + 0.3 * timeFactor + 0.25 * dataFactor + 0.1 * reasonFactor;
+    return Math.max(0.5, Math.min(0.98, raw));
+  };
 
   if (currentPhase.type === 'hypertrophy') {
-    const should = currentPhaseLength >= criteria.hypertrophy.minWeeks || plateauRisk > criteria.hypertrophy.plateauThreshold || progressionRate < criteria.hypertrophy.progressionThreshold;
-    if (should) {
+    const byTime = currentPhaseLength >= criteria.hypertrophy.minWeeks;
+    const byPlateau = plateauRisk > criteria.hypertrophy.plateauThreshold && hasProgressData && progressionRate <= criteria.hypertrophy.progressionThreshold;
+    if (byTime || byPlateau) {
+      const reason = byTime
+        ? `Hypertrophy phase threshold met (${currentPhaseLength}w). Transition to strength for neural adaptations.`
+        : 'Hypertrophy progress stalling with elevated plateau risk. Transition to strength emphasis to vary stimulus.';
       return {
         shouldTransition: true,
         nextPhase: createStrengthPhaseFromCriteria(criteria),
-        reasoning: `Hypertrophy phase threshold met (${currentPhaseLength}w). Transition to strength for neural adaptations.`,
-        confidence: 0.85,
+        reasoning: reason,
+        confidence: computeConfidence(criteria.hypertrophy.minWeeks, byTime ? 'time' : 'plateau'),
         researchBasis: periodizationResearch,
         expectedOutcomes: ['Increased 1RM', 'Reduced monotony', 'Preparation for next hypertrophy block']
       };
     }
   }
   if (currentPhase.type === 'strength') {
-    const should = currentPhaseLength >= criteria.strength.minWeeks || progressionRate < criteria.strength.progressionThreshold;
-    if (should) {
+    const byTime = currentPhaseLength >= criteria.strength.minWeeks;
+    const byStagnation = hasProgressData && progressionRate < criteria.strength.progressionThreshold;
+    if (byTime || byStagnation) {
       return {
         shouldTransition: true,
         nextPhase: createDeloadPhaseFromCriteria(criteria),
-        reasoning: 'Strength phase complete or progress stalled. Deload to dissipate fatigue.',
-        confidence: 0.9,
+        reasoning: byTime ? 'Strength phase complete. Deload to dissipate fatigue.' : 'Strength progress has stalled. Insert deload before next block.',
+        confidence: computeConfidence(criteria.strength.minWeeks, byTime ? 'time' : 'stagnation'),
         researchBasis: periodizationResearch,
         expectedOutcomes: ['Reduced fatigue', 'Improved readiness', 'Set up for hypertrophy']
       };
@@ -58,12 +81,12 @@ export function calculateResearchBackedPhaseTransition(
       shouldTransition: true,
       nextPhase: createHypertrophyPhaseFromCriteria(criteria, volProg),
       reasoning: 'Deload complete. Start new hypertrophy block.',
-      confidence: 0.95,
+      confidence: computeConfidence(1, 'time'),
       researchBasis: periodizationResearch,
       expectedOutcomes: ['Renewed volume tolerance', 'Improved workout quality']
     };
   }
-  return { shouldTransition: false, reasoning: 'Continue current phase', confidence: 0.8, researchBasis: periodizationResearch, expectedOutcomes: [] };
+  return { shouldTransition: false, reasoning: 'Continue current phase', confidence: 0.6, researchBasis: periodizationResearch, expectedOutcomes: [] };
 }
 
 function extractTransitionCriteria(_research: ResearchEvidence[]): any {

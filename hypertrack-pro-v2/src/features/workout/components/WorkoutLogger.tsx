@@ -118,32 +118,21 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
               <WeightInput
                   value={weight}
                 onChange={(n) => setWeight(n ?? 0)}
-                increments={[2.5, 5, 10]}
+                increments={[]}
                 autoLabel={history.label || undefined}
               />
             </div>
 
             <div>
               <div className="text-sm text-textMuted mb-1">Reps</div>
-              <div className="flex items-center space-x-3">
-                <button
-                  className="h-11 w-11 rounded-full bg-gray-700 text-xl active:scale-95"
-                  onClick={() => handleQuickAdjust('reps', -1)}
-                >
-                  -
-                </button>
+              <div className="flex items-center">
                 <input
                   type="number"
                   className="flex-1 h-11 bg-background rounded-lg px-3 text-xl number-xl"
                   value={reps}
                   onChange={(e) => setReps(Number(e.target.value))}
+                  min={1}
                 />
-                <button
-                  className="h-11 w-11 rounded-full bg-gray-700 text-xl active:scale-95"
-                  onClick={() => handleQuickAdjust('reps', 1)}
-                >
-                  +
-                </button>
               </div>
             </div>
           </div>
@@ -152,7 +141,13 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
             <SetTable rows={rows} onChange={handleRowChange} onAdd={handleAddSet} onDelete={handleDeleteSet} />
             <button onClick={() => {
               if (activeExercise) {
-                // ensure bottom summary shows counts immediately
+                // If there are prefilled rows not yet added to the store, sync them in
+                const existingIds = new Set((currentWorkout?.exercises.find(e => e.id === activeExercise)?.sets || []).map(s => s.id));
+                rows.forEach(r => {
+                  if (!existingIds.has(r.id)) {
+                    addSet(activeExercise, { id: r.id, weight: r.weight, reps: r.reps });
+                  }
+                });
                 completeExercise(activeExercise);
               }
             }} className="btn-muted w-full">Complete Exercise</button>
@@ -168,13 +163,13 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
               currentWorkout.exercises.map((ex) => {
                 const totalVolume = ex.sets.reduce((acc, s) => acc + s.weight * s.reps, 0);
                 return (
-                <div key={ex.id} className="card p-3">
+                <button key={ex.id} className="card p-3 text-left w-full" onClick={() => selectExercise(ex.id, true)}>
                   <div className="font-semibold mb-1">{ex.name}</div>
                   <div className="text-sm text-textSecondary">
                     {ex.sets.map((s) => `${s.weight}×${s.reps}`).join('  •  ')}
                   </div>
                   <div className="text-xs text-textMuted mt-1">Sets: {ex.sets.length} • Volume: {Math.round(totalVolume)} lbs</div>
-                </div>
+                </button>
               )})
             ) : (
               <div className="text-textMuted">No sets yet</div>
