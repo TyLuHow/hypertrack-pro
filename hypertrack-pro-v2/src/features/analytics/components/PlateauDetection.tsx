@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getExercisePerformanceSeries, type ExerciseSessionSeries } from '../../../lib/supabase/queries';
-import { usePlateauDetection } from '../../../shared/hooks/usePlateauDetection';
+import { detectPlateau } from '../../../lib/algorithms/plateau';
 
 type ExercisePlateauData = {
   exerciseName: string;
@@ -28,17 +28,17 @@ export const PlateauDetection: React.FC = () => {
     Array.from(byExercise.entries()).forEach(([exerciseName, sessions]) => {
       // sort most recent first as expected by algorithm hook
       const sorted = sessions.sort((a, b) => (a.date < b.date ? 1 : -1));
-      const hookInput = sorted.map(s => ({ date: s.date, sets: s.sets }));
-      const { analysis } = usePlateauDetection(hookInput as any);
+      const input = sorted.map(s => ({ date: s.date, sets: s.sets }));
+      const analysis = detectPlateau({ sessions: input as any });
       const bestSet = sBest(sorted[0]?.sets || []);
-      const trendSlope = typeof analysis.slopeValue === 'number' ? analysis.slopeValue : 0;
+      const trendSlope = typeof analysis.slope === 'number' ? analysis.slope : 0;
       rows.push({
         exerciseName,
-        sessionsAnalyzed: analysis.consideredCount ?? sorted.length,
+        sessionsAnalyzed: (analysis as any).consideredCount ?? sorted.length,
         currentMax: bestSet?.weight || 0,
         trendSlope,
-        plateauRisk: !!analysis.isPlateau,
-        stagnationRisk: !analysis.isPlateau && Math.abs(trendSlope) < 0.01
+        plateauRisk: !!(analysis as any).plateauDetected,
+        stagnationRisk: !(analysis as any).plateauDetected && Math.abs(trendSlope) < 0.01
       });
     });
     // prioritize risks first
