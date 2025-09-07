@@ -1,8 +1,16 @@
 import React from 'react';
-import { useRecoveryReadiness } from '../../../shared/hooks/useRecoveryReadiness';
+import { calculateHRVBasedReadiness } from '../utils/hrvReadiness';
+import { ResearchBackedRecommendationCard } from './ResearchBackedRecommendationCard';
+import { useQuery } from '@tanstack/react-query';
+import { getWeeklyVolumeSeries, getWeeklyWorkoutFrequency } from '../../../lib/supabase/queries';
 
 export const AIIntelligence: React.FC = () => {
-  const { readiness } = useRecoveryReadiness();
+  const { data: volumeSeries } = useQuery({ queryKey: ['weekly-volume-readiness-ui'], queryFn: () => getWeeklyVolumeSeries(12) });
+  const { data: weeklyFreq } = useQuery({ queryKey: ['weekly-frequency-readiness-ui'], queryFn: () => getWeeklyWorkoutFrequency(12) });
+  const readiness = calculateHRVBasedReadiness(
+    (volumeSeries || []).map(v => v.volume),
+    (weeklyFreq || []).map(f => f.count)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-800 to-slate-900">
@@ -16,7 +24,7 @@ export const AIIntelligence: React.FC = () => {
             <div className="relative">
               <div className="w-28 h-28 rounded-full border-8 border-emerald-500/60" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-4xl font-bold text-white">{readiness?.readinessScore ?? 7}</span>
+                <span className="text-4xl font-bold text-white">{readiness.readinessScore ?? 7}</span>
               </div>
               <div className="text-center mt-2">
                 <span className="text-sm text-gray-400">Recovery Score</span>
@@ -29,6 +37,16 @@ export const AIIntelligence: React.FC = () => {
               </div>
               <div className="bg-slate-800/80 rounded-xl p-4">
                 <p className="text-gray-300">{readiness ? (readiness.recommendation === 'deload' ? 'Prioritize rest and reduce volume this week' : readiness.recommendation === 'reduce' ? 'Slightly reduce volume or intensity' : 'Proceed with planned training') : 'Keep up your current recovery routine!'}</p>
+        <div className="mt-6">
+          <ResearchBackedRecommendationCard
+            recommendation={{
+              title: `${readiness.recommendation.toUpperCase()} Training`,
+              description: readiness.reasoning,
+              researchBasis: readiness.researchBasis || [],
+              confidence: readiness.readinessScore / 10
+            }}
+          />
+        </div>
               </div>
             </div>
           </div>

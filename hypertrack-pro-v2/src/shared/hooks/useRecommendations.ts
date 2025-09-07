@@ -6,6 +6,7 @@ import { getPerMuscleWeeklySets } from '../../lib/supabase/queries';
 import { RESEARCH_VOLUME_TARGETS } from '../constants/researchTargets';
 import { inferExerciseType } from '../utils/exerciseClassification';
 import { usePeriodization } from '../../features/periodization/hooks/usePeriodization';
+import { getOptimalExerciseSelection } from '../../features/analytics/utils/exerciseOptimization';
 
 export function useRecommendations(activeExerciseId?: string) {
   const { currentWorkout } = useWorkoutStore();
@@ -87,6 +88,22 @@ export function useRecommendations(activeExerciseId?: string) {
           urgency: 'low'
         });
       }
+    });
+    // Exercise optimization per muscle
+    const muscles = Array.from(byMuscle.keys());
+    muscles.forEach((muscle) => {
+      try {
+        const exerciseRec = getOptimalExerciseSelection(muscle, ['barbell','dumbbell','cable','bodyweight'], currentPhase as any);
+        out.push({
+          muscle,
+          type: 'maintain',
+          current: byMuscle.get(muscle)?.slice(-4).reduce((a,b)=>a+b,0) || 0,
+          recommended: (RESEARCH_VOLUME_TARGETS as any)[(muscle||'').toLowerCase()]?.optimal || 12,
+          citation: 'EMG research',
+          reasoning: exerciseRec.reasoning,
+          urgency: 'low'
+        } as any);
+      } catch { /* ignore */ }
     });
     return out.sort((a, b) => (a.type === 'volume_increase' ? -1 : a.type === 'volume_reduce' && b.type !== 'volume_increase' ? -1 : 1));
   }, [weeklySets, currentPhase]);

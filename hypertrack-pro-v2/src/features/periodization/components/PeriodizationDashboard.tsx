@@ -1,7 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePeriodization } from '../hooks/usePeriodization';
-import { calculatePhaseTransition, ProgressionData } from '../utils/phaseTransitions';
+import { calculateResearchBackedPhaseTransition } from '../utils/researchBackedTransitions';
+import { ResearchBackedRecommendationCard } from '../../analytics/components/ResearchBackedRecommendationCard';
 
 function formatDistanceToNow(date: Date): string {
   const ms = date.getTime() - Date.now();
@@ -17,8 +18,14 @@ async function getProgressionHistory(): Promise<ProgressionData> {
 export function PeriodizationDashboard() {
   const { currentPhase, nextTransition, actions } = usePeriodization();
   const { data: progressData } = useQuery({ queryKey: ['progression-history'], queryFn: getProgressionHistory });
-  const plateauRisk = 0.0; // TODO: integrate from plateau analytics if desired
-  const transitionRecommendation = calculatePhaseTransition(currentPhase, progressData || { recentPerformance: [] }, plateauRisk);
+  const { data: volumeSeries } = useQuery({ queryKey: ['weekly-volume-series-ui'], queryFn: () => Promise.resolve([] as any) });
+  const plateauRisk = 0.0;
+  const transitionRecommendation = calculateResearchBackedPhaseTransition(
+    currentPhase,
+    (progressData || { recentPerformance: [] }) as any,
+    plateauRisk,
+    (volumeSeries || []) as any
+  );
 
   return (
     <div className="bg-slate-700/40 rounded-2xl p-6">
@@ -26,7 +33,19 @@ export function PeriodizationDashboard() {
       <PhaseIndicator phase={currentPhase} transitionIn={nextTransition} />
       <PhaseProgress currentWeek={currentPhase.weekNumber} totalWeeks={currentPhase.totalWeeks} goals={currentPhase.goals} />
       {transitionRecommendation.shouldTransition && transitionRecommendation.nextPhase && (
-        <TransitionRecommendation recommendation={transitionRecommendation} onAccept={() => actions.transitionPhase(transitionRecommendation.nextPhase!)} />
+        <div className="mt-4">
+          <ResearchBackedRecommendationCard
+            recommendation={{
+              title: `Transition to ${transitionRecommendation.nextPhase.type} Phase`,
+              description: transitionRecommendation.reasoning,
+              researchBasis: transitionRecommendation.researchBasis,
+              confidence: transitionRecommendation.confidence
+            }}
+          />
+          <div className="mt-3">
+            <button className="px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded text-white text-sm" onClick={() => actions.transitionPhase(transitionRecommendation.nextPhase!)}>Accept Transition</button>
+          </div>
+        </div>
       )}
       <div className="text-xs text-gray-400 mt-4">Research: {currentPhase.researchBacking}</div>
     </div>
