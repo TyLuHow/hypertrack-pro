@@ -9,12 +9,17 @@ import { WorkoutHeader } from './features/workout/components/WorkoutHeader';
 import { ResearchFactsBanner } from './features/research/components/ResearchFactsBanner';
 import { InstallPrompt } from './features/pwa/components/InstallPrompt';
 import React from 'react';
+import { useEffect } from 'react';
+import { initializeResearchGraph } from './lib/research/initialization';
 import { useWorkoutStore } from './shared/stores/workoutStore';
 
 function App() {
   const [selectorOpen, setSelectorOpen] = React.useState(false);
   
   const [tab, setTab] = React.useState<TabKey>('workout');
+  useEffect(() => {
+    initializeResearchGraph();
+  }, []);
   const selectExercise = useWorkoutStore((s) => s.selectExercise);
   const upsertExerciseMeta = useWorkoutStore((s) => s.upsertExerciseMeta);
   const currentWorkout = useWorkoutStore((s) => s.currentWorkout);
