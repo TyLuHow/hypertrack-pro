@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { RESEARCH_CITATIONS, RESEARCH_VOLUME_TARGETS } from '../../../shared/constants/researchTargets';
 import { useRecommendations } from '../../../shared/hooks/useRecommendations';
 import { PeriodizationDashboard } from '../../periodization/components/PeriodizationDashboard';
+import { AdvancedAnalyticsDashboard } from './AdvancedAnalyticsDashboard';
 
 // Reserved for future exercise-level metrics
 
@@ -131,10 +132,8 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
                       return [value, name];
                     }}
                     labelFormatter={(label: string, payload: any) => {
-                      // Aggregate for tooltip
                       const d = payload && payload[0] ? payload[0].payload : undefined;
                       if (!d) return label;
-                      // split classification
                       const muscles = new Set<string>();
                       const items = (workoutSeries || []).filter(x => x.date === d.date);
                       items.forEach(x => muscles.add(x.muscle));
@@ -164,6 +163,10 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
         <div className="bg-slate-700/40 rounded-2xl p-6 mt-6">
           <div className="text-white font-semibold mb-3">PR Timelines</div>
           <PRTimeline userId={userId} />
+        </div>
+
+        <div className="mt-6">
+          <AdvancedAnalyticsDashboard />
         </div>
       </div>
     </div>
@@ -200,7 +203,6 @@ function ResearchInsight({ metric, value, muscleGroup }: { metric: string; value
       return { message: `${mg} volume is within optimal range. Maintain.`, citation: RESEARCH_CITATIONS.schoenfeld_2017 };
     }
     if (m === 'weeklyVolume') {
-      // Generic overall note
       return { message: 'Distribute weekly volume across muscles 10–20 sets/week per muscle as a guide.', citation: RESEARCH_CITATIONS.schoenfeld_2017 };
     }
     return null;
