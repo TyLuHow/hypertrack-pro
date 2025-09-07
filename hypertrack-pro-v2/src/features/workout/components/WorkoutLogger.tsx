@@ -191,15 +191,25 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
         {currentWorkout && (
           <button
             onClick={async () => {
-              completeWorkout();
-              const session = {
-                name: currentWorkout.name,
-                date: currentWorkout.date,
-                startTime: currentWorkout.startTime,
-                endTime: currentWorkout.endTime,
-                exercises: currentWorkout.exercises.map((e) => ({ id: e.id, name: e.name, sets: e.sets.map(s => ({ id: s.id, weight: s.weight, reps: s.reps })) }))
-              };
-              try { await persistWorkoutSession(session as any); } catch { /* surface toast later */ }
+              // Guard: require at least one logged set before finishing
+              const hasAnySet = (currentWorkout.exercises || []).some(e => (e.sets || []).length > 0);
+              if (!hasAnySet) { alert('Please add at least one set before finishing.'); return; }
+              const endTime = new Date().toISOString();
+              try {
+                const session = {
+                  name: currentWorkout.name,
+                  date: currentWorkout.date,
+                  startTime: currentWorkout.startTime,
+                  endTime,
+                  exercises: currentWorkout.exercises.map((e) => ({ id: e.id, name: e.name, sets: e.sets.map(s => ({ id: s.id, weight: s.weight, reps: s.reps })) }))
+                };
+                await persistWorkoutSession(session as any);
+                completeWorkout();
+                alert('Workout saved. You can view it in History and Analytics.');
+              } catch (err: any) {
+                console.error('Failed to persist workout session', err);
+                alert('Could not save workout. Please sign in and ensure Supabase credentials are configured.');
+              }
             }}
             className="mt-3 w-full btn-primary"
           >
