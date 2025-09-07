@@ -97,7 +97,7 @@ function extractNumericalData(text: string): NumericalFinding[] {
   const sentences = text.split(/[.!?]+/);
   sentences.forEach((sentence) => {
     patterns.forEach((pattern) => {
-      const matches = sentence.matchAll(pattern);
+      const matches = Array.from(sentence.matchAll(pattern));
       for (const match of matches) {
         findings.push({
           value: parseFloat(match[1]),
