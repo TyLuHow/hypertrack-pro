@@ -1,28 +1,201 @@
-## Push Protocol (for all agents)
+# HyperTrack Pro - Enhanced Cursor Rules for Agentic Development
 
-- Always push to branch: `main`.
-- App is in `hypertrack-pro-v2` (Create React App). Only stage that directory unless you intentionally changed root files.
-- Vercel builds from Root Directory: `hypertrack-pro-v2`. Do not add a root `vercel.json`.
-- Use PowerShell-friendly commands (no `&&`/`||`).
+## 🎯 Project Context & Architecture
 
-Standard push:
+### Core Application Structure
+- **App Root**: `hypertrack-pro-v2/` (React + TypeScript)
+- **Architecture**: Feature-first with shared libraries
+- **Backend**: Vercel serverless functions (`/api/`)
+- **Database**: Supabase PostgreSQL with TypeScript types
+- **Testing**: Jest with automated CI/CD
+- **Deployment**: Vercel with automatic builds
+
+### Directory Organization
+```
+hypertrack-pro-v2/
+├── src/
+│   ├── core/              # Core business logic
+│   ├── features/          # Feature modules (workouts, exercises, analytics)
+│   ├── shared/            # Shared utilities, types, components
+│   ├── infrastructure/    # External integrations (Supabase, APIs)
+│   └── lib/
+│       ├── algorithms/    # Training algorithms (PRESERVED - research-backed)
+│       ├── supabase/      # Database client
+│       └── offline/       # Offline functionality
+├── public/               # Static assets
+└── api/                 # Serverless functions (Vercel)
+```
+
+## 🧠 Agent Collaboration Framework
+
+### Agent Specialization Roles
+1. **Architecture Agent**: High-level design, module relationships, API design
+2. **Implementation Agent**: Feature development, component creation, algorithm integration
+3. **Testing Agent**: Test creation, quality assurance, performance validation
+4. **Documentation Agent**: API docs, code comments, README updates
+
+### Tool Integration Protocol
+- **@codebase**: Primary tool for pattern analysis and architectural understanding
+- **@terminal**: Build, test, and deployment automation
+- **@web**: Research current best practices, especially for fitness/health domains
+- **@docs**: Framework-specific guidance (React, TypeScript, Supabase)
+
+## 🛠️ Development Standards
+
+### Code Quality Requirements
+- **TypeScript**: Strict mode enabled, comprehensive type coverage
+- **Path Aliases**: Use `@core/*`, `@features/*`, `@shared/*`, `@infrastructure/*`
+- **Testing**: Minimum 80% coverage, focus on algorithms and API endpoints
+- **Performance**: Core Web Vitals optimized, offline-first design
+- **Accessibility**: WCAG 2.1 AA compliance maintained
+
+### Research Integration Standards
+- **Algorithm Preservation**: `src/lib/algorithms/` contains research-backed calculations
+- **Citation Required**: All training recommendations must reference research sources
+- **Evidence-Based**: No fitness advice without scientific backing
+- **Data Validation**: All user inputs validated against physiological limits
+
+### API Development Guidelines
+- **RESTful Design**: Consistent endpoint patterns
+- **Authentication**: JWT with guest mode fallback
+- **Error Handling**: Comprehensive error responses with logging
+- **Rate Limiting**: Implemented for all endpoints
+- **Documentation**: OpenAPI/Swagger compatible
+
+## 🔄 Automated Workflows
+
+### Push Protocol (PowerShell-Compatible)
 ```powershell
-# From repo root
+# Standard deployment workflow
 git status;
 git fetch --all;
-# Stage app changes only (preferred)
 git add -A .\hypertrack-pro-v2;
-# Or stage all if you changed docs/scripts:
-# git add -A;
-$MSG = "Update: <describe change>";
+$MSG = "feat: <description> | fix: <description> | docs: <description>";
 if (-not (git diff --cached --quiet)) { git commit -m $MSG };
-# Rebase to keep history clean
 git pull --rebase origin main;
-# Push
 git push origin main;
 ```
 
-Common fixes:
-- If `build` not found on Vercel: Root Directory must be `hypertrack-pro-v2`.
-- If warnings break CI: fix ESLint warnings locally (CRA treats warnings as errors in CI).
-- If files were accidentally deleted (e.g., `api/*.js`): `git restore path\\to\\file` then re-commit.
+### Testing Automation
+- **Pre-commit**: ESLint, TypeScript compilation, Jest tests
+- **CI/CD**: Automated testing on all PRs
+- **Vercel Deploy**: Automatic deployment with environment validation
+- **Performance**: Lighthouse CI integration
+
+### Quality Gates
+- **Code Review**: All algorithm changes require research validation
+- **Security**: Supabase RLS policies enforced
+- **Performance**: Build size limits, runtime performance monitoring
+- **Accessibility**: Automated a11y testing
+
+## 🎯 Agent-Specific Instructions
+
+### For Implementation Tasks
+1. **Always** check `src/lib/algorithms/` before modifying training logic
+2. **Preserve** existing research-backed calculations
+3. **Use** TypeScript path aliases for clean imports
+4. **Test** both online and offline functionality
+5. **Document** any new API endpoints in README-API.md
+
+### For Testing Tasks
+1. **Focus** on critical paths: authentication, workout creation, data sync
+2. **Test** edge cases: network failures, data corruption, large datasets
+3. **Validate** algorithm outputs against known research standards
+4. **Performance** test with realistic user data volumes
+
+### For Architecture Tasks
+1. **Maintain** feature-first organization
+2. **Preserve** offline-first design principles
+3. **Consider** multi-device synchronization requirements
+4. **Plan** for scalability (10k+ users, millions of workouts)
+
+## 🔍 Context Management
+
+### High-Priority Files for Agent Context
+```
+# Core Architecture
+hypertrack-pro-v2/src/shared/types/supabase.ts
+hypertrack-pro-v2/ARCHITECTURE.md
+hypertrack-pro-v2/package.json
+
+# Business Logic
+hypertrack-pro-v2/src/lib/algorithms/
+hypertrack-pro-v2/src/core/
+
+# API Layer
+api/auth.js
+api/workouts.js
+api/recommendations.js
+
+# Documentation
+README.md
+README-API.md
+```
+
+### Search Patterns for Agent Navigation
+- **Features**: `@codebase src/features/[feature-name]`
+- **Types**: `@codebase src/shared/types`
+- **Algorithms**: `@codebase src/lib/algorithms`
+- **API**: `@codebase api/`
+- **Tests**: `@codebase *.test.* OR *.spec.*`
+
+## 🚨 Critical Constraints
+
+### DO NOT MODIFY
+- **Research Algorithms**: `src/lib/algorithms/` (evidence-based, peer-reviewed)
+- **Database Schema**: Supabase types are authoritative
+- **Deployment Config**: Vercel settings in package.json
+
+### ALWAYS VALIDATE
+- **User Input**: Physiological limits, data types, security
+- **Algorithm Outputs**: Against research standards
+- **API Responses**: Type safety, error handling
+- **Performance**: Core Web Vitals, offline functionality
+
+### SECURITY REQUIREMENTS
+- **Authentication**: JWT validation on all protected endpoints
+- **Data Privacy**: User data isolation, GDPR compliance
+- **Input Sanitization**: All user inputs validated and sanitized
+- **API Security**: Rate limiting, CORS, environment variable protection
+
+## 📊 Success Metrics
+
+### Code Quality
+- **TypeScript Coverage**: 95%+
+- **Test Coverage**: 80%+
+- **ESLint Compliance**: Zero warnings in CI
+- **Build Performance**: <30s build time
+
+### User Experience
+- **Load Time**: <2s on 3G networks
+- **Offline Functionality**: Core features work without network
+- **Accessibility**: WCAG 2.1 AA compliance
+- **Cross-Platform**: iOS, Android, Desktop compatibility
+
+### Research Integrity
+- **Algorithm Accuracy**: Outputs match research expectations
+- **Citation Coverage**: All recommendations include research sources
+- **Evidence Standards**: No unsupported fitness claims
+- **Scientific Method**: A/B test framework for algorithm improvements
+
+---
+
+## 💡 Agent Workflow Examples
+
+### Adding New Exercise Feature
+1. **Research**: `@web` search for exercise science standards
+2. **Architecture**: Review `@codebase src/features/exercises`
+3. **Types**: Update `@codebase src/shared/types`
+4. **Implementation**: Create feature in appropriate directory
+5. **Testing**: Add tests with physiological validation
+6. **Documentation**: Update README-API.md with new endpoints
+
+### Optimizing Algorithm Performance
+1. **Baseline**: `@terminal npm test -- --coverage` for current performance
+2. **Research**: `@web` search for latest optimization research
+3. **Implementation**: Modify `@codebase src/lib/algorithms` with research citations
+4. **Validation**: Ensure outputs remain scientifically accurate
+5. **Testing**: Performance benchmarks and accuracy tests
+6. **Documentation**: Update algorithm documentation with changes
+
+This enhanced configuration creates a robust framework for multi-agent collaboration while preserving the scientific integrity and architectural quality of HyperTrack Pro.

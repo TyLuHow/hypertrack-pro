@@ -58,16 +58,17 @@ export function generatePerformanceForecast(
   userProfile: UserProfile
 ): PerformanceForecast[] {
   return (exerciseHistory || []).map(exercise => {
-    const r = progressionRate(exercise.data);
+    const r = Math.max(0, progressionRate(exercise.data)); // clamp negatives to zero growth to avoid absurd predictions
     const plateauRisk = calculateExercisePlateauRisk(exercise);
     const experienceMultiplier = getExperienceMultiplier(userProfile.experience);
     const phaseMultiplier = getPhaseMultiplier(currentPhase.type);
-    const predictedGain = r * experienceMultiplier * phaseMultiplier; // fraction per week
+    const predictedGain = r * experienceMultiplier * phaseMultiplier; // fraction per week (non-negative)
     const weeks = 12;
+    const predicted = Math.round(exercise.currentMax * (1 + predictedGain * weeks));
     return {
       exercise: exercise.name,
       currentMax: exercise.currentMax,
-      predictedMax: Math.round(exercise.currentMax * (1 + predictedGain * weeks)),
+      predictedMax: Math.max(exercise.currentMax, predicted),
       timeframe: weeks,
       confidence: Math.max(0.3, 0.9 - plateauRisk),
       assumptions: [

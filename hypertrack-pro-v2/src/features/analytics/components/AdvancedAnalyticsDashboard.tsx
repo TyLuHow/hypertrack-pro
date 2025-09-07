@@ -31,6 +31,10 @@ export function AdvancedAnalyticsDashboard() {
       const inferred = inferExerciseType(name);
       if (inferred.type !== 'compound') return;
       const sorted = series.sort((a,b)=>a.ts-b.ts);
+      // Filter: require at least 2 workouts in last 21 days
+      const since = Date.now() - 21 * 86400000;
+      const uniqueDates = new Set(sorted.filter(p => p.ts >= since).map(p => new Date(p.ts).toDateString()));
+      if (uniqueDates.size < 2) return;
       const currentMax = sorted.reduce((m, p) => Math.max(m, p.value), 0);
       out.push({ name, currentMax, data: sorted });
     });
@@ -71,50 +75,106 @@ export function AdvancedAnalyticsDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="bg-slate-800/60 rounded p-4">
-          <h3 className="font-medium mb-3">Plateau Risk (Compound Lifts)</h3>
-          {compoundExercises.length ? (
-            <ul className="text-sm text-slate-300 space-y-1">
-              {compoundExercises.map(ex => {
-                const slope = (() => {
-                  const pts = ex.data;
-                  if (!pts || pts.length < 2) return 0;
-                  const xs = pts.map(p=>p.ts);
-                  const ys = pts.map(p=>p.value);
-                  const n = xs.length;
-                  const mx = xs.reduce((a,b)=>a+b,0)/n;
-                  const my = ys.reduce((a,b)=>a+b,0)/n;
-                  const num = xs.reduce((acc, x, i) => acc + (x-mx)*(ys[i]-my), 0);
-                  const den = xs.reduce((acc, x) => acc + (x-mx)*(x-mx), 0);
-                  if (den === 0 || my === 0) return 0;
-                  const slopePerMs = num / den;
-                  const weekly = slopePerMs * 7 * 86400000;
-                  return weekly / my; // fraction/week
-                })();
-                const risk = Math.max(0, Math.min(1, 0.5 - slope));
-                const label = risk > 0.7 ? 'High' : risk > 0.5 ? 'Moderate' : 'Low';
-                return (<li key={ex.name}>{ex.name}: {label} risk (current {ex.currentMax} lbs)</li>);
-              })}
-            </ul>
-          ) : (
-            <div className="text-sm text-slate-300">No compound-lift data yet.</div>
-          )}
-        </div>
-        <div className="bg-slate-800/60 rounded p-4">
-          <h3 className="font-medium mb-3">Performance Forecast (Compound Lifts)</h3>
-          {forecastData.length === 0 ? <div className="text-sm text-slate-300">No forecast available</div> : (
-            <ul className="text-sm text-slate-300 space-y-1">
-              {forecastData.map(f => (
-                <li key={f.exercise}>{f.exercise}: {f.currentMax} → {f.predictedMax} in {f.timeframe}w (conf {Math.round(f.confidence*100)}%)</li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <PlateauRiskTable rows={compoundExercises} />
+        <PerformanceForecastTable rows={forecastData} />
         <div className="bg-slate-800/60 rounded p-4">
           <h3 className="font-medium mb-3">Periodization</h3>
           <div className="text-sm text-slate-300">Current phase: {currentPhase.type}</div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PlateauRiskTable({ rows }: { rows: ExercisePerformanceData[] }) {
+  const [query, setQuery] = useState('');
+  const computeSlope = (pts: Array<{ ts: number; value: number }>) => {
+    if (!pts || pts.length < 2) return 0;
+    const xs = pts.map(p=>p.ts);
+    const ys = pts.map(p=>p.value);
+    const n = xs.length;
+    const mx = xs.reduce((a,b)=>a+b,0)/n;
+    const my = ys.reduce((a,b)=>a+b,0)/n;
+    const num = xs.reduce((acc, x, i) => acc + (x-mx)*(ys[i]-my), 0);
+    const den = xs.reduce((acc, x) => acc + (x-mx)*(x-mx), 0);
+    if (den === 0 || my === 0) return 0;
+    const slopePerMs = num / den;
+    const weekly = slopePerMs * 7 * 86400000;
+    return weekly / my; // fraction/week
+  };
+  const enriched = rows.map(r => {
+    const slope = computeSlope(r.data);
+    const risk = Math.max(0, Math.min(1, 0.5 - slope)); // higher when slope is negative/flat
+    return { name: r.name, oneRM: r.currentMax, risk };
+  }).filter(r => r.name.toLowerCase().includes(query.toLowerCase()))
+    .sort((a,b)=> b.risk - a.risk);
+  return (
+    <div className="bg-slate-800/60 rounded p-4">
+      <h3 className="font-medium mb-3">Plateau Risk (Compound Lifts)</h3>
+      <div className="mb-2"><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Filter lifts" className="w-full bg-slate-700 rounded px-2 py-1 text-sm" /></div>
+      {enriched.length === 0 ? <div className="text-sm text-slate-300">No qualifying lifts in last 3 weeks.</div> : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-300">
+                <th className="py-2">Lift</th>
+                <th className="py-2">One-Rep Max</th>
+                <th className="py-2">Risk</th>
+              </tr>
+            </thead>
+            <tbody>
+              {enriched.map(r => (
+                <tr key={r.name} className="border-t border-slate-700">
+                  <td className="py-2">{r.name}</td>
+                  <td className="py-2">{r.oneRM} lbs</td>
+                  <td className="py-2">{Math.round(r.risk*100)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PerformanceForecastTable({ rows }: { rows: Array<{ exercise: string; currentMax: number; predictedMax: number; timeframe: number; confidence: number }> }) {
+  const [query, setQuery] = useState('');
+  const enriched = (rows || []).map(r => ({
+    ...r,
+    pctIncrease: r.currentMax > 0 ? (r.predictedMax - r.currentMax) / r.currentMax : 0
+  })).filter(r => r.exercise.toLowerCase().includes(query.toLowerCase()))
+    .sort((a,b)=> b.pctIncrease - a.pctIncrease);
+  return (
+    <div className="bg-slate-800/60 rounded p-4">
+      <h3 className="font-medium mb-3">Performance Forecast (Compound Lifts)</h3>
+      <div className="mb-2"><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Filter lifts" className="w-full bg-slate-700 rounded px-2 py-1 text-sm" /></div>
+      {enriched.length === 0 ? <div className="text-sm text-slate-300">No forecasts available.</div> : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-300">
+                <th className="py-2">Lift</th>
+                <th className="py-2">One-Rep Max</th>
+                <th className="py-2">Predicted</th>
+                <th className="py-2">Increase</th>
+                <th className="py-2">Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              {enriched.map(r => (
+                <tr key={r.exercise} className="border-t border-slate-700">
+                  <td className="py-2">{r.exercise}</td>
+                  <td className="py-2">{r.currentMax} lbs</td>
+                  <td className="py-2">{r.predictedMax} lbs</td>
+                  <td className="py-2">{Math.round(r.pctIncrease*100)}%</td>
+                  <td className="py-2">{Math.round(r.confidence*100)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
