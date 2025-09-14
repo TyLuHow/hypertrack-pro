@@ -199,7 +199,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
                   date: currentWorkout.date,
                   startTime: currentWorkout.startTime,
                   endTime,
-                  exercises: currentWorkout.exercises.map((e) => ({ id: e.id, name: e.name, sets: e.sets.map(s => ({ id: s.id, weight: s.weight, reps: s.reps })) }))
+                  exercises: currentWorkout.exercises.map((e) => ({ id: e.id, name: e.name, muscleGroup: e.muscleGroup, category: e.category, sets: e.sets.map(s => ({ id: s.id, weight: s.weight, reps: s.reps })) }))
                 };
                 const result = await persistWorkoutSession(session as any);
                 completeWorkout();

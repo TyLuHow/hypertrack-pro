@@ -53,7 +53,32 @@ export default async function handler(req, res) {
     for (let i = 0; i < (session.exercises || []).length; i++) {
       const ex = session.exercises[i];
       const order = i + 1;
-      const exIdNum = Number(ex.id);
+      // Resolve exercise_id: try numeric id, else upsert by name
+      let exIdNum = Number(ex.id);
+      if (!Number.isFinite(exIdNum)) {
+        const exName = (ex.name || '').trim();
+        if (exName) {
+          // try find by name
+          const { data: found, error: findErr } = await supabase.from('exercises').select('id').eq('name', exName).maybeSingle();
+          if (!findErr && found?.id) {
+            exIdNum = found.id;
+          } else {
+            // create minimal exercise row
+            const { data: created, error: createErr } = await supabase
+              .from('exercises')
+              .insert({
+                name: exName,
+                muscle_group: ex.muscleGroup || 'Unknown',
+                category: ex.category || 'Isolation',
+                tier: 3,
+                mvc_percentage: 0
+              })
+              .select('id')
+              .single();
+            if (!createErr && created?.id) exIdNum = created.id;
+          }
+        }
+      }
       const { data: weRow, error: weErr } = await supabase
         .from('workout_exercises')
         .insert({ workout_id: workoutId, exercise_id: Number.isFinite(exIdNum) ? exIdNum : null, exercise_order: order })
