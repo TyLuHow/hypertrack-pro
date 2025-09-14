@@ -143,10 +143,34 @@ async function handleCreateWorkout(res, workoutData) {
     // Generate recommendations for next workout
     const recommendations = await generateNextWorkoutRecommendations({ ...formattedWorkout, user_id: formattedWorkout.user_id });
 
-    return res.status(201).json({ 
-      workout: data[0],
-      recommendations
-    });
+    const workoutId = data?.[0]?.id;
+    // If client provided exercises array, create rows and sets
+    if (workoutId && Array.isArray(workoutData.exercises)) {
+      let totalSets = 0;
+      let totalVolume = 0;
+      for (let i = 0; i < workoutData.exercises.length; i++) {
+        const ex = workoutData.exercises[i];
+        const order = i + 1;
+        const exIdNum = Number(ex.id);
+        const { data: weRow, error: weErr } = await supabase
+          .from('workout_exercises')
+          .insert({ workout_id: workoutId, exercise_id: Number.isFinite(exIdNum) ? exIdNum : null, exercise_order: order })
+          .select('id')
+          .single();
+        if (weErr) return res.status(400).json({ error: weErr.message });
+        const weId = weRow.id;
+        const setRows = (ex.sets || []).map((s, idx) => ({ workout_exercise_id: weId, set_number: idx + 1, weight: Number(s.weight) || 0, reps: Number(s.reps) || 0 }));
+        if (setRows.length > 0) {
+          const { error: sErr } = await supabase.from('sets').insert(setRows);
+          if (sErr) return res.status(400).json({ error: sErr.message });
+          totalSets += setRows.length;
+          totalVolume += setRows.reduce((acc, r) => acc + (r.weight * r.reps), 0);
+        }
+      }
+      await supabase.from('workouts').update({ total_sets: totalSets, total_volume: Math.round(totalVolume) }).eq('id', workoutId);
+    }
+
+    return res.status(201).json({ workout: data[0], recommendations });
   } catch (error) {
     throw error;
   }

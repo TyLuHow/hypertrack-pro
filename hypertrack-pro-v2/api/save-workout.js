@@ -47,7 +47,9 @@ export default async function handler(req, res) {
     if (wErr) return res.status(400).json({ error: wErr.message });
     const workoutId = wrow.id;
 
-    // Insert exercises and sets
+    // Insert exercises and sets; accumulate totals locally to avoid join issues
+    let totalSets = 0;
+    let totalVolume = 0;
     for (let i = 0; i < (session.exercises || []).length; i++) {
       const ex = session.exercises[i];
       const order = i + 1;
@@ -59,29 +61,24 @@ export default async function handler(req, res) {
         .single();
       if (weErr) return res.status(400).json({ error: weErr.message });
       const weId = weRow.id;
-      const setRows = (ex.sets || []).map((s, idx) => ({ workout_exercise_id: weId, set_number: idx + 1, weight: s.weight, reps: s.reps }));
+      const setRows = (ex.sets || []).map((s, idx) => ({
+        workout_exercise_id: weId,
+        set_number: idx + 1,
+        weight: Number(s.weight) || 0,
+        reps: Number(s.reps) || 0
+      }));
       if (setRows.length > 0) {
         const { error: sErr } = await supabase.from('sets').insert(setRows);
         if (sErr) return res.status(400).json({ error: sErr.message });
+        totalSets += setRows.length;
+        totalVolume += setRows.reduce((acc, r) => acc + (r.weight * r.reps), 0);
       }
     }
-
-    // Compute totals and update workout
-    const { data: setAgg, error: aggErr } = await supabase
-      .from('sets')
-      .select('weight,reps, workout_exercises!inner(workout_id)')
-      .eq('workout_exercises.workout_id', workoutId);
-    if (!aggErr) {
-      const totals = (setAgg || []).reduce((acc, r) => {
-        acc.total_sets += 1;
-        acc.total_volume += (Number(r.weight) || 0) * (Number(r.reps) || 0);
-        return acc;
-      }, { total_sets: 0, total_volume: 0 });
-      await supabase
-        .from('workouts')
-        .update({ total_sets: totals.total_sets, total_volume: Math.round(totals.total_volume) })
-        .eq('id', workoutId);
-    }
+    // Update totals on workout
+    await supabase
+      .from('workouts')
+      .update({ total_sets: totalSets, total_volume: Math.round(totalVolume) })
+      .eq('id', workoutId);
 
     return res.status(201).json({ workoutId });
   } catch (error) {
