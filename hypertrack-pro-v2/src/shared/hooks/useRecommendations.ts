@@ -64,7 +64,7 @@ export function useRecommendations(activeExerciseId?: string) {
           current: avg,
           recommended: targets.min,
           citation: targets.citation,
-          reasoning: `Below minimum effective volume (~${targets.min} sets/week).` + (currentPhase?.type === 'deload' ? ' Note: Deload week – schedule increase for next block.' : ''),
+          reasoning: `Below minimum effective volume (~${targets.min} sets/week). You need ${targets.min - avg} more sets this week.` + (currentPhase?.type === 'deload' ? ' Note: Deload week – schedule increase for next block.' : ''),
           urgency: currentPhase?.type === 'deload' ? 'medium' : 'high'
         });
       } else if (avg > targets.max) {
@@ -74,7 +74,7 @@ export function useRecommendations(activeExerciseId?: string) {
           current: avg,
           recommended: targets.optimal,
           citation: targets.citation,
-          reasoning: `Above likely maximum adaptive volume (>~${targets.max} sets/week).` + (currentPhase?.type === 'strength' ? ' Strength block: keep volume modest.' : ''),
+          reasoning: `Above likely maximum adaptive volume (>~${targets.max} sets/week). Consider reducing by ${avg - targets.optimal} sets this week.` + (currentPhase?.type === 'strength' ? ' Strength block: keep volume modest.' : ''),
           urgency: 'medium'
         });
       } else {

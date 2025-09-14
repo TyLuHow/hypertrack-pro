@@ -97,8 +97,17 @@ export const PRTimeline: React.FC<{ userId?: string }> = ({ userId }) => {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={series.rows} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis dataKey="ts" type="number" domain={['dataMin','dataMax']} tickFormatter={(t) => new Date(t).toISOString().slice(0,10)} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-            <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
+            <XAxis 
+              dataKey="ts" 
+              type="number" 
+              domain={['dataMin', 'dataMax + 7*24*60*60*1000']} 
+              tickFormatter={(t) => new Date(t).toISOString().slice(0,10)} 
+              tick={{ fill: '#94a3b8', fontSize: 12 }} 
+            />
+            <YAxis 
+              tick={{ fill: '#94a3b8', fontSize: 12 }} 
+              domain={['dataMin - dataMin*0.1', 'dataMax + dataMax*0.1']}
+            />
             <Tooltip
               contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#e2e8f0' }}
               formatter={(value: any, name: any, props: any) => {

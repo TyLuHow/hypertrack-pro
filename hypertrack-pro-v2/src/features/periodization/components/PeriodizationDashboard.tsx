@@ -4,6 +4,7 @@ import { usePeriodization } from '../hooks/usePeriodization';
 import { calculateResearchBackedPhaseTransition } from '../utils/researchBackedTransitions';
 import type { ProgressionData } from '../utils/researchBackedTransitions';
 import { ResearchBackedRecommendationCard } from '../../analytics/components/ResearchBackedRecommendationCard';
+import { getWorkoutMetricsSeries, getPRTimelines } from '../../../lib/supabase/queries';
 
 function formatDistanceToNow(date: Date): string {
   const ms = date.getTime() - Date.now();
@@ -12,8 +13,57 @@ function formatDistanceToNow(date: Date): string {
 }
 
 async function getProgressionHistory(): Promise<ProgressionData> {
-  // Placeholder: could derive from PR timelines or workout metrics
-  return { recentPerformance: [] };
+  try {
+    // Get PR timelines for the last 12 weeks to analyze progression
+    const prData = await getPRTimelines(84); // 12 weeks = 84 days
+    
+    if (!prData || prData.length === 0) {
+      return { recentPerformance: [] };
+    }
+    
+    // Calculate progression slope for each exercise
+    const exerciseProgressions = new Map<string, number[]>();
+    
+    prData.forEach(pr => {
+      if (pr.type === 'weight' && pr.value > 0) {
+        const existing = exerciseProgressions.get(pr.exercise) || [];
+        existing.push(pr.value);
+        exerciseProgressions.set(pr.exercise, existing);
+      }
+    });
+    
+    // Calculate average progression rate
+    const progressionRates: number[] = [];
+    exerciseProgressions.forEach((values) => {
+      if (values.length >= 3) {
+        // Simple linear regression slope
+        const n = values.length;
+        const x = Array.from({length: n}, (_, i) => i);
+        const sumX = x.reduce((a, b) => a + b, 0);
+        const sumY = values.reduce((a, b) => a + b, 0);
+        const sumXY = x.reduce((sum, xi, i) => sum + xi * values[i], 0);
+        const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0);
+        
+        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+        if (!isNaN(slope) && isFinite(slope)) {
+          progressionRates.push(slope);
+        }
+      }
+    });
+    
+    const avgProgressionRate = progressionRates.length > 0 
+      ? progressionRates.reduce((a, b) => a + b, 0) / progressionRates.length 
+      : 0;
+    
+    return {
+      recentPerformance: [avgProgressionRate],
+      currentPhaseWeeks: 6, // Default, could be calculated from workout history
+      currentPhase: 'hypertrophy' as const
+    };
+  } catch (error) {
+    console.error('Error calculating progression history:', error);
+    return { recentPerformance: [] };
+  }
 }
 
 export function PeriodizationDashboard() {
