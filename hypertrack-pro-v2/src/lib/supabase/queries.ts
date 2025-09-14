@@ -509,39 +509,111 @@ export async function persistWorkoutSession(session: {
 }): Promise<number> {
   const supabase = getSupabase() as any;
   const uid = await getCurrentUserId();
-  if (!uid) {
-    // Try serverless save without auth (single-user mode)
-    try {
-      const resp = await fetch('/api/save-workout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(session)
-      });
-      if (resp.ok) {
-        const json = await resp.json();
-        return json.workoutId || 0;
+  // Primary path: try direct Supabase insert (works if RLS allows anon or user is logged in)
+  try {
+    const { data: workoutRow, error: wErr } = await (supabase
+      .from('workouts')
+      .insert({
+        user_id: uid || null,
+        name: session.name || null,
+        workout_date: session.date,
+        start_time: session.startTime,
+        end_time: session.endTime || new Date().toISOString()
+      })
+      .select('id')
+      .single());
+    if (!wErr && workoutRow) {
+      const workoutId = workoutRow.id as number;
+      for (let i = 0; i < session.exercises.length; i++) {
+        const ex = session.exercises[i];
+        const order = i;
+        const exId = Number(ex.id);
+        const { data: weRow, error: weErr } = await (supabase
+          .from('workout_exercises')
+          .insert({ workout_id: workoutId, exercise_id: isFinite(exId) ? exId : null, exercise_order: order + 1 })
+          .select('id')
+          .single());
+        if (weErr) throw weErr;
+        const weId = weRow.id as number;
+        const setRows = ex.sets.map((s, idx) => ({ workout_exercise_id: weId, set_number: idx + 1, weight: s.weight, reps: s.reps }));
+        if (setRows.length > 0) {
+          const { error: sErr } = await (supabase.from('sets').insert(setRows));
+          if (sErr) throw sErr;
+        }
       }
-    } catch {}
-    // Fallback: save locally and queue for sync
-    const db = new OfflineDatabase();
-    await db.initialize();
-    const local: LocalWorkoutSession = {
-      id: `${Date.now()}`,
-      name: session.name,
-      date: session.date,
-      startTime: session.startTime,
-      endTime: session.endTime || new Date().toISOString(),
-      exercises: session.exercises.map((e) => ({
-        id: e.id,
-        name: e.name,
-        muscleGroup: 'Unknown',
-        category: 'Isolation',
-        sets: e.sets.map((s) => ({ id: s.id, weight: s.weight, reps: s.reps }))
-      }))
-    };
-    await db.addWorkout(local);
-    return 0; // indicates saved locally
+      await workoutQueries.completeWorkoutMetrics(workoutId);
+      return workoutId;
+    }
+    // If direct insert failed and there's no user, try serverless route next
+  } catch (e) {
+    // continue to serverless fallback
   }
+
+  try {
+    const resp = await fetch('/api/save-workout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(session)
+    });
+    if (resp.ok) {
+      const json = await resp.json();
+      return json.workoutId || 0;
+    } else {
+      const txt = await resp.text();
+      // eslint-disable-next-line no-console
+      console.warn('save-workout failed:', resp.status, txt);
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('save-workout request error:', err);
+  }
+
+  // Secondary serverless path: legacy workouts API (also uses service role)
+  try {
+    const resp2 = await fetch('/api/workouts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: uid || null,
+        name: session.name,
+        date: session.date,
+        start_time: session.startTime,
+        end_time: session.endTime || new Date().toISOString(),
+        exercises: session.exercises
+      })
+    });
+    if (resp2.ok) {
+      const j = await resp2.json();
+      return (j?.workout?.id as number) || 0;
+    } else {
+      const t2 = await resp2.text();
+      // eslint-disable-next-line no-console
+      console.warn('POST /api/workouts failed:', resp2.status, t2);
+    }
+  } catch (e2) {
+    // eslint-disable-next-line no-console
+    console.warn('POST /api/workouts error:', e2);
+  }
+
+  // Final fallback: save locally and queue for sync
+  const db = new OfflineDatabase();
+  await db.initialize();
+  const local: LocalWorkoutSession = {
+    id: `${Date.now()}`,
+    name: session.name,
+    date: session.date,
+    startTime: session.startTime,
+    endTime: session.endTime || new Date().toISOString(),
+    exercises: session.exercises.map((e) => ({
+      id: e.id,
+      name: e.name,
+      muscleGroup: 'Unknown',
+      category: 'Isolation',
+      sets: e.sets.map((s) => ({ id: s.id, weight: s.weight, reps: s.reps }))
+    }))
+  };
+  await db.addWorkout(local);
+  return 0;
 
   // 1) Create workout row
   const { data: workoutRow, error: wErr } = await (supabase
