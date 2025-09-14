@@ -510,6 +510,18 @@ export async function persistWorkoutSession(session: {
   const supabase = getSupabase() as any;
   const uid = await getCurrentUserId();
   if (!uid) {
+    // Try serverless save without auth (single-user mode)
+    try {
+      const resp = await fetch('/api/save-workout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(session)
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        return json.workoutId || 0;
+      }
+    } catch {}
     // Fallback: save locally and queue for sync
     const db = new OfflineDatabase();
     await db.initialize();
