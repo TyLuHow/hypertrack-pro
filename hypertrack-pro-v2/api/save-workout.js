@@ -28,17 +28,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid session payload' });
     }
 
+    // Validate env
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return res.status(500).json({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' });
+    }
+
     // Create workout row (user_id optional; null acceptable for single-user usage)
     const { data: wrow, error: wErr } = await supabase
       .from('workouts')
       .insert({
         user_id: session.userId || null,
-        name: session.name || null,
         workout_date: session.date,
         start_time: session.startTime,
-        end_time: session.endTime || new Date().toISOString(),
-        metadata: null,
-        tags: null
+        end_time: session.endTime || new Date().toISOString()
       })
       .select('id')
       .single();

@@ -575,7 +575,6 @@ export async function persistWorkoutSession(session: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_id: uid || null,
-        name: session.name,
         date: session.date,
         start_time: session.startTime,
         end_time: session.endTime || new Date().toISOString(),

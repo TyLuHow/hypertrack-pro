@@ -123,11 +123,12 @@ async function handleGetWorkoutAnalytics(res, filters) {
 async function handleCreateWorkout(res, workoutData) {
   try {
     // Validate and format workout data
+    // Map client payload into actual DB columns
     const formattedWorkout = {
-      ...workoutData,
-      id: workoutData.id || generateWorkoutId(),
-      created_at: new Date().toISOString(),
-      exercises: workoutData.exercises || []
+      user_id: workoutData.user_id || null,
+      workout_date: workoutData.date,
+      start_time: workoutData.start_time || workoutData.startTime,
+      end_time: workoutData.end_time || workoutData.endTime || new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -140,7 +141,7 @@ async function handleCreateWorkout(res, workoutData) {
     }
 
     // Generate recommendations for next workout
-    const recommendations = await generateNextWorkoutRecommendations(formattedWorkout);
+    const recommendations = await generateNextWorkoutRecommendations({ ...formattedWorkout, user_id: formattedWorkout.user_id });
 
     return res.status(201).json({ 
       workout: data[0],
