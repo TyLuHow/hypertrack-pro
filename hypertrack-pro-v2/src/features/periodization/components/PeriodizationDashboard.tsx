@@ -83,14 +83,6 @@ function PhaseProgress({ currentWeek, totalWeeks, goals }: { currentWeek: number
   );
 }
 
-function TransitionRecommendation({ recommendation, onAccept }: { recommendation: { reasoning: string; confidence: number; nextPhase?: any }; onAccept: () => void }) {
-  return (
-    <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-600">
-      <div className="text-white font-medium mb-2">Recommended Transition</div>
-      <div className="text-gray-300 text-sm mb-3">{recommendation.reasoning} (confidence {Math.round(recommendation.confidence * 100)}%)</div>
-      <button className="px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded text-white text-sm" onClick={onAccept}>Accept Transition</button>
-    </div>
-  );
-}
+// Removed unused TransitionRecommendation component to satisfy lint rules
 
 

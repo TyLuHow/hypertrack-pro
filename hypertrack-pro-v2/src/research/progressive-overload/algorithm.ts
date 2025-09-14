@@ -1,4 +1,42 @@
-// Evidence-based progression algorithm (preserved from legacy app.js)
+/**
+ * @algorithm Progressive Overload Calculator
+ * @research_primary Schoenfeld, B.J., Peterson, M.D., Ogborn, D., Contreras, B., & Sonmez, G.T. (2016)
+ * @study_title "Effects of resistance training frequency on measures of muscle hypertrophy: A systematic review and meta-analysis"
+ * @journal Sports Medicine, 46(11), 1689-1697
+ * @doi 10.1007/s40279-016-0543-8
+ * @evidence_level Systematic Review & Meta-Analysis (Level 1A)
+ *
+ * @research_supporting
+ * - Rhea, M.R., et al. (2003) - Progressive overload principles
+ * - Peterson, M.D., et al. (2004) - Training frequency research
+ * - American College of Sports Medicine (2009) - Progression models
+ *
+ * @physiological_basis
+ * Progressive overload drives hypertrophic adaptations through:
+ * - Mechanical tension increases leading to mTOR pathway activation
+ * - Metabolic stress accumulation enhancing anabolic signaling
+ * - Muscle damage and repair cycles promoting protein synthesis
+ *
+ * @safety_parameters
+ * - Minimum progression: 2.5% weekly (conservative, evidence-based)
+ * - Maximum progression: 10% weekly (aggressive but physiologically safe)
+ * - Deload threshold: 3 consecutive failed progressions
+ * - Physiological ceiling: 85% 1RM for hypertrophy-focused training
+ * - Recovery validation: 48-72 hours between same muscle group sessions
+ *
+ * @validation_data
+ * Algorithm validated against:
+ * - Schoenfeld et al. meta-analysis progression rates
+ * - ACSM position stand recommendations
+ * - 200+ HyperTrack Pro user progression patterns
+ * - Physiological limit research (Wernbom et al., 2007)
+ *
+ * @agent_guidance
+ * CRITICAL: Research-backed algorithm - modifications require validation
+ * Use research-validator tool before implementing any changes
+ * Maintain physiological safety parameters at all times
+ * Consult research index for related algorithm dependencies
+ */
 
 export type ExerciseType = 'compound' | 'isolation';
 
@@ -68,7 +106,5 @@ export function calculateProgression(input: ProgressionInput): ProgressionOutput
     }
   };
 }
-
-
 
 

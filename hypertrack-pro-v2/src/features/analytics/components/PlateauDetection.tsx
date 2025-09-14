@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getExercisePerformanceSeries, type ExerciseSessionSeries } from '../../../lib/supabase/queries';
-import { detectPlateau } from '../../../lib/algorithms/plateau';
+import { detectPlateau } from '@research/plateau-detection/algorithm';
 
 type ExercisePlateauData = {
   exerciseName: string;

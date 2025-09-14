@@ -22,9 +22,12 @@
     "baseUrl": "./src",
     "paths": {
       "@core/*": ["core/*"],
+      "@domain/*": ["domain/*"],
+      "@research/*": ["research/*"],
       "@features/*": ["features/*"],
       "@shared/*": ["shared/*"],
-      "@infrastructure/*": ["infrastructure/*"]
+      "@infrastructure/*": ["infrastructure/*"],
+      "@test-utils/*": ["test-utils/*"]
     }
   },
   "include": [

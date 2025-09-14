@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { detectPlateau, getDeloadRecommendation, WorkoutExerciseSession } from '../../lib/algorithms/plateau';
+import { detectPlateau, getDeloadRecommendation, WorkoutExerciseSession } from '@research/plateau-detection/algorithm';
 
 export function usePlateauDetection(sessions: WorkoutExerciseSession[]) {
   const analysis = useMemo(() => detectPlateau({ sessions }), [sessions]);

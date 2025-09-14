@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { calculateProgression } from '../../lib/algorithms/progression';
+import { calculateProgression } from '@research/progressive-overload/algorithm';
 import { useWorkoutStore } from '../stores/workoutStore';
 import { useQuery } from '@tanstack/react-query';
 import { getPerMuscleWeeklySets } from '../../lib/supabase/queries';

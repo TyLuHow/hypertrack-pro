@@ -1,4 +1,4 @@
-import { detectPlateau, WorkoutExerciseSession } from '../plateau';
+import { detectPlateau, type WorkoutExerciseSession } from '../../../research/plateau-detection/algorithm';
 
 const makeSession = (weight: number): WorkoutExerciseSession => ({
   date: new Date().toISOString(),

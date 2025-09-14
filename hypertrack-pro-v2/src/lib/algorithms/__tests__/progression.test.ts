@@ -1,4 +1,4 @@
-import { calculateProgression, ProgressionInput } from '../progression';
+import { calculateProgression, type ProgressionInput } from '../../../research/progressive-overload/algorithm';
 
 describe('Progression Algorithm (legacy-preserved)', () => {
   test('compound: gate passes at >=10 reps and increases with rounding', () => {

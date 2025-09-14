@@ -61,10 +61,7 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
 
   const canAdd = useMemo(() => !!activeExercise && weight > 0 && reps > 0, [activeExercise, weight, reps]);
 
-  const handleQuickAdjust = (field: 'weight' | 'reps', delta: number) => {
-    if (field === 'weight') setWeight((w) => Math.max(0, Math.round((w + delta) / 2.5) * 2.5));
-    else setReps((r) => Math.max(1, r + delta));
-  };
+  // Removed unused quick adjust handler (re-add when UI provides controls)
 
   const handleAddSet = () => {
     if (!activeExercise || !canAdd) return;

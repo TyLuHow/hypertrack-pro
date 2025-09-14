@@ -1,5 +1,5 @@
 // Progress analytics utilities (client-side), preserving legacy math where specified
-import { detectPlateau as legacyDetectPlateau, WorkoutExerciseSession } from '../algorithms/plateau';
+import { detectPlateau as legacyDetectPlateau, type WorkoutExerciseSession } from '../../research/plateau-detection/algorithm';
 
 export interface ProgressMetrics {
   totalWorkouts: number;

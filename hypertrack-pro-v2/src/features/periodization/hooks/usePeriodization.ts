@@ -63,7 +63,7 @@ export function usePeriodization() {
       }
     }, 7 * 24 * 60 * 60 * 1000); // weekly check
     return () => clearInterval(id);
-  }, [store.state.autoTransitions, store.state.currentPhase]);
+  }, [store.state.autoTransitions, store.state.currentPhase, store.actions]);
 
   return {
     currentPhase: store.state.currentPhase,

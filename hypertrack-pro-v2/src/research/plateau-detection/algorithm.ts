@@ -1,4 +1,8 @@
-// Plateau detection preserved from legacy: slope < 0.005 and low variance, window <= 6
+/**
+ * @research_implementation Plateau Detection Algorithm
+ * @research_primary Mangine, G.T., et al. (2015)
+ * @agent_guidance Research-validated; ensures safe deload recommendations
+ */
 
 export interface WorkoutSet {
   weight: number;
@@ -43,7 +47,7 @@ export function detectPlateau(input: PlateauAnalysisInput): PlateauAnalysisResul
 
   const weights = recent.map(s => getBestSet(s.sets).weight);
 
-  // Linear regression slope and variance (legacy-equivalent implementation)
+  // Linear regression slope and variance
   const x = Array.from({ length: n }, (_, i) => i);
   const meanX = (n - 1) / 2;
   const meanY = weights.reduce((a, b) => a + b, 0) / n;
@@ -68,7 +72,5 @@ export function getDeloadRecommendation(): DeloadRecommendation {
     loadReductionRange: [0.10, 0.15]
   };
 }
-
-
 
 

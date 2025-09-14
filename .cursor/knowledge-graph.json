@@ -1,0 +1,1275 @@
+{
+  "timestamp": "2025-09-12T21:24:50.601Z",
+  "modules": {
+    "App.test.tsx": {
+      "type": "file",
+      "path": "src\\App.test.tsx",
+      "size": 411,
+      "exports": [],
+      "imports": [
+        "react",
+        "@testing-library/react",
+        "./test-utils/renderWithClient",
+        "./App"
+      ]
+    },
+    "App.tsx": {
+      "type": "file",
+      "path": "src\\App.tsx",
+      "size": 2485,
+      "exports": [
+        "App"
+      ],
+      "imports": [
+        "./features/workout/components/WorkoutLogger",
+        "./features/exercises/components/ExerciseSelector",
+        "./features/shared/components/BottomTabs",
+        "./features/history/components/HistoryView",
+        "./features/progress/components/AnalyticsView",
+        "./features/settings/components/SettingsView",
+        "./features/workout/components/WorkoutHeader",
+        "./features/research/components/ResearchFactsBanner",
+        "./features/pwa/components/InstallPrompt",
+        "react",
+        "react",
+        "./lib/research/initialization",
+        "./shared/stores/workoutStore"
+      ]
+    },
+    "core": {
+      "type": "directory",
+      "path": "src\\core",
+      "children": {}
+    },
+    "data": {
+      "type": "directory",
+      "path": "src\\data",
+      "children": {
+        "researchFacts.ts": {
+          "type": "file",
+          "path": "src\\data\\researchFacts.ts",
+          "size": 23858,
+          "exports": [
+            "researchFacts"
+          ],
+          "imports": []
+        }
+      }
+    },
+    "domain": {
+      "type": "directory",
+      "path": "src\\domain",
+      "children": {}
+    },
+    "features": {
+      "type": "directory",
+      "path": "src\\features",
+      "children": {
+        "analytics": {
+          "type": "directory",
+          "path": "src\\features\\analytics",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\analytics\\components",
+              "children": {
+                "AdvancedAnalyticsDashboard.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\AdvancedAnalyticsDashboard.tsx",
+                  "size": 9256,
+                  "exports": [
+                    "AdvancedAnalyticsDashboard"
+                  ],
+                  "imports": [
+                    "react",
+                    "@tanstack/react-query",
+                    "../../periodization/hooks/usePeriodization",
+                    "../utils/performancePrediction",
+                    "../utils/analyticsExport",
+                    "../../../lib/supabase/queries",
+                    "../../../shared/utils/exerciseClassification"
+                  ]
+                },
+                "AIIntelligence.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\AIIntelligence.tsx",
+                  "size": 3217,
+                  "exports": [
+                    "AIIntelligence"
+                  ],
+                  "imports": [
+                    "react",
+                    "../utils/hrvReadiness",
+                    "./ResearchBackedRecommendationCard",
+                    "@tanstack/react-query",
+                    "../../../lib/supabase/queries"
+                  ]
+                },
+                "ComprehensiveResearchDashboard.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\ComprehensiveResearchDashboard.tsx",
+                  "size": 1708,
+                  "exports": [
+                    "ComprehensiveResearchDashboard"
+                  ],
+                  "imports": [
+                    "react",
+                    "../../analytics/utils/researchSaturatedAnalytics"
+                  ]
+                },
+                "PerMuscleTrends.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\PerMuscleTrends.tsx",
+                  "size": 3327,
+                  "exports": [
+                    "PerMuscleTrends"
+                  ],
+                  "imports": [
+                    "react",
+                    "@tanstack/react-query",
+                    "recharts",
+                    "../../../lib/supabase/queries",
+                    "../../../shared/constants/researchTargets"
+                  ]
+                },
+                "PersonalRecordsTracker.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\PersonalRecordsTracker.tsx",
+                  "size": 3255,
+                  "exports": [
+                    "PersonalRecordsTracker"
+                  ],
+                  "imports": [
+                    "react",
+                    "@tanstack/react-query",
+                    "../../../lib/supabase/queries"
+                  ]
+                },
+                "PlateauDetection.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\PlateauDetection.tsx",
+                  "size": 5899,
+                  "exports": [
+                    "PlateauDetection"
+                  ],
+                  "imports": [
+                    "react",
+                    "@tanstack/react-query",
+                    "../../../lib/supabase/queries",
+                    "@research/plateau-detection/algorithm"
+                  ]
+                },
+                "ProgressDashboard.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\ProgressDashboard.tsx",
+                  "size": 14564,
+                  "exports": [
+                    "ProgressDashboard"
+                  ],
+                  "imports": [
+                    "react",
+                    "recharts",
+                    "./PerMuscleTrends",
+                    "./PRTimeline",
+                    "@tanstack/react-query",
+                    "../../../lib/supabase/queries",
+                    "react",
+                    "../../../shared/constants/researchTargets",
+                    "../../../shared/hooks/useRecommendations",
+                    "../../periodization/components/PeriodizationDashboard",
+                    "./AdvancedAnalyticsDashboard",
+                    "../utils/hrvReadiness",
+                    "./ResearchBackedRecommendationCard"
+                  ]
+                },
+                "PRTimeline.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\PRTimeline.tsx",
+                  "size": 7007,
+                  "exports": [
+                    "PRTimeline"
+                  ],
+                  "imports": [
+                    "react",
+                    "@tanstack/react-query",
+                    "recharts",
+                    "../../../lib/supabase/queries"
+                  ]
+                },
+                "RecentProgressChart.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\RecentProgressChart.tsx",
+                  "size": 2287,
+                  "exports": [
+                    "RecentProgressChart"
+                  ],
+                  "imports": [
+                    "react",
+                    "@tanstack/react-query",
+                    "recharts",
+                    "../../../lib/supabase/queries"
+                  ]
+                },
+                "ResearchBackedRecommendationCard.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\ResearchBackedRecommendationCard.tsx",
+                  "size": 1990,
+                  "exports": [
+                    "EvidenceStrengthBadge",
+                    "ConfidenceIndicator",
+                    "ResearchBackedRecommendationCard"
+                  ],
+                  "imports": [
+                    "react"
+                  ]
+                },
+                "ResearchModal.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\ResearchModal.tsx",
+                  "size": 3455,
+                  "exports": [
+                    "ResearchModal"
+                  ],
+                  "imports": [
+                    "react"
+                  ]
+                },
+                "TrainingFrequencyChart.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\components\\TrainingFrequencyChart.tsx",
+                  "size": 1293,
+                  "exports": [
+                    "TrainingFrequencyChart"
+                  ],
+                  "imports": [
+                    "react",
+                    "@tanstack/react-query",
+                    "recharts",
+                    "../../../lib/supabase/queries"
+                  ]
+                }
+              }
+            },
+            "index.ts": {
+              "type": "file",
+              "path": "src\\features\\analytics\\index.ts",
+              "size": 355,
+              "exports": [
+                "ProgressDashboard ",
+                "RecentProgressChart ",
+                "AIIntelligence ",
+                "PlateauDetection ",
+                "TrainingFrequencyChart "
+              ],
+              "imports": []
+            },
+            "utils": {
+              "type": "directory",
+              "path": "src\\features\\analytics\\utils",
+              "children": {
+                "analyticsExport.ts": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\utils\\analyticsExport.ts",
+                  "size": 4215,
+                  "exports": [
+                    "generateComprehensiveReport",
+                    "exportToCSV",
+                    "exportToPDF"
+                  ],
+                  "imports": []
+                },
+                "exerciseOptimization.ts": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\utils\\exerciseOptimization.ts",
+                  "size": 6793,
+                  "exports": [
+                    "getOptimalExerciseSelection"
+                  ],
+                  "imports": [
+                    "../../../lib/research/schema",
+                    "../../periodization/types/periodization"
+                  ]
+                },
+                "hrvReadiness.ts": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\utils\\hrvReadiness.ts",
+                  "size": 4303,
+                  "exports": [
+                    "setHRVReadinessResearchEngine",
+                    "calculateHRVBasedReadiness"
+                  ],
+                  "imports": [
+                    "../../../lib/research/schema",
+                    "../../../lib/research/queryEngine"
+                  ]
+                },
+                "performancePrediction.ts": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\utils\\performancePrediction.ts",
+                  "size": 3281,
+                  "exports": [
+                    "generatePerformanceForecast"
+                  ],
+                  "imports": [
+                    "../../periodization/types/periodization"
+                  ]
+                },
+                "plateauRiskModel.ts": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\utils\\plateauRiskModel.ts",
+                  "size": 5069,
+                  "exports": [
+                    "calculatePlateauRisk"
+                  ],
+                  "imports": []
+                },
+                "researchBackedCalculations.ts": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\utils\\researchBackedCalculations.ts",
+                  "size": 3098,
+                  "exports": [
+                    "initResearchEngine",
+                    "getResearchBackedVolumeTarget",
+                    "getResearchBackedProgressionRate"
+                  ],
+                  "imports": [
+                    "../../../lib/research/schema",
+                    "../../../lib/research/queryEngine"
+                  ]
+                },
+                "researchBackedPredictions.ts": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\utils\\researchBackedPredictions.ts",
+                  "size": 2220,
+                  "exports": [
+                    "generateResearchBackedPredictions"
+                  ],
+                  "imports": []
+                },
+                "researchSaturatedAnalytics.ts": {
+                  "type": "file",
+                  "path": "src\\features\\analytics\\utils\\researchSaturatedAnalytics.ts",
+                  "size": 3994,
+                  "exports": [
+                    "getResearchSaturatedVolumeAnalysis",
+                    "getResearchSaturatedRestAnalysis",
+                    "getResearchSaturatedExerciseOrder",
+                    "getResearchSaturatedFrequencyAnalysis"
+                  ],
+                  "imports": [
+                    "../../../lib/research/schema"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "exercises": {
+          "type": "directory",
+          "path": "src\\features\\exercises",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\exercises\\components",
+              "children": {
+                "ExerciseSelector.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\exercises\\components\\ExerciseSelector.tsx",
+                  "size": 4417,
+                  "exports": [
+                    "ExerciseSelector"
+                  ],
+                  "imports": [
+                    "react",
+                    "../../../lib/supabase/client",
+                    "../../../shared/stores/workoutStore"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "history": {
+          "type": "directory",
+          "path": "src\\features\\history",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\history\\components",
+              "children": {
+                "HistoryView.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\history\\components\\HistoryView.tsx",
+                  "size": 2586,
+                  "exports": [
+                    "HistoryView"
+                  ],
+                  "imports": [
+                    "react",
+                    "../../../lib/supabase/queries",
+                    "./WorkoutDetailsModal"
+                  ]
+                },
+                "WorkoutDetailsModal.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\history\\components\\WorkoutDetailsModal.tsx",
+                  "size": 5615,
+                  "exports": [
+                    "WorkoutDetailsModal"
+                  ],
+                  "imports": [
+                    "react"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "periodization": {
+          "type": "directory",
+          "path": "src\\features\\periodization",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\periodization\\components",
+              "children": {
+                "PeriodizationDashboard.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\periodization\\components\\PeriodizationDashboard.tsx",
+                  "size": 4200,
+                  "exports": [
+                    "PeriodizationDashboard"
+                  ],
+                  "imports": [
+                    "react",
+                    "@tanstack/react-query",
+                    "../hooks/usePeriodization",
+                    "../utils/researchBackedTransitions",
+                    "../utils/researchBackedTransitions",
+                    "../../analytics/components/ResearchBackedRecommendationCard"
+                  ]
+                }
+              }
+            },
+            "hooks": {
+              "type": "directory",
+              "path": "src\\features\\periodization\\hooks",
+              "children": {
+                "usePeriodization.ts": {
+                  "type": "file",
+                  "path": "src\\features\\periodization\\hooks\\usePeriodization.ts",
+                  "size": 2759,
+                  "exports": [
+                    "usePeriodizationStore",
+                    "usePeriodization"
+                  ],
+                  "imports": [
+                    "zustand",
+                    "zustand/middleware/immer",
+                    "../types/periodization",
+                    "../utils/phaseTransitions",
+                    "react"
+                  ]
+                }
+              }
+            },
+            "types": {
+              "type": "directory",
+              "path": "src\\features\\periodization\\types",
+              "children": {
+                "periodization.ts": {
+                  "type": "file",
+                  "path": "src\\features\\periodization\\types\\periodization.ts",
+                  "size": 571,
+                  "exports": [],
+                  "imports": []
+                }
+              }
+            },
+            "utils": {
+              "type": "directory",
+              "path": "src\\features\\periodization\\utils",
+              "children": {
+                "phaseTransitions.ts": {
+                  "type": "file",
+                  "path": "src\\features\\periodization\\utils\\phaseTransitions.ts",
+                  "size": 4285,
+                  "exports": [
+                    "getPhaseLength",
+                    "calculateProgressionSlope",
+                    "createHypertrophyPhase",
+                    "createStrengthPhase",
+                    "createDeloadPhase",
+                    "calculatePhaseTransition"
+                  ],
+                  "imports": [
+                    "../types/periodization"
+                  ]
+                },
+                "researchBackedTransitions.ts": {
+                  "type": "file",
+                  "path": "src\\features\\periodization\\utils\\researchBackedTransitions.ts",
+                  "size": 7647,
+                  "exports": [
+                    "calculateResearchBackedPhaseTransition"
+                  ],
+                  "imports": [
+                    "../types/periodization",
+                    "../../../lib/research/schema",
+                    "../../../lib/research/queryEngine",
+                    "./phaseTransitions"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "progress": {
+          "type": "directory",
+          "path": "src\\features\\progress",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\progress\\components",
+              "children": {
+                "AnalyticsView.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\progress\\components\\AnalyticsView.tsx",
+                  "size": 535,
+                  "exports": [
+                    "AnalyticsView"
+                  ],
+                  "imports": [
+                    "react",
+                    "../../analytics/components/PersonalRecordsTracker",
+                    "../../analytics"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "pwa": {
+          "type": "directory",
+          "path": "src\\features\\pwa",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\pwa\\components",
+              "children": {
+                "InstallPrompt.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\pwa\\components\\InstallPrompt.tsx",
+                  "size": 2090,
+                  "exports": [
+                    "InstallPrompt"
+                  ],
+                  "imports": [
+                    "react"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "research": {
+          "type": "directory",
+          "path": "src\\features\\research",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\research\\components",
+              "children": {
+                "ResearchFactsBanner.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\research\\components\\ResearchFactsBanner.tsx",
+                  "size": 1564,
+                  "exports": [
+                    "ResearchFactsBanner"
+                  ],
+                  "imports": [
+                    "react",
+                    "../../../data/researchFacts"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "settings": {
+          "type": "directory",
+          "path": "src\\features\\settings",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\settings\\components",
+              "children": {
+                "BodyweightSettings.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\settings\\components\\BodyweightSettings.tsx",
+                  "size": 3272,
+                  "exports": [
+                    "BodyweightSettings"
+                  ],
+                  "imports": [
+                    "react"
+                  ]
+                },
+                "DataManagementSettings.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\settings\\components\\DataManagementSettings.tsx",
+                  "size": 4845,
+                  "exports": [
+                    "DataManagementSettings"
+                  ],
+                  "imports": [
+                    "react",
+                    "../utils/csvExport"
+                  ]
+                },
+                "SettingsView.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\settings\\components\\SettingsView.tsx",
+                  "size": 3571,
+                  "exports": [
+                    "SettingsView"
+                  ],
+                  "imports": [
+                    "react",
+                    "./BodyweightSettings",
+                    "./DataManagementSettings"
+                  ]
+                }
+              }
+            },
+            "utils": {
+              "type": "directory",
+              "path": "src\\features\\settings\\utils",
+              "children": {
+                "csvExport.ts": {
+                  "type": "file",
+                  "path": "src\\features\\settings\\utils\\csvExport.ts",
+                  "size": 830,
+                  "exports": [
+                    "convertWorkoutsToCSV",
+                    "downloadCSVFile"
+                  ],
+                  "imports": [
+                    "papaparse",
+                    "../../../shared/stores/workoutStore"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "shared": {
+          "type": "directory",
+          "path": "src\\features\\shared",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\shared\\components",
+              "children": {
+                "BottomTabs.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\shared\\components\\BottomTabs.tsx",
+                  "size": 1403,
+                  "exports": [
+                    "BottomTabs"
+                  ],
+                  "imports": [
+                    "react"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "workout": {
+          "type": "directory",
+          "path": "src\\features\\workout",
+          "children": {
+            "components": {
+              "type": "directory",
+              "path": "src\\features\\workout\\components",
+              "children": {
+                "SetTable.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\workout\\components\\SetTable.tsx",
+                  "size": 1716,
+                  "exports": [
+                    "SetTable"
+                  ],
+                  "imports": [
+                    "react"
+                  ]
+                },
+                "WeightInput.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\workout\\components\\WeightInput.tsx",
+                  "size": 2546,
+                  "exports": [
+                    "WeightInput"
+                  ],
+                  "imports": [
+                    "react"
+                  ]
+                },
+                "WorkoutHeader.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\workout\\components\\WorkoutHeader.tsx",
+                  "size": 3040,
+                  "exports": [
+                    "WorkoutHeader"
+                  ],
+                  "imports": [
+                    "react",
+                    "../../../shared/stores/workoutStore"
+                  ]
+                },
+                "WorkoutLogger.tsx": {
+                  "type": "file",
+                  "path": "src\\features\\workout\\components\\WorkoutLogger.tsx",
+                  "size": 10286,
+                  "exports": [
+                    "WorkoutLogger"
+                  ],
+                  "imports": [
+                    "react",
+                    "../../../shared/stores/workoutStore",
+                    "./WeightInput",
+                    "../../../shared/hooks/useExerciseHistory",
+                    "./SetTable",
+                    "../../../lib/supabase/queries",
+                    "../../../shared/hooks/useRecommendations"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "__tests__": {
+          "type": "directory",
+          "path": "src\\features\\__tests__",
+          "children": {
+            "integration.test.ts": {
+              "type": "file",
+              "path": "src\\features\\__tests__\\integration.test.ts",
+              "size": 770,
+              "exports": [],
+              "imports": [
+                "@research/progressive-overload/algorithm",
+                "@research/plateau-detection/algorithm"
+              ]
+            },
+            "ui.test.tsx": {
+              "type": "file",
+              "path": "src\\features\\__tests__\\ui.test.tsx",
+              "size": 868,
+              "exports": [],
+              "imports": [
+                "react",
+                "@testing-library/react",
+                "../../test-utils/renderWithClient",
+                "react-dom/test-utils",
+                "../../shared/stores/workoutStore",
+                "../workout/components/WorkoutLogger"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "index.tsx": {
+      "type": "file",
+      "path": "src\\index.tsx",
+      "size": 860,
+      "exports": [],
+      "imports": [
+        "react",
+        "react-dom/client",
+        "./App",
+        "./reportWebVitals",
+        "@tanstack/react-query"
+      ]
+    },
+    "lib": {
+      "type": "directory",
+      "path": "src\\lib",
+      "children": {
+        "analytics": {
+          "type": "directory",
+          "path": "src\\lib\\analytics",
+          "children": {
+            "index.ts": {
+              "type": "file",
+              "path": "src\\lib\\analytics\\index.ts",
+              "size": 45,
+              "exports": [],
+              "imports": []
+            },
+            "progressCalculations.ts": {
+              "type": "file",
+              "path": "src\\lib\\analytics\\progressCalculations.ts",
+              "size": 4561,
+              "exports": [
+                "ProgressAnalyzer"
+              ],
+              "imports": [
+                "../algorithms/plateau"
+              ]
+            }
+          }
+        },
+        "offline": {
+          "type": "directory",
+          "path": "src\\lib\\offline",
+          "children": {
+            "database.ts": {
+              "type": "file",
+              "path": "src\\lib\\offline\\database.ts",
+              "size": 2283,
+              "exports": [
+                "OfflineDatabase"
+              ],
+              "imports": [
+                "idb",
+                "../../shared/stores/workoutStore"
+              ]
+            }
+          }
+        },
+        "research": {
+          "type": "directory",
+          "path": "src\\lib\\research",
+          "children": {
+            "extractor.ts": {
+              "type": "file",
+              "path": "src\\lib\\research\\extractor.ts",
+              "size": 8804,
+              "exports": [
+                "extractResearchFindings",
+                "buildResearchGraph"
+              ],
+              "imports": [
+                "./schema"
+              ]
+            },
+            "initialization.ts": {
+              "type": "file",
+              "path": "src\\lib\\research\\initialization.ts",
+              "size": 2102,
+              "exports": [
+                "getResearchGraph"
+              ],
+              "imports": [
+                "./extractor",
+                "./schema"
+              ]
+            },
+            "queryEngine.ts": {
+              "type": "file",
+              "path": "src\\lib\\research\\queryEngine.ts",
+              "size": 1842,
+              "exports": [
+                "ResearchQueryEngine"
+              ],
+              "imports": [
+                "./schema"
+              ]
+            },
+            "schema.ts": {
+              "type": "file",
+              "path": "src\\lib\\research\\schema.ts",
+              "size": 1348,
+              "exports": [],
+              "imports": []
+            }
+          }
+        },
+        "supabase": {
+          "type": "directory",
+          "path": "src\\lib\\supabase",
+          "children": {
+            "client.ts": {
+              "type": "file",
+              "path": "src\\lib\\supabase\\client.ts",
+              "size": 741,
+              "exports": [
+                "getSupabase",
+                "getCurrentUserId"
+              ],
+              "imports": [
+                "@supabase/supabase-js",
+                "../../shared/types/supabase"
+              ]
+            },
+            "index.ts": {
+              "type": "file",
+              "path": "src\\lib\\supabase\\index.ts",
+              "size": 59,
+              "exports": [],
+              "imports": []
+            },
+            "queries.ts": {
+              "type": "file",
+              "path": "src\\lib\\supabase\\queries.ts",
+              "size": 25717,
+              "exports": [
+                "workoutQueries"
+              ],
+              "imports": [
+                "./client"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "react-app-env.d.ts": {
+      "type": "file",
+      "path": "src\\react-app-env.d.ts",
+      "size": 41,
+      "exports": [],
+      "imports": []
+    },
+    "reportWebVitals.ts": {
+      "type": "file",
+      "path": "src\\reportWebVitals.ts",
+      "size": 440,
+      "exports": [
+        "reportWebVitals"
+      ],
+      "imports": [
+        "web-vitals"
+      ]
+    },
+    "research": {
+      "type": "directory",
+      "path": "src\\research",
+      "children": {
+        "index.ts": {
+          "type": "file",
+          "path": "src\\research\\index.ts",
+          "size": 568,
+          "exports": [
+            "RESEARCH_INDEX"
+          ],
+          "imports": []
+        },
+        "plateau-detection": {
+          "type": "directory",
+          "path": "src\\research\\plateau-detection",
+          "children": {
+            "algorithm.ts": {
+              "type": "file",
+              "path": "src\\research\\plateau-detection\\algorithm.ts",
+              "size": 2312,
+              "exports": [
+                "getBestSet",
+                "detectPlateau",
+                "getDeloadRecommendation"
+              ],
+              "imports": []
+            }
+          }
+        },
+        "progressive-overload": {
+          "type": "directory",
+          "path": "src\\research\\progressive-overload",
+          "children": {
+            "algorithm.ts": {
+              "type": "file",
+              "path": "src\\research\\progressive-overload\\algorithm.ts",
+              "size": 4057,
+              "exports": [
+                "calculateProgression"
+              ],
+              "imports": []
+            }
+          }
+        }
+      }
+    },
+    "setupTests.ts": {
+      "type": "file",
+      "path": "src\\setupTests.ts",
+      "size": 241,
+      "exports": [],
+      "imports": []
+    },
+    "shared": {
+      "type": "directory",
+      "path": "src\\shared",
+      "children": {
+        "constants": {
+          "type": "directory",
+          "path": "src\\shared\\constants",
+          "children": {
+            "researchTargets.ts": {
+              "type": "file",
+              "path": "src\\shared\\constants\\researchTargets.ts",
+              "size": 1249,
+              "exports": [
+                "RESEARCH_VOLUME_TARGETS",
+                "RESEARCH_CITATIONS"
+              ],
+              "imports": []
+            }
+          }
+        },
+        "hooks": {
+          "type": "directory",
+          "path": "src\\shared\\hooks",
+          "children": {
+            "useExerciseHistory.ts": {
+              "type": "file",
+              "path": "src\\shared\\hooks\\useExerciseHistory.ts",
+              "size": 2120,
+              "exports": [
+                "useExerciseHistory"
+              ],
+              "imports": [
+                "react",
+                "../../lib/supabase/client",
+                "../../lib/supabase/queries"
+              ]
+            },
+            "useOfflineSync.ts": {
+              "type": "file",
+              "path": "src\\shared\\hooks\\useOfflineSync.ts",
+              "size": 3478,
+              "exports": [
+                "useOfflineSync"
+              ],
+              "imports": [
+                "react",
+                "../../lib/offline/database",
+                "../../lib/supabase/client"
+              ]
+            },
+            "usePlateauDetection.ts": {
+              "type": "file",
+              "path": "src\\shared\\hooks\\usePlateauDetection.ts",
+              "size": 433,
+              "exports": [
+                "usePlateauDetection"
+              ],
+              "imports": [
+                "react",
+                "@research/plateau-detection/algorithm"
+              ]
+            },
+            "useRecommendations.ts": {
+              "type": "file",
+              "path": "src\\shared\\hooks\\useRecommendations.ts",
+              "size": 5340,
+              "exports": [
+                "useRecommendations"
+              ],
+              "imports": [
+                "react",
+                "@research/progressive-overload/algorithm",
+                "../stores/workoutStore",
+                "@tanstack/react-query",
+                "../../lib/supabase/queries",
+                "../constants/researchTargets",
+                "../utils/exerciseClassification",
+                "../../features/periodization/hooks/usePeriodization",
+                "../../features/analytics/utils/exerciseOptimization"
+              ]
+            },
+            "useRecoveryReadiness.ts": {
+              "type": "file",
+              "path": "src\\shared\\hooks\\useRecoveryReadiness.ts",
+              "size": 2558,
+              "exports": [
+                "useRecoveryReadiness"
+              ],
+              "imports": [
+                "react",
+                "@tanstack/react-query",
+                "../../lib/supabase/queries"
+              ]
+            }
+          }
+        },
+        "stores": {
+          "type": "directory",
+          "path": "src\\shared\\stores",
+          "children": {
+            "workoutStore.ts": {
+              "type": "file",
+              "path": "src\\shared\\stores\\workoutStore.ts",
+              "size": 5816,
+              "exports": [
+                "useWorkoutStore"
+              ],
+              "imports": [
+                "zustand",
+                "zustand/middleware/immer"
+              ]
+            }
+          }
+        },
+        "types": {
+          "type": "directory",
+          "path": "src\\shared\\types",
+          "children": {
+            "supabase.ts": {
+              "type": "file",
+              "path": "src\\shared\\types\\supabase.ts",
+              "size": 16810,
+              "exports": [
+                "Constants"
+              ],
+              "imports": []
+            }
+          }
+        },
+        "utils": {
+          "type": "directory",
+          "path": "src\\shared\\utils",
+          "children": {
+            "exerciseClassification.ts": {
+              "type": "file",
+              "path": "src\\shared\\utils\\exerciseClassification.ts",
+              "size": 2051,
+              "exports": [
+                "inferExerciseType"
+              ],
+              "imports": []
+            },
+            "researchIntegration.ts": {
+              "type": "file",
+              "path": "src\\shared\\utils\\researchIntegration.ts",
+              "size": 2202,
+              "exports": [
+                "validateRecommendationWithResearch",
+                "generateResearchSummary"
+              ],
+              "imports": []
+            }
+          }
+        }
+      }
+    },
+    "test-utils": {
+      "type": "directory",
+      "path": "src\\test-utils",
+      "children": {
+        "agent-helpers.ts": {
+          "type": "file",
+          "path": "src\\test-utils\\agent-helpers.ts",
+          "size": 1383,
+          "exports": [
+            "AgentTestHelpers",
+            "mockWorkoutData"
+          ],
+          "imports": []
+        },
+        "renderWithClient.tsx": {
+          "type": "file",
+          "path": "src\\test-utils\\renderWithClient.tsx",
+          "size": 492,
+          "exports": [
+            "renderWithClient"
+          ],
+          "imports": [
+            "react",
+            "@testing-library/react",
+            "@tanstack/react-query"
+          ]
+        },
+        "setup.tsx": {
+          "type": "file",
+          "path": "src\\test-utils\\setup.tsx",
+          "size": 842,
+          "exports": [],
+          "imports": [
+            "react",
+            "@tanstack/react-query"
+          ]
+        }
+      }
+    },
+    "types": {
+      "type": "directory",
+      "path": "src\\types",
+      "children": {
+        "ambient.d.ts": {
+          "type": "file",
+          "path": "src\\types\\ambient.d.ts",
+          "size": 33,
+          "exports": [],
+          "imports": []
+        }
+      }
+    }
+  },
+  "dependencies": {},
+  "apiEndpoints": {
+    "auth.js": {
+      "type": "file",
+      "path": "api\\auth.js",
+      "size": 9389,
+      "exports": [
+        "requireAuth",
+        "async"
+      ],
+      "imports": [
+        "@supabase/supabase-js",
+        "jsonwebtoken"
+      ]
+    },
+    "exercises.js": {
+      "type": "file",
+      "path": "api\\exercises.js",
+      "size": 5336,
+      "exports": [
+        "async"
+      ],
+      "imports": [
+        "@supabase/supabase-js"
+      ]
+    },
+    "health.js": {
+      "type": "file",
+      "path": "api\\health.js",
+      "size": 7699,
+      "exports": [
+        "getMetrics",
+        "isHealthy",
+        "async"
+      ],
+      "imports": [
+        "@supabase/supabase-js"
+      ]
+    },
+    "recommendations.js": {
+      "type": "file",
+      "path": "api\\recommendations.js",
+      "size": 20689,
+      "exports": [
+        "async"
+      ],
+      "imports": [
+        "@supabase/supabase-js"
+      ]
+    },
+    "workouts.js": {
+      "type": "file",
+      "path": "api\\workouts.js",
+      "size": 12836,
+      "exports": [
+        "async"
+      ],
+      "imports": [
+        "@supabase/supabase-js"
+      ]
+    }
+  },
+  "testCoverage": {},
+  "researchReferences": []
+}

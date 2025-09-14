@@ -12,7 +12,7 @@ export function AdvancedAnalyticsDashboard() {
   const [selectedTimeframe, setSelectedTimeframe] = useState('12weeks');
   const [exportFormat, setExportFormat] = useState<'csv' | 'pdf'>('csv');
   const { currentPhase } = usePeriodization();
-  const userProfile = { experience: 'intermediate' as const };
+  const userProfile = useMemo(() => ({ experience: 'intermediate' as const }), []);
 
   const days = selectedTimeframe === '12weeks' ? 84 : 168;
   const { data: exerciseSessions } = useQuery({ queryKey: ['exercise-performance-series', days], queryFn: () => getExercisePerformanceSeries(days) });
@@ -42,7 +42,10 @@ export function AdvancedAnalyticsDashboard() {
     return out;
   }, [exerciseSessions]);
 
-  const forecastData = useMemo(() => generatePerformanceForecast(compoundExercises, currentPhase, userProfile), [compoundExercises, currentPhase]);
+  const forecastData = useMemo(
+    () => generatePerformanceForecast(compoundExercises, currentPhase, userProfile),
+    [compoundExercises, currentPhase, userProfile]
+  );
 
   const handleExport = async (fmt: 'csv' | 'pdf') => {
     const range: DateRange = { start: new Date(Date.now() - 12 * 7 * 86400000).toISOString().slice(0,10), end: new Date().toISOString().slice(0,10) };

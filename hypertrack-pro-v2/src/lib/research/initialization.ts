@@ -30,15 +30,13 @@ async function loadResearchReports(): Promise<string[]> {
   } catch {
     // ignore, fall back below
   }
-  {
-    return [
-      'Heart Rate Variability (HRV) readiness threshold ~0.5 SD lnRMSSD; recovery 24–72 hours; 7-day rolling average',
-      'EMG activation: Bench press high pec EMG; Hip thrust very high glute activation; Pull-ups, Rows top for lats',
-      'Periodization: Undulating strong for trained; block useful for advanced peaking; hypertrophy ~6 weeks, strength ~4 weeks',
-      'Volume: 10–20 sets per week yields optimal hypertrophy; diminishing returns beyond 20',
-      'Progressive overload: Novice 5–10% weekly, intermediate 2–5% per cycle; advanced 1%/month; watch for plateaus'
-    ];
-  }
+  return [
+    'Heart Rate Variability (HRV) readiness threshold ~0.5 SD lnRMSSD; recovery 24–72 hours; 7-day rolling average',
+    'EMG activation: Bench press high pec EMG; Hip thrust very high glute activation; Pull-ups, Rows top for lats',
+    'Periodization: Undulating strong for trained; block useful for advanced peaking; hypertrophy ~6 weeks, strength ~4 weeks',
+    'Volume: 10–20 sets per week yields optimal hypertrophy; diminishing returns beyond 20',
+    'Progressive overload: Novice 5–10% weekly, intermediate 2–5% per cycle; advanced 1%/month; watch for plateaus'
+  ];
 }
 
 async function storeResearchGraph(graph: ResearchGraph): Promise<void> {

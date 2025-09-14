@@ -1,0 +1,62 @@
+# HyperTrack Pro - Agentic Development Rules
+
+## 🎯 Project Context
+- App: React + TypeScript in hypertrack-pro-v2/
+- Backend: Vercel serverless functions (api/)
+- Database: Supabase with TypeScript types
+- Focus: Evidence-based fitness tracking with 52 research insights
+
+## 🧠 Agent Collaboration Framework
+- Architecture Agent: High-level design, API planning
+- Implementation Agent: Feature development, algorithm integration  
+- Testing Agent: Quality assurance, performance validation
+- Documentation Agent: API docs, code comments, README updates
+
+## 📁 Directory Structure (CRITICAL)
+src/
+├── core/ - Business logic, domain models
+├── features/ - Feature modules (workouts, analytics, recommendations)
+├── shared/ - Types, utilities, components  
+├── lib/algorithms/ - Research-backed calculations (PRESERVE)
+├── infrastructure/ - External integrations
+
+## 🔒 CRITICAL CONSTRAINTS
+- NEVER modify src/lib/algorithms/ without research validation
+- ALWAYS use TypeScript path aliases (@core/, @features/, @shared/)
+- PRESERVE offline-first architecture
+- MAINTAIN 52 research citations and evidence-based approach
+
+## 🛠️ Development Standards
+- TypeScript strict mode required
+- Jest testing (80% coverage minimum)
+- ESLint compliance (zero warnings)
+- Research citations required for fitness recommendations
+- WCAG 2.1 AA accessibility compliance
+
+## 🚀 Deployment Protocol (PowerShell)
+git add -A .\hypertrack-pro-v2;
+$MSG = "feat: <description>";
+git commit -m $MSG;
+git pull --rebase origin main;
+git push origin main;
+
+## 🎯 Agent Navigation Patterns
+- Feature work: @codebase src/features/[feature]
+- Types: @codebase src/shared/types  
+- Algorithms: @codebase src/lib/algorithms
+- API: @codebase api/
+- Tests: @codebase *.test.* OR *.spec.*
+
+## 📊 Quality Gates
+- Research validation for algorithm changes
+- Performance: Core Web Vitals optimized
+- Security: JWT auth, input validation, RLS policies
+- Accessibility: Screen reader compatible
+
+## 🔬 Research Integration
+- Evidence-based development required
+- 52 research sources integrated
+- Citation format: "Author et al. (Year)"
+- No fitness advice without scientific backing
+
+Always consult .cursor/knowledge-graph.json for comprehensive codebase understanding.

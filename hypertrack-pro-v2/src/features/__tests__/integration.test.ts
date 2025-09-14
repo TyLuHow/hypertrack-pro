@@ -1,5 +1,5 @@
-import { calculateProgression } from '../../lib/algorithms/progression';
-import { detectPlateau } from '../../lib/algorithms/plateau';
+import { calculateProgression } from '@research/progressive-overload/algorithm';
+import { detectPlateau } from '@research/plateau-detection/algorithm';
 
 describe('Core flow smoke tests', () => {
   test('progression + plateau interop', () => {

@@ -1,0 +1,34 @@
+{
+  "name": "hypertrack-pro-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for HyperTrack Pro agentic development",
+  "servers": {
+    "codebase": {
+      "command": "node",
+      "args": [
+        ".cursor/mcp-server.js"
+      ],
+      "env": {
+        "PROJECT_ROOT": "."
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "search_code",
+      "description": "Search for code patterns and functions across the codebase"
+    },
+    {
+      "name": "validate_research",
+      "description": "Validate research citations and algorithm implementations"
+    },
+    {
+      "name": "run_tests",
+      "description": "Execute test suites and return results"
+    },
+    {
+      "name": "analyze_performance",
+      "description": "Profile code performance and identify bottlenecks"
+    }
+  ]
+}
