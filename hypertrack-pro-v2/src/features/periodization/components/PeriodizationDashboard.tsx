@@ -56,7 +56,7 @@ async function getProgressionHistory(): Promise<ProgressionData> {
       : 0;
     
     return {
-      recentPerformance: [avgProgressionRate],
+      recentPerformance: [{ ts: Date.now(), value: avgProgressionRate }],
       currentPhaseWeeks: 6, // Default, could be calculated from workout history
       currentPhase: 'hypertrophy' as const
     };
