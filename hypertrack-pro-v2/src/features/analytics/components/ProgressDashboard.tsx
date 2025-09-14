@@ -197,6 +197,72 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
           </section>
         )}
 
+        {/* All muscle group set discrepancies */}
+        {researchRecommendations && researchRecommendations.length > 0 && (
+          <section className="mt-6">
+            <h3 className="text-lg font-semibold mb-3 text-white">Muscle Group Set Discrepancies</h3>
+            <div className="bg-slate-700/40 rounded-lg p-4">
+              <div className="space-y-2">
+                {researchRecommendations
+                  .sort((a: any, b: any) => {
+                    // Sort by urgency first (high > medium > low), then by discrepancy magnitude
+                    const urgencyOrder = { high: 3, medium: 2, low: 1 };
+                    const aUrgency = urgencyOrder[a.urgency] || 0;
+                    const bUrgency = urgencyOrder[b.urgency] || 0;
+                    if (aUrgency !== bUrgency) return bUrgency - aUrgency;
+                    
+                    // Then sort by absolute discrepancy (largest first)
+                    const aDiscrepancy = Math.abs(a.current - a.recommended);
+                    const bDiscrepancy = Math.abs(b.current - b.recommended);
+                    return bDiscrepancy - aDiscrepancy;
+                  })
+                  .map((rec: any, index: number) => {
+                    const discrepancy = rec.current - rec.recommended;
+                    const isAbove = discrepancy > 0;
+                    const isBelow = discrepancy < 0;
+                    const isOptimal = Math.abs(discrepancy) <= 1; // Within 1 set is considered optimal
+                    
+                    const getStatusColor = () => {
+                      if (rec.urgency === 'high') return 'text-red-400';
+                      if (rec.urgency === 'medium') return 'text-yellow-400';
+                      if (isOptimal) return 'text-green-400';
+                      return 'text-gray-400';
+                    };
+                    
+                    const getStatusIcon = () => {
+                      if (rec.urgency === 'high') return '⚠️';
+                      if (rec.urgency === 'medium') return '⚡';
+                      if (isOptimal) return '✅';
+                      return '📊';
+                    };
+                    
+                    return (
+                      <div key={index} className="flex items-center justify-between py-2 px-3 bg-slate-600/30 rounded">
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{getStatusIcon()}</span>
+                          <div>
+                            <span className="font-medium text-white">{rec.muscle}</span>
+                            <div className="text-sm text-gray-400">
+                              Current: {rec.current} sets/week • Target: {rec.recommended} sets/week
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`font-semibold ${getStatusColor()}`}>
+                            {isAbove ? `+${Math.abs(discrepancy)}` : isBelow ? `-${Math.abs(discrepancy)}` : '0'} sets
+                          </div>
+                          <div className="text-xs text-gray-500 capitalize">
+                            {rec.urgency} priority
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Readiness overview */}
         <section className="mt-6">
           <div className="bg-blue-50/10 border border-blue-400/30 rounded-lg p-4">
