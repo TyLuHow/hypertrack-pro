@@ -201,9 +201,15 @@ export const WorkoutLogger: React.FC<WorkoutLoggerProps> = ({
                   endTime,
                   exercises: currentWorkout.exercises.map((e) => ({ id: e.id, name: e.name, sets: e.sets.map(s => ({ id: s.id, weight: s.weight, reps: s.reps })) }))
                 };
-                await persistWorkoutSession(session as any);
+                const result = await persistWorkoutSession(session as any);
                 completeWorkout();
                 setShowFinishModal(true);
+                if (result === 0) {
+                  // saved locally only
+                  setTimeout(() => {
+                    alert('Saved locally. Sign in to sync your workout to the cloud.');
+                  }, 0);
+                }
               } catch (err: any) {
                 console.error('Failed to persist workout session', err);
                 alert('Could not save workout. Please sign in and ensure Supabase credentials are configured.');

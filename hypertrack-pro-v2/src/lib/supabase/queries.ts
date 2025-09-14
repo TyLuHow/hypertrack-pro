@@ -1,4 +1,6 @@
 import { getSupabase, getCurrentUserId } from './client';
+import { OfflineDatabase } from '../offline/database';
+import type { WorkoutSession as LocalWorkoutSession } from '../../shared/stores/workoutStore';
 
 type WorkoutInsert = {
   workout_date: string;
@@ -507,7 +509,27 @@ export async function persistWorkoutSession(session: {
 }): Promise<number> {
   const supabase = getSupabase() as any;
   const uid = await getCurrentUserId();
-  if (!uid) throw new Error('Not authenticated');
+  if (!uid) {
+    // Fallback: save locally and queue for sync
+    const db = new OfflineDatabase();
+    await db.initialize();
+    const local: LocalWorkoutSession = {
+      id: `${Date.now()}`,
+      name: session.name,
+      date: session.date,
+      startTime: session.startTime,
+      endTime: session.endTime || new Date().toISOString(),
+      exercises: session.exercises.map((e) => ({
+        id: e.id,
+        name: e.name,
+        muscleGroup: 'Unknown',
+        category: 'Isolation',
+        sets: e.sets.map((s) => ({ id: s.id, weight: s.weight, reps: s.reps }))
+      }))
+    };
+    await db.addWorkout(local);
+    return 0; // indicates saved locally
+  }
 
   // 1) Create workout row
   const { data: workoutRow, error: wErr } = await (supabase
