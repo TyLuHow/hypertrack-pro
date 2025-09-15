@@ -206,9 +206,9 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({ userId }) 
                 {researchRecommendations
                   .sort((a: any, b: any) => {
                     // Sort by urgency first (high > medium > low), then by discrepancy magnitude
-                    const urgencyOrder = { high: 3, medium: 2, low: 1 };
-                    const aUrgency = urgencyOrder[a.urgency] || 0;
-                    const bUrgency = urgencyOrder[b.urgency] || 0;
+                    const urgencyOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
+                    const aUrgency = urgencyOrder[a.urgency as string] || 0;
+                    const bUrgency = urgencyOrder[b.urgency as string] || 0;
                     if (aUrgency !== bUrgency) return bUrgency - aUrgency;
                     
                     // Then sort by absolute discrepancy (largest first)
